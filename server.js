@@ -6,13 +6,17 @@ const PORT = process.env.PORT || 3000;
 
 const mysql = require("mysql2");
 
-const db = mysql.createConnection({
+const db = mysql.createPool({
   host: "sql105.infinityfree.com",
   user: "if0_40358009",
   password: "Mackenzie122807",
   database: "if0_40358009_sukattown_db",
   port: 3306,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
 });
+
 
 db.connect((err) => {
   if (err) {
