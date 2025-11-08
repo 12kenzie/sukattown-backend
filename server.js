@@ -313,35 +313,23 @@ app.get("/api/stats/energy", (req, res) => {
 // ========== HEALTH CHECK ==========
 
 app.get("/api/health", (req, res) => {
-  // Test database connection
   db.query("SELECT 1", (err) => {
     const dbStatus = err ? "disconnected" : "connected";
-    
+    if (err) {
+      console.error("❌ Health check DB error:", err.message);
+    } else {
+      console.log("✅ Health check DB connected");
+    }
+
     res.json({
       success: true,
       message: "SukatTown API is running",
       timestamp: Date.now(),
       database: dbStatus,
-      endpoints: {
-        powerData: {
-          post: "/api/power-data - Send power data",
-          get: "/api/power-data - Get latest in-memory data"
-        },
-        alerts: {
-          post: "/api/consumption-alerts - Send alert",
-          get: "/api/consumption-alerts - Get latest alert",
-          delete: "/api/consumption-alerts - Clear alert"
-        },
-        database: {
-          readings: "/api/readings?limit=50&user_id=1 - Get readings",
-          userReadings: "/api/readings/user/1?limit=50 - Get user readings",
-          latest: "/api/readings/latest?user_id=1 - Get latest reading",
-          stats: "/api/stats/energy?user_id=1 - Get energy statistics"
-        }
-      }
     });
   });
 });
+
 
 // ========== STATIC FILES ==========
 
