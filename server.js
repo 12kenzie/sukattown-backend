@@ -17,15 +17,6 @@ const db = mysql.createPool({
   queueLimit: 0,
 });
 
-
-db.connect((err) => {
-  if (err) {
-    console.error("MySQL connection failed:", err);
-  } else {
-    console.log("Connected to InfinityFree MySQL");
-  }
-});
-
 app.use(cors());
 app.use(express.json());
 
