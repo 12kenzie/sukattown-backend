@@ -3,23 +3,16 @@ const cors = require("cors");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const mysql = require("mysql2");
-
-/* FOR INFINITEFREE
-const db = mysql.createPool({
-  host: "sql105.infinityfree.com",
-  user: "if0_40358009",
-  password: "Mackenzie122807",
-  database: "if0_40358009_sukattown_db",
-  port: 3306,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-});
-*/
-
+// Firebase Admin SDK
 const admin = require("firebase-admin");
-const serviceAccount = require("./firebase-key.json");
+
+// Initialize Firebase with environment variable or local file
+let serviceAccount;
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+} else {
+  serviceAccount = require("./firebase-key.json");
+}
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -46,22 +39,14 @@ let latestPZEMData = {
 let latestConsumptionAlert = null;
 
 // POWER DATA ENDPOINTS
-
-// Receive data from ESP32
-app.post("/api/power-data", (req, res) => {
+app.post("/api/power-data", async (req, res) => {
   const data = req.body;
-
   console.log("📊 Received PZEM data:", data);
 
-  // Validate required fields
   if (!data.voltage || !data.current || !data.power) {
-    return res.status(400).json({
-      success: false,
-      message: "Missing required fields (voltage, current, power)"
-    });
+    return res.status(400).json({ success: false, message: "Missing required fields" });
   }
 
-  // Update latest data
   latestPZEMData = {
     voltage: parseFloat(data.voltage),
     current: parseFloat(data.current),
@@ -72,54 +57,35 @@ app.post("/api/power-data", (req, res) => {
     timestamp: Date.now(),
   };
 
-  // Save to MySQL - Updated column names to match your database
-  const { voltage, current, power, energy, frequency, powerFactor } = latestPZEMData;
+  try {
+    const userId = data.user_id || 1;
+    await db.ref("readings").push({
+      user_id: userId,
+      ...latestPZEMData
+    });
 
-  // Note: user_id is set to 1 by default. You can change this based on your needs
-  const userId = 1;
-
-  db.ref("readings").push({
-    user_id: 1,
-    voltage,
-    current,
-    power,
-    energy,
-    frequency,
-    powerFactor,
-    timestamp: Date.now()
-  });
-
-
-  res.status(200).json({
-    success: true,
-    message: "Data received successfully",
-    data: latestPZEMData,
-  });
+    console.log("✅ Data saved to Firebase");
+    res.status(200).json({ success: true, message: "Data received successfully", data: latestPZEMData });
+  } catch (err) {
+    console.error("❌ Firebase error:", err);
+    res.status(500).json({ success: false, message: "Firebase save failed" });
+  }
 });
 
-// Get latest sensor data
 app.get("/api/power-data", (req, res) => {
   console.log("📤 Sending latest PZEM data");
   res.json(latestPZEMData);
 });
 
-// CONSUMPTION ALERTS ENDPOINTS 
-
-// Receive consumption alert from ESP32
-app.post("/api/consumption-alerts", (req, res) => {
+// CONSUMPTION ALERTS ENDPOINTS
+app.post("/api/consumption-alerts", async (req, res) => {
   const alertData = req.body;
-
   console.log("🚨 Received consumption alert:", alertData);
 
-  // Validate required fields
   if (!alertData.period || !alertData.consumption || !alertData.limit) {
-    return res.status(400).json({
-      success: false,
-      message: "Missing required fields (period, consumption, limit)"
-    });
+    return res.status(400).json({ success: false, message: "Missing required fields" });
   }
 
-  // Update latest alert
   latestConsumptionAlert = {
     period: alertData.period,
     consumption: parseFloat(alertData.consumption),
@@ -128,238 +94,211 @@ app.post("/api/consumption-alerts", (req, res) => {
     timestamp: Date.now(),
   };
 
-  // Save to MySQL alerts table 
-  // Uncomment this after creating the alerts table
-  /*
-  const userId = 1;
-  db.query(
-    "INSERT INTO alerts (user_id, period, consumption, `limit`, percentage_over) VALUES (?, ?, ?, ?, ?)",
-    [
-      userId,
-      latestConsumptionAlert.period,
-      latestConsumptionAlert.consumption,
-      latestConsumptionAlert.limit,
-      latestConsumptionAlert.percentageOver
-    ],
-    (err, result) => {
-      if (err) {
-        console.error("❌ Alert insert error:", err);
-      } else {
-        console.log("✅ Alert saved to database with ID:", result.insertId);
-      }
-    }
-  );
-  */
+  try {
+    const userId = alertData.user_id || 1;
+    await db.ref("alerts").push({
+      user_id: userId,
+      period: latestConsumptionAlert.period,
+      consumption: latestConsumptionAlert.consumption,
+      limit: latestConsumptionAlert.limit,
+      percentage_over: latestConsumptionAlert.percentageOver,
+      timestamp: latestConsumptionAlert.timestamp
+    });
 
-  res.status(200).json({
-    success: true,
-    message: "Alert received successfully",
-    data: latestConsumptionAlert,
-  });
+    console.log("✅ Alert saved to Firebase");
+    res.status(200).json({ success: true, message: "Alert received successfully", data: latestConsumptionAlert });
+  } catch (err) {
+    console.error("❌ Firebase error:", err);
+    res.status(500).json({ success: false, message: "Firebase save failed" });
+  }
 });
 
-// Get latest consumption alert
 app.get("/api/consumption-alerts", (req, res) => {
   if (!latestConsumptionAlert) {
-    return res.status(404).json({
-      success: false,
-      message: "No alerts available"
-    });
+    return res.status(404).json({ success: false, message: "No alerts available" });
   }
-
   console.log("📤 Sending latest consumption alert");
   res.json(latestConsumptionAlert);
 });
 
-// Clear consumption alert (for testing)
 app.delete("/api/consumption-alerts", (req, res) => {
   latestConsumptionAlert = null;
   console.log("🗑️ Consumption alert cleared");
-  res.json({
-    success: true,
-    message: "Alert cleared"
-  });
+  res.json({ success: true, message: "Alert cleared" });
 });
 
-// DATABASE QUERY ENDPOINTS 
+// DATABASE QUERY ENDPOINTS
+app.get("/api/readings", async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 50;
+    const userId = parseInt(req.query.user_id) || null;
 
-// Get all readings from database
-app.get("/api/readings", (req, res) => {
-  const limit = parseInt(req.query.limit) || 50;
-  const userId = parseInt(req.query.user_id) || null;
-  
-  let query = "SELECT * FROM readings";
-  let params = [];
-  
-  if (userId) {
-    query += " WHERE user_id = ?";
-    params.push(userId);
-  }
-  
-  query += " ORDER BY timestamp DESC LIMIT ?";
-  params.push(limit);
-  
-  db.query(query, params, (err, results) => {
-    if (err) {
-      console.error("❌ Query error:", err);
-      return res.status(500).json({
-        success: false,
-        message: "Database query failed",
-        error: err.message
-      });
-    }
-    res.json({
-      success: true,
-      count: results.length,
-      data: results
-    });
-  });
-});
+    const snapshot = await db.ref("readings").orderByChild("timestamp").limitToLast(limit).once("value");
+    let readings = [];
 
-// Get readings by user_id
-app.get("/api/readings/user/:userId", (req, res) => {
-  const userId = parseInt(req.params.userId);
-  const limit = parseInt(req.query.limit) || 50;
-  
-  db.query(
-    "SELECT * FROM readings WHERE user_id = ? ORDER BY timestamp DESC LIMIT ?",
-    [userId, limit],
-    (err, results) => {
-      if (err) {
-        console.error("❌ Query error:", err);
-        return res.status(500).json({
-          success: false,
-          message: "Database query failed"
-        });
+    snapshot.forEach((child) => {
+      const reading = child.val();
+      if (!userId || reading.user_id === userId) {
+        readings.push({ id: child.key, ...reading });
       }
-      res.json({
+    });
+
+    readings.reverse();
+    res.json({ success: true, count: readings.length, data: readings });
+  } catch (err) {
+    console.error("❌ Firebase query error:", err);
+    res.status(500).json({ success: false, message: "Firebase query failed" });
+  }
+});
+
+app.get("/api/readings/user/:userId", async (req, res) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    const limit = parseInt(req.query.limit) || 50;
+
+    const snapshot = await db.ref("readings").orderByChild("user_id").equalTo(userId).limitToLast(limit).once("value");
+    let readings = [];
+
+    snapshot.forEach((child) => {
+      readings.push({ id: child.key, ...child.val() });
+    });
+
+    readings.reverse();
+    res.json({ success: true, userId: userId, count: readings.length, data: readings });
+  } catch (err) {
+    console.error("❌ Firebase query error:", err);
+    res.status(500).json({ success: false, message: "Firebase query failed" });
+  }
+});
+
+app.get("/api/readings/latest", async (req, res) => {
+  try {
+    const userId = parseInt(req.query.user_id) || null;
+    const snapshot = await db.ref("readings").orderByChild("timestamp").limitToLast(1).once("value");
+    
+    let latest = null;
+    snapshot.forEach((child) => {
+      const reading = child.val();
+      if (!userId || reading.user_id === userId) {
+        latest = { id: child.key, ...reading };
+      }
+    });
+
+    if (!latest) {
+      return res.status(404).json({ success: false, message: "No readings found" });
+    }
+
+    res.json({ success: true, data: latest });
+  } catch (err) {
+    console.error("❌ Firebase query error:", err);
+    res.status(500).json({ success: false, message: "Firebase query failed" });
+  }
+});
+
+// STATISTICS ENDPOINTS
+app.get("/api/stats/energy", async (req, res) => {
+  try {
+    const userId = parseInt(req.query.user_id) || null;
+    const snapshot = await db.ref("readings").once("value");
+    
+    let readings = [];
+    snapshot.forEach((child) => {
+      const reading = child.val();
+      if (!userId || reading.user_id === userId) {
+        readings.push(reading);
+      }
+    });
+
+    if (readings.length === 0) {
+      return res.json({
         success: true,
-        userId: userId,
-        count: results.length,
-        data: results
+        data: { total_readings: 0, avg_voltage: 0, avg_current: 0, avg_power: 0, max_energy: 0, min_energy: 0, avg_frequency: 0, avg_powerFactor: 0 }
       });
     }
-  );
-});
 
-// Get latest reading from database
-app.get("/api/readings/latest", (req, res) => {
-  const userId = parseInt(req.query.user_id) || null;
-  
-  let query = "SELECT * FROM readings";
-  let params = [];
-  
-  if (userId) {
-    query += " WHERE user_id = ?";
-    params.push(userId);
+    const stats = {
+      total_readings: readings.length,
+      avg_voltage: readings.reduce((sum, r) => sum + r.voltage, 0) / readings.length,
+      avg_current: readings.reduce((sum, r) => sum + r.current, 0) / readings.length,
+      avg_power: readings.reduce((sum, r) => sum + r.power, 0) / readings.length,
+      max_energy: Math.max(...readings.map(r => r.energy)),
+      min_energy: Math.min(...readings.map(r => r.energy)),
+      avg_frequency: readings.reduce((sum, r) => sum + r.frequency, 0) / readings.length,
+      avg_powerFactor: readings.reduce((sum, r) => sum + r.powerFactor, 0) / readings.length
+    };
+
+    res.json({ success: true, data: stats });
+  } catch (err) {
+    console.error("❌ Firebase stats error:", err);
+    res.status(500).json({ success: false, message: "Failed to calculate statistics" });
   }
-  
-  query += " ORDER BY timestamp DESC LIMIT 1";
-  
-  db.query(query, params, (err, results) => {
-    if (err) {
-      console.error("❌ Query error:", err);
-      return res.status(500).json({
-        success: false,
-        message: "Database query failed"
-      });
-    }
-    
-    if (results.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No readings found"
-      });
-    }
-    
-    res.json({
-      success: true,
-      data: results[0]
-    });
-  });
 });
 
-// STATISTICS ENDPOINTS 
+// Get all alerts
+app.get("/api/alerts", async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 50;
+    const userId = parseInt(req.query.user_id) || null;
 
-// Get energy statistics
-app.get("/api/stats/energy", (req, res) => {
-  const userId = parseInt(req.query.user_id) || null;
-  
-  let query = `
-    SELECT 
-      COUNT(*) as total_readings,
-      AVG(voltage) as avg_voltage,
-      AVG(current) as avg_current,
-      AVG(power) as avg_power,
-      MAX(energy) as max_energy,
-      MIN(energy) as min_energy,
-      AVG(frequency) as avg_frequency,
-      AVG(powerFactor) as avg_powerFactor
-    FROM readings
-  `;
-  
-  let params = [];
-  
-  if (userId) {
-    query += " WHERE user_id = ?";
-    params.push(userId);
+    const snapshot = await db.ref("alerts").orderByChild("timestamp").limitToLast(limit).once("value");
+    let alerts = [];
+
+    snapshot.forEach((child) => {
+      const alert = child.val();
+      if (!userId || alert.user_id === userId) {
+        alerts.push({ id: child.key, ...alert });
+      }
+    });
+
+    alerts.reverse();
+    res.json({ success: true, count: alerts.length, data: alerts });
+  } catch (err) {
+    console.error("❌ Firebase alerts query error:", err);
+    res.status(500).json({ success: false, message: "Failed to fetch alerts" });
   }
-  
-  db.query(query, params, (err, results) => {
-    if (err) {
-      console.error("❌ Query error:", err);
-      return res.status(500).json({
-        success: false,
-        message: "Database query failed"
-      });
-    }
-    res.json({
-      success: true,
-      data: results[0]
-    });
-  });
 });
 
-// HEALTH CHECK 
-
-app.get("/api/health", (req, res) => {
-  db.query("SELECT 1", (err) => {
-    const dbStatus = err ? "disconnected" : "connected";
-    if (err) {
-      console.error("❌ Health check DB error:", err.message);
-    } else {
-      console.log("✅ Health check DB connected");
-    }
-
+// HEALTH CHECK
+app.get("/api/health", async (req, res) => {
+  try {
+    await db.ref(".info/connected").once("value");
     res.json({
       success: true,
       message: "SukatTown API is running",
       timestamp: Date.now(),
-      database: dbStatus,
+      database: "connected",
+      firebase: "connected"
     });
-  });
+  } catch (err) {
+    res.json({
+      success: true,
+      message: "SukatTown API is running",
+      timestamp: Date.now(),
+      database: "error",
+      firebase: "disconnected"
+    });
+  }
 });
 
-
-// STATIC FILES 
-
+// STATIC FILES
 app.use(express.static("public"));
 
-// START SERVER 
-
+// START SERVER
 app.listen(PORT, () => {
   console.log(`\n🚀 SukatTown Server running on port ${PORT}`);
   console.log(`📡 Backend: https://sukattown-backend.onrender.com`);
-  console.log(`🌐 Frontend: http://sukattown.wuaze.com`);
+  //console.log(`🌐 Frontend: https://yourusername.github.io/sukattown`);
+  console.log(`🔥 Firebase: Connected`);
   console.log(`\n📋 Available Endpoints:`);
-  console.log(`   POST   /api/power-data - Receive ESP32 data`);
-  console.log(`   GET    /api/power-data - Get latest data`);
-  console.log(`   POST   /api/consumption-alerts - Receive alerts`);
-  console.log(`   GET    /api/consumption-alerts - Get latest alert`);
-  console.log(`   DELETE /api/consumption-alerts - Clear alert`);
-  console.log(`   GET    /api/readings?limit=50&user_id=1 - Get DB readings`);
-  console.log(`   GET    /api/readings/user/1?limit=50 - Get user readings`);
-  console.log(`   GET    /api/readings/latest?user_id=1 - Get latest reading`);
-  console.log(`   GET    /api/stats/energy?user_id=1 - Get statistics`);
-  console.log(`   GET    /api/health - Health check\n`);
+  console.log(`  POST /api/power-data - Receive ESP32 data`);
+  console.log(`  GET  /api/power-data - Get latest data`);
+  console.log(`  POST /api/consumption-alerts - Receive alerts`);
+  console.log(`  GET  /api/consumption-alerts - Get latest alert`);
+  console.log(`  DELETE /api/consumption-alerts - Clear alert`);
+  console.log(`  GET  /api/readings?limit=50&user_id=1 - Get readings`);
+  console.log(`  GET  /api/readings/user/1?limit=50 - Get user readings`);
+  console.log(`  GET  /api/readings/latest?user_id=1 - Get latest reading`);
+  console.log(`  GET  /api/stats/energy?user_id=1 - Get statistics`);
+  console.log(`  GET  /api/alerts?limit=50&user_id=1 - Get all alerts`);
+  console.log(`  GET  /api/health - Health check\n`);
 });
