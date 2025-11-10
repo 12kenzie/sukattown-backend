@@ -1,4 +1,3 @@
-// server.js - Updated to match your actual database structure
 const express = require("express");
 const cors = require("cors");
 const app = express();
@@ -6,6 +5,7 @@ const PORT = process.env.PORT || 3000;
 
 const mysql = require("mysql2");
 
+/* FOR INFINITEFREE
 const db = mysql.createPool({
   host: "sql105.infinityfree.com",
   user: "if0_40358009",
@@ -16,6 +16,17 @@ const db = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
 });
+*/
+
+const admin = require("firebase-admin");
+const serviceAccount = require("./firebase-key.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: "https://sukattown-default-rtdb.asia-southeast1.firebasedatabase.app"
+});
+
+const db = admin.database();
 
 app.use(cors());
 app.use(express.json());
@@ -34,7 +45,7 @@ let latestPZEMData = {
 // Store latest consumption alert
 let latestConsumptionAlert = null;
 
-// ========== POWER DATA ENDPOINTS ==========
+// POWER DATA ENDPOINTS
 
 // Receive data from ESP32
 app.post("/api/power-data", (req, res) => {
@@ -67,18 +78,17 @@ app.post("/api/power-data", (req, res) => {
   // Note: user_id is set to 1 by default. You can change this based on your needs
   const userId = 1;
 
-  db.query(
-    "INSERT INTO readings (user_id, voltage, current, power, energy, frequency, powerFactor) VALUES (?, ?, ?, ?, ?, ?, ?)",
-    [userId, voltage, current, power, energy, frequency, powerFactor],
-    (err, result) => {
-      if (err) {
-        console.error("❌ Insert error:", err);
-        // Still return success to ESP32 even if DB insert fails
-      } else {
-        console.log("✅ Reading saved to database with ID:", result.insertId);
-      }
-    }
-  );
+  db.ref("readings").push({
+    user_id: 1,
+    voltage,
+    current,
+    power,
+    energy,
+    frequency,
+    powerFactor,
+    timestamp: Date.now()
+  });
+
 
   res.status(200).json({
     success: true,
@@ -93,7 +103,7 @@ app.get("/api/power-data", (req, res) => {
   res.json(latestPZEMData);
 });
 
-// ========== CONSUMPTION ALERTS ENDPOINTS ==========
+// CONSUMPTION ALERTS ENDPOINTS 
 
 // Receive consumption alert from ESP32
 app.post("/api/consumption-alerts", (req, res) => {
@@ -171,7 +181,7 @@ app.delete("/api/consumption-alerts", (req, res) => {
   });
 });
 
-// ========== DATABASE QUERY ENDPOINTS ==========
+// DATABASE QUERY ENDPOINTS 
 
 // Get all readings from database
 app.get("/api/readings", (req, res) => {
@@ -269,7 +279,7 @@ app.get("/api/readings/latest", (req, res) => {
   });
 });
 
-// ========== STATISTICS ENDPOINTS ==========
+// STATISTICS ENDPOINTS 
 
 // Get energy statistics
 app.get("/api/stats/energy", (req, res) => {
@@ -310,7 +320,7 @@ app.get("/api/stats/energy", (req, res) => {
   });
 });
 
-// ========== HEALTH CHECK ==========
+// HEALTH CHECK 
 
 app.get("/api/health", (req, res) => {
   db.query("SELECT 1", (err) => {
@@ -331,11 +341,11 @@ app.get("/api/health", (req, res) => {
 });
 
 
-// ========== STATIC FILES ==========
+// STATIC FILES 
 
 app.use(express.static("public"));
 
-// ========== START SERVER ==========
+// START SERVER 
 
 app.listen(PORT, () => {
   console.log(`\n🚀 SukatTown Server running on port ${PORT}`);
