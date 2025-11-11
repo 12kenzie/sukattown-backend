@@ -16,20 +16,23 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://sukattown-default-rtdb.asia-southeast1.firebasedatabase.app"
+  databaseURL:
+    "https://sukattown-default-rtdb.asia-southeast1.firebasedatabase.app",
 });
 
 const db = admin.database();
 
 // CORS configuration for GitHub Pages
-app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'https://12kenzie.github.io'  // Your GitHub Pages domain
-  ],
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:5173",
+      "https://12kenzie.github.io", // Your GitHub Pages domain
+    ],
+    credentials: true,
+  })
+);
 
 app.use(express.json());
 
@@ -46,6 +49,7 @@ let latestPZEMData = {
 
 // Store latest consumption alert
 let latestConsumptionAlert = null;
+let latestFireAlert = null;
 
 // POWER DATA ENDPOINTS
 app.post("/api/power-data", async (req, res) => {
@@ -53,7 +57,9 @@ app.post("/api/power-data", async (req, res) => {
   console.log("📊 Received PZEM data:", data);
 
   if (!data.voltage || !data.current || !data.power) {
-    return res.status(400).json({ success: false, message: "Missing required fields" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Missing required fields" });
   }
 
   latestPZEMData = {
@@ -70,11 +76,17 @@ app.post("/api/power-data", async (req, res) => {
     const userId = data.user_id || 1;
     await db.ref("readings").push({
       user_id: userId,
-      ...latestPZEMData
+      ...latestPZEMData,
     });
 
     console.log("✅ Data saved to Firebase");
-    res.status(200).json({ success: true, message: "Data received successfully", data: latestPZEMData });
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: "Data received successfully",
+        data: latestPZEMData,
+      });
   } catch (err) {
     console.error("❌ Firebase error:", err);
     res.status(500).json({ success: false, message: "Firebase save failed" });
@@ -92,7 +104,9 @@ app.post("/api/consumption-alerts", async (req, res) => {
   console.log("🚨 Received consumption alert:", alertData);
 
   if (!alertData.period || !alertData.consumption || !alertData.limit) {
-    return res.status(400).json({ success: false, message: "Missing required fields" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Missing required fields" });
   }
 
   latestConsumptionAlert = {
@@ -111,11 +125,17 @@ app.post("/api/consumption-alerts", async (req, res) => {
       consumption: latestConsumptionAlert.consumption,
       limit: latestConsumptionAlert.limit,
       percentage_over: latestConsumptionAlert.percentageOver,
-      timestamp: latestConsumptionAlert.timestamp
+      timestamp: latestConsumptionAlert.timestamp,
     });
 
     console.log("✅ Alert saved to Firebase");
-    res.status(200).json({ success: true, message: "Alert received successfully", data: latestConsumptionAlert });
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: "Alert received successfully",
+        data: latestConsumptionAlert,
+      });
   } catch (err) {
     console.error("❌ Firebase error:", err);
     res.status(500).json({ success: false, message: "Firebase save failed" });
@@ -124,7 +144,9 @@ app.post("/api/consumption-alerts", async (req, res) => {
 
 app.get("/api/consumption-alerts", (req, res) => {
   if (!latestConsumptionAlert) {
-    return res.status(404).json({ success: false, message: "No alerts available" });
+    return res
+      .status(404)
+      .json({ success: false, message: "No alerts available" });
   }
   console.log("📤 Sending latest consumption alert");
   res.json(latestConsumptionAlert);
@@ -136,13 +158,80 @@ app.delete("/api/consumption-alerts", (req, res) => {
   res.json({ success: true, message: "Alert cleared" });
 });
 
+// FIRE ALERT ENDPOINTS
+// Receive fire alert from ESP32
+app.post("/api/fire-alerts", async (req, res) => {
+  const alertData = req.body;
+  console.log("🔥 Received fire alert:", alertData);
+
+  if (!alertData.type) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Missing required field: type" });
+  }
+
+  latestFireAlert = {
+    type: alertData.type,
+    flameDetected: alertData.flameDetected || false,
+    smokeLevel: parseInt(alertData.smokeLevel) || 0,
+    smokeThreshold: parseInt(alertData.smokeThreshold) || 400,
+    timestamp: Date.now(),
+  };
+
+  try {
+    const userId = alertData.user_id || 1;
+    await db.ref("fire_alerts").push({
+      user_id: userId,
+      type: latestFireAlert.type,
+      flame_detected: latestFireAlert.flameDetected,
+      smoke_level: latestFireAlert.smokeLevel,
+      smoke_threshold: latestFireAlert.smokeThreshold,
+      timestamp: latestFireAlert.timestamp,
+    });
+
+    console.log("✅ Fire alert saved to Firebase");
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: "Fire alert received successfully",
+        data: latestFireAlert,
+      });
+  } catch (err) {
+    console.error("❌ Firebase error:", err);
+    res.status(500).json({ success: false, message: "Firebase save failed" });
+  }
+});
+
+// Get latest fire alert
+app.get("/api/fire-alerts", (req, res) => {
+  if (!latestFireAlert) {
+    return res
+      .status(404)
+      .json({ success: false, message: "No fire alerts available" });
+  }
+  console.log("📤 Sending latest fire alert");
+  res.json(latestFireAlert);
+});
+
+// Clear fire alert
+app.delete("/api/fire-alerts", (req, res) => {
+  latestFireAlert = null;
+  console.log("🗑️ Fire alert cleared");
+  res.json({ success: true, message: "Fire alert cleared" });
+});
+
 // DATABASE QUERY ENDPOINTS
 app.get("/api/readings", async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 50;
     const userId = parseInt(req.query.user_id) || null;
 
-    const snapshot = await db.ref("readings").orderByChild("timestamp").limitToLast(limit).once("value");
+    const snapshot = await db
+      .ref("readings")
+      .orderByChild("timestamp")
+      .limitToLast(limit)
+      .once("value");
     let readings = [];
 
     snapshot.forEach((child) => {
@@ -165,7 +254,12 @@ app.get("/api/readings/user/:userId", async (req, res) => {
     const userId = parseInt(req.params.userId);
     const limit = parseInt(req.query.limit) || 50;
 
-    const snapshot = await db.ref("readings").orderByChild("user_id").equalTo(userId).limitToLast(limit).once("value");
+    const snapshot = await db
+      .ref("readings")
+      .orderByChild("user_id")
+      .equalTo(userId)
+      .limitToLast(limit)
+      .once("value");
     let readings = [];
 
     snapshot.forEach((child) => {
@@ -173,7 +267,12 @@ app.get("/api/readings/user/:userId", async (req, res) => {
     });
 
     readings.reverse();
-    res.json({ success: true, userId: userId, count: readings.length, data: readings });
+    res.json({
+      success: true,
+      userId: userId,
+      count: readings.length,
+      data: readings,
+    });
   } catch (err) {
     console.error("❌ Firebase query error:", err);
     res.status(500).json({ success: false, message: "Firebase query failed" });
@@ -183,8 +282,12 @@ app.get("/api/readings/user/:userId", async (req, res) => {
 app.get("/api/readings/latest", async (req, res) => {
   try {
     const userId = parseInt(req.query.user_id) || null;
-    const snapshot = await db.ref("readings").orderByChild("timestamp").limitToLast(1).once("value");
-    
+    const snapshot = await db
+      .ref("readings")
+      .orderByChild("timestamp")
+      .limitToLast(1)
+      .once("value");
+
     let latest = null;
     snapshot.forEach((child) => {
       const reading = child.val();
@@ -194,7 +297,9 @@ app.get("/api/readings/latest", async (req, res) => {
     });
 
     if (!latest) {
-      return res.status(404).json({ success: false, message: "No readings found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "No readings found" });
     }
 
     res.json({ success: true, data: latest });
@@ -209,7 +314,7 @@ app.get("/api/stats/energy", async (req, res) => {
   try {
     const userId = parseInt(req.query.user_id) || null;
     const snapshot = await db.ref("readings").once("value");
-    
+
     let readings = [];
     snapshot.forEach((child) => {
       const reading = child.val();
@@ -221,25 +326,41 @@ app.get("/api/stats/energy", async (req, res) => {
     if (readings.length === 0) {
       return res.json({
         success: true,
-        data: { total_readings: 0, avg_voltage: 0, avg_current: 0, avg_power: 0, max_energy: 0, min_energy: 0, avg_frequency: 0, avg_powerFactor: 0 }
+        data: {
+          total_readings: 0,
+          avg_voltage: 0,
+          avg_current: 0,
+          avg_power: 0,
+          max_energy: 0,
+          min_energy: 0,
+          avg_frequency: 0,
+          avg_powerFactor: 0,
+        },
       });
     }
 
     const stats = {
       total_readings: readings.length,
-      avg_voltage: readings.reduce((sum, r) => sum + r.voltage, 0) / readings.length,
-      avg_current: readings.reduce((sum, r) => sum + r.current, 0) / readings.length,
-      avg_power: readings.reduce((sum, r) => sum + r.power, 0) / readings.length,
-      max_energy: Math.max(...readings.map(r => r.energy)),
-      min_energy: Math.min(...readings.map(r => r.energy)),
-      avg_frequency: readings.reduce((sum, r) => sum + r.frequency, 0) / readings.length,
-      avg_powerFactor: readings.reduce((sum, r) => sum + r.powerFactor, 0) / readings.length
+      avg_voltage:
+        readings.reduce((sum, r) => sum + r.voltage, 0) / readings.length,
+      avg_current:
+        readings.reduce((sum, r) => sum + r.current, 0) / readings.length,
+      avg_power:
+        readings.reduce((sum, r) => sum + r.power, 0) / readings.length,
+      max_energy: Math.max(...readings.map((r) => r.energy)),
+      min_energy: Math.min(...readings.map((r) => r.energy)),
+      avg_frequency:
+        readings.reduce((sum, r) => sum + r.frequency, 0) / readings.length,
+      avg_powerFactor:
+        readings.reduce((sum, r) => sum + r.powerFactor, 0) / readings.length,
     };
 
     res.json({ success: true, data: stats });
   } catch (err) {
     console.error("❌ Firebase stats error:", err);
-    res.status(500).json({ success: false, message: "Failed to calculate statistics" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to calculate statistics" });
   }
 });
 
@@ -249,7 +370,11 @@ app.get("/api/alerts", async (req, res) => {
     const limit = parseInt(req.query.limit) || 50;
     const userId = parseInt(req.query.user_id) || null;
 
-    const snapshot = await db.ref("alerts").orderByChild("timestamp").limitToLast(limit).once("value");
+    const snapshot = await db
+      .ref("alerts")
+      .orderByChild("timestamp")
+      .limitToLast(limit)
+      .once("value");
     let alerts = [];
 
     snapshot.forEach((child) => {
@@ -276,7 +401,7 @@ app.get("/api/health", async (req, res) => {
       message: "SukatTown API is running",
       timestamp: Date.now(),
       database: "connected",
-      firebase: "connected"
+      firebase: "connected",
     });
   } catch (err) {
     res.json({
@@ -284,7 +409,7 @@ app.get("/api/health", async (req, res) => {
       message: "SukatTown API is running",
       timestamp: Date.now(),
       database: "error",
-      firebase: "disconnected"
+      firebase: "disconnected",
     });
   }
 });
@@ -309,5 +434,8 @@ app.listen(PORT, () => {
   console.log(`  GET  /api/readings/latest?user_id=1 - Get latest reading`);
   console.log(`  GET  /api/stats/energy?user_id=1 - Get statistics`);
   console.log(`  GET  /api/alerts?limit=50&user_id=1 - Get all alerts`);
+  console.log(`  POST /api/fire-alerts - Receive fire alerts`);
+  console.log(`  GET  /api/fire-alerts - Get latest fire alert`);
+  console.log(`  DELETE /api/fire-alerts - Clear fire alert`);
   console.log(`  GET  /api/health - Health check\n`);
 });
