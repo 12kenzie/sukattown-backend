@@ -21,11 +21,12 @@ admin.initializeApp({
 
 const db = admin.database();
 
+// CORS configuration for GitHub Pages
 app.use(cors({
   origin: [
     'http://localhost:3000',
     'http://localhost:5173',
-    'https://12kenzie.github.io' 
+    'https://12kenzie.github.io'  // Your GitHub Pages domain
   ],
   credentials: true
 }));
@@ -295,7 +296,7 @@ app.use(express.static("public"));
 app.listen(PORT, () => {
   console.log(`\n🚀 SukatTown Server running on port ${PORT}`);
   console.log(`📡 Backend: https://sukattown-backend.onrender.com`);
-  console.log(`🌐 Frontend: https://12kenzie.github.io/sukattown/`);
+  console.log(`🌐 Frontend: https://yourusername.github.io/sukattown`);
   console.log(`🔥 Firebase: Connected`);
   console.log(`\n📋 Available Endpoints:`);
   console.log(`  POST /api/power-data - Receive ESP32 data`);
