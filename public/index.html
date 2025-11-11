@@ -783,30 +783,6 @@
     </div> <!-- end main -->
   </div> <!-- end app -->
 
-  <script type="module">
-    // Import the functions you need from the SDKs you need
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-analytics.js";
-    // TODO: Add SDKs for Firebase products that you want to use
-    // https://firebase.google.com/docs/web/setup#available-libraries
-
-    // Your web app's Firebase configuration
-    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-    const firebaseConfig = {
-      apiKey: "AIzaSyBT6jWcm3iDQsR90BGMmb3exngX4b-jjHI",
-      authDomain: "sukattown.firebaseapp.com",
-      databaseURL: "https://sukattown-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "sukattown",
-      storageBucket: "sukattown.firebasestorage.app",
-      messagingSenderId: "728474013336",
-      appId: "1:728474013336:web:9f65527b9925f34445caed",
-      measurementId: "G-HQCBGKY7DT"
-    };
-
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
-  </script>
 
   <script>
     // Live data fetching from Node.js backend
@@ -892,7 +868,7 @@
           title = '🔴 Monthly Limit Exceeded';
           message = `Consumption: ${alertData.consumption.toFixed(2)} kWh (Limit: ${alertData.limit} kWh) - ${alertData.percentageOver}% over`;
           icon = '📈';
-          type = '';
+          type = 'info';
           break;
         default:
           title = 'Alert';
