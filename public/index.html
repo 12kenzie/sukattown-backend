@@ -446,6 +446,7 @@
         transform: translateX(400px);
         opacity: 0;
       }
+
       to {
         transform: translateX(0);
         opacity: 1;
@@ -457,6 +458,7 @@
         transform: translateX(0);
         opacity: 1;
       }
+
       to {
         transform: translateX(400px);
         opacity: 0;
@@ -748,7 +750,7 @@
             <div style="margin-top:10px" class="note">Receiving live data from ESP32...</div>
           </div>
 
-          
+
           <!-- Alert History Card -->
           <div class="card small-card">
             <div style="display:flex;justify-content:space-between;align-items:center">
@@ -764,14 +766,25 @@
           <div class="card small-card">
             <div style="font-weight:700;margin-bottom:12px">Demo Controls</div>
             <div style="display:flex;flex-direction:column;gap:8px">
-              <button onclick="triggerDemoAlert('hourly')" style="padding:10px;border-radius:8px;border:none;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:white;font-weight:600;cursor:pointer;transition:transform 0.2s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+              <button onclick="triggerDemoAlert('hourly')"
+                style="padding:10px;border-radius:8px;border:none;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:white;font-weight:600;cursor:pointer;transition:transform 0.2s"
+                onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                 ⚡ Trigger Hourly Alert
               </button>
-              <button onclick="triggerDemoAlert('daily')" style="padding:10px;border-radius:8px;border:none;background:linear-gradient(135deg,#ff6b6b,#ee5a52);color:white;font-weight:600;cursor:pointer;transition:transform 0.2s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+              <button onclick="triggerDemoAlert('daily')"
+                style="padding:10px;border-radius:8px;border:none;background:linear-gradient(135deg,#ff6b6b,#ee5a52);color:white;font-weight:600;cursor:pointer;transition:transform 0.2s"
+                onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                 🚨 Trigger Daily Alert
               </button>
-              <button onclick="triggerDemoAlert('monthly')" style="padding:10px;border-radius:8px;border:none;background:linear-gradient(135deg,#a34ef2,#6b53f5);color:white;font-weight:600;cursor:pointer;transition:transform 0.2s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+              <button onclick="triggerDemoAlert('monthly')"
+                style="padding:10px;border-radius:8px;border:none;background:linear-gradient(135deg,#a34ef2,#6b53f5);color:white;font-weight:600;cursor:pointer;transition:transform 0.2s"
+                onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                 📈 Trigger Monthly Alert
+              </button>
+              <button onclick="triggerDemoAlert('fire')"
+                style="padding:10px;border-radius:8px;border:none;background:linear-gradient(135deg,#ff4444,#cc0000);color:white;font-weight:600;cursor:pointer;transition:transform 0.2s"
+                onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                🔥 Trigger Fire Alert
               </button>
             </div>
             <div class="note" style="margin-top:10px">Click buttons to test alert notifications</div>
@@ -790,6 +803,7 @@
     let sensorHistory = [];
     const API_URL = 'https://sukattown-backend.onrender.com/api/power-data';
     const ALERT_API_URL = 'https://sukattown-backend.onrender.com/api/consumption-alerts';
+    const FIRE_ALERT_API_URL = 'https://sukattown-backend.onrender.com/api/fire-alerts'; // ADD THIS
     const COST_PER_KWH = 5.5;
     let alertHistory = [];
     let lastAlertCheck = 0;
@@ -823,7 +837,7 @@
     function fetchConsumptionAlerts() {
       const now = Date.now();
       if (now - lastAlertCheck < 5000) return; // Check every 5 seconds minimum
-      
+
       lastAlertCheck = now;
 
       fetch(ALERT_API_URL)
@@ -831,7 +845,7 @@
         .then(data => {
           if (data && data.period) {
             const alertId = `${data.period}-${data.timestamp}`;
-            
+
             // Check if this alert was already shown
             const existingAlert = alertHistory.find(a => a.id === alertId);
             if (!existingAlert) {
@@ -845,13 +859,40 @@
         });
     }
 
+    function fetchFireAlerts() {
+      fetch(FIRE_ALERT_API_URL)
+        .then(response => {
+          if (!response.ok) {
+            if (response.status === 404) {
+              return null;
+            }
+            throw new Error(`HTTP ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (data && data.type) {
+            const alertId = `fire-${data.timestamp}`;
+
+            const existingAlert = alertHistory.find(a => a.id === alertId);
+            if (!existingAlert) {
+              showFireAlert(data);
+              addFireToAlertHistory(data, alertId);
+            }
+          }
+        })
+        .catch(error => {
+          // Silently handle errors
+        });
+    }
+
     function showAlert(alertData) {
       const container = $('#alertContainer');
       const alertId = `alert-${Date.now()}`;
-      
+
       let title, message, icon, type;
-      
-      switch(alertData.period) {
+
+      switch (alertData.period) {
         case 'hourly':
           title = '⚠️ Hourly Limit Exceeded';
           message = `Consumption: ${alertData.consumption.toFixed(2)} kWh (Limit: ${alertData.limit} kWh) - ${alertData.percentageOver}% over`;
@@ -876,7 +917,7 @@
           icon = '⚠️';
           type = 'info';
       }
-      
+
       const alertHtml = `
         <div class="alert-notification ${type}" id="${alertId}">
           <div class="alert-icon">${icon}</div>
@@ -888,16 +929,99 @@
           <button class="alert-close" onclick="closeAlert('${alertId}')">×</button>
         </div>
       `;
-      
+
       container.append(alertHtml);
-      
+
       // Play sound notification (optional)
       playAlertSound();
-      
+
       // Auto-dismiss after 10 seconds
       setTimeout(() => {
         closeAlert(alertId);
       }, 10000);
+    }
+
+    function showFireAlert(alertData) {
+      const container = $('#alertContainer');
+      const alertId = `alert-${Date.now()}`;
+
+      let message = '';
+      if (alertData.type === 'flame_and_smoke') {
+        message = `⚠️ CRITICAL: Flame and smoke detected! Smoke level: ${alertData.smokeLevel}`;
+      } else if (alertData.type === 'flame') {
+        message = `🔥 Flame detected!`;
+      } else if (alertData.type === 'smoke') {
+        message = `💨 Smoke detected! Level: ${alertData.smokeLevel} (Threshold: ${alertData.smokeThreshold})`;
+      }
+
+      const alertHtml = `
+    <div class="alert-notification" id="${alertId}" style="background:linear-gradient(135deg,#ff4444,#cc0000)">
+      <div class="alert-icon">🔥</div>
+      <div class="alert-content">
+        <div class="alert-title">🚨 FIRE ALARM!</div>
+        <div class="alert-message">${message}</div>
+        <div class="alert-time">${new Date().toLocaleTimeString()}</div>
+      </div>
+      <button class="alert-close" onclick="closeAlert('${alertId}')">×</button>
+    </div>
+  `;
+
+      container.append(alertHtml);
+
+      // Play urgent alarm sound
+      playFireAlarmSound();
+
+      // Auto-dismiss after 15 seconds (longer for fire alerts)
+      setTimeout(() => {
+        closeAlert(alertId);
+      }, 15000);
+    }
+
+    function playFireAlarmSound() {
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Create urgent pulsing alarm sound
+        for (let i = 0; i < 3; i++) {
+          setTimeout(() => {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = 1200; // Higher frequency for urgency
+            oscillator.type = 'square'; // Harsher sound for alarm
+
+            gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+          }, i * 600);
+        }
+      } catch (error) {
+        console.log('Audio notification not available');
+      }
+    }
+
+    function addFireToAlertHistory(alertData, alertId) {
+      const historyItem = {
+        id: alertId,
+        period: 'fire',
+        type: alertData.type,
+        flameDetected: alertData.flameDetected,
+        smokeLevel: alertData.smokeLevel,
+        timestamp: new Date()
+      };
+
+      alertHistory.unshift(historyItem);
+
+      if (alertHistory.length > 10) {
+        alertHistory.pop();
+      }
+
+      updateAlertHistory();
     }
 
     function closeAlert(alertId) {
@@ -917,31 +1041,31 @@
         percentageOver: alertData.percentageOver,
         timestamp: new Date()
       };
-      
+
       alertHistory.unshift(historyItem);
-      
+
       // Keep only last 10 alerts
       if (alertHistory.length > 10) {
         alertHistory.pop();
       }
-      
+
       updateAlertHistory();
     }
 
     function updateAlertHistory() {
       const historyContainer = $('#alertHistory');
       $('#alertCount').text(`${alertHistory.length} alert${alertHistory.length !== 1 ? 's' : ''}`);
-      
+
       if (alertHistory.length === 0) {
         historyContainer.html('<div class="note" style="margin-top:10px;text-align:center">No alerts yet</div>');
         return;
       }
-      
+
       let historyHtml = '';
       alertHistory.forEach(alert => {
         const typeClass = alert.period === 'hourly' ? 'warning' : '';
         const icon = alert.period === 'hourly' ? '⚡' : alert.period === 'daily' ? '📊' : '📈';
-        
+
         historyHtml += `
           <div class="alert-history-item ${typeClass}">
             <div class="alert-history-item-title">${icon} ${alert.period.charAt(0).toUpperCase() + alert.period.slice(1)} Alert</div>
@@ -952,7 +1076,7 @@
           </div>
         `;
       });
-      
+
       historyContainer.html(historyHtml);
     }
 
@@ -962,16 +1086,16 @@
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
-        
+
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
-        
+
         oscillator.frequency.value = 800;
         oscillator.type = 'sine';
-        
+
         gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-        
+
         oscillator.start(audioContext.currentTime);
         oscillator.stop(audioContext.currentTime + 0.3);
       } catch (error) {
@@ -1008,7 +1132,7 @@
     function updatePeriodValues() {
       const now = new Date();
       const hour = now.getHours();
-      
+
       // Get total accumulated energy for each period
       const morningData = sensorHistory.filter(d => new Date(d.timestamp).getHours() >= 6 && new Date(d.timestamp).getHours() < 12);
       const afternoonData = sensorHistory.filter(d => new Date(d.timestamp).getHours() >= 12 && new Date(d.timestamp).getHours() < 17);
@@ -1021,10 +1145,10 @@
       // Update display with values
       $('#period1Label').text(hour >= 6 && hour < 12 ? 'Morning (Now)' : 'Morning');
       $('#period1Value').text(morningEnergy.toFixed(2) + ' kWh');
-      
+
       $('#period2Label').text(hour >= 12 && hour < 17 ? 'Afternoon (Now)' : 'Afternoon');
       $('#period2Value').text(afternoonEnergy.toFixed(2) + ' kWh');
-      
+
       $('#period3Label').text(hour >= 17 && hour < 22 ? 'Evening (Now)' : 'Evening');
       $('#period3Value').text(eveningEnergy.toFixed(2) + ' kWh');
     }
@@ -1055,7 +1179,7 @@
         initChart(labels, powerData);
       }
     }
-    
+
 
     // Chart.js integration (cannot be converted to jQuery)
     function initChart(labels, data) {
@@ -1171,9 +1295,28 @@
     }
 
     function triggerDemoAlert(period) {
+      if (period === 'fire') {
+        // Fire alert demo
+        const fireTypes = ['flame', 'smoke', 'flame_and_smoke'];
+        const randomType = fireTypes[Math.floor(Math.random() * fireTypes.length)];
+
+        const demoFireAlert = {
+          type: randomType,
+          flameDetected: randomType !== 'smoke',
+          smokeLevel: Math.floor(Math.random() * 600) + 400,
+          smokeThreshold: 400,
+          timestamp: Date.now()
+        };
+
+        const alertId = `demo-fire-${Date.now()}`;
+        showFireAlert(demoFireAlert);
+        addFireToAlertHistory(demoFireAlert, alertId);
+        return;
+      }
+
       let consumption, limit, percentageOver;
-      
-      switch(period) {
+
+      switch (period) {
         case 'hourly':
           limit = 2.0;
           consumption = 2.5 + Math.random() * 0.5; // 2.5-3.0 kWh
@@ -1187,9 +1330,9 @@
           consumption = 550.0 + Math.random() * 50.0; // 550-600 kWh
           break;
       }
-      
+
       percentageOver = parseFloat((((consumption - limit) / limit) * 100).toFixed(2));
-      
+
       const demoAlert = {
         period: period,
         consumption: consumption,
@@ -1197,11 +1340,12 @@
         percentageOver: percentageOver,
         timestamp: Date.now()
       };
-      
+
       const alertId = `demo-${period}-${Date.now()}`;
       showAlert(demoAlert);
       addToAlertHistory(demoAlert, alertId);
     }
+
 
     // Make closeAlert available globally
     window.closeAlert = closeAlert;
@@ -1210,9 +1354,11 @@
     $(document).ready(function () {
       fetchSensorData();
       fetchConsumptionAlerts();
-      
+      fetchFireAlerts();
+
       setInterval(fetchSensorData, 5000);
       setInterval(fetchConsumptionAlerts, 3000); // Check for alerts every 3 seconds
+      setInterval(fetchFireAlerts, 2000); // Check for fire alerts every 3 seconds
     });
   </script>
 
