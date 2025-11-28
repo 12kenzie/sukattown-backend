@@ -2,14 +2,14 @@
 <html lang="en">
 
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="icon" href="/assets/favicon.png" type="image/png">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script> <!-- Jquery-->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script> <!-- Chart.js -->
   <script src="https://kit.fontawesome.com/c6249fb7d2.js" crossorigin="anonymous"></script>
 
-<title>SukatTown</title>
+  <title>SukatTown</title>
   <style>
     :root {
       --bg: #f6efef;
@@ -265,6 +265,23 @@
     .power-tile {
       background: linear-gradient(135deg, #fbbf24, #f59e0b);
       color: white;
+    }
+
+    .tile-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      flex-shrink: 0;
+    }
+
+    .bill-widget {
+      background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+      border: 2px solid rgba(46, 125, 50, 0.1);
     }
 
     .tile-title {
@@ -575,25 +592,25 @@
       <div class="nav" role="navigation" aria-label="Main">
         <button class="active" title="Dashboard" aria-label="Dashboard">
           <!-- home icon -->
-          <i class="fa-solid fa-house"></i>
+          <i class="fa-solid fa-house" aria-hidden="true"></i>
         </button>
 
         <button title="Consumption" aria-label="Consumption">
-          <i class="fa-solid fa-bolt"></i>
+          <i class="fa-solid fa-bolt" aria-hidden="true"></i>
         </button>
 
         <button title="Reports" aria-label="Reports">
-          <i class="fa-solid fa-chart-area"></i>
+          <i class="fa-solid fa-chart-area" aria-hidden="true"></i>
         </button>
 
         <button title="Settings" aria-label="Settings">
-          <i class="fa-solid fa-gear"></i>
+          <i class="fa-solid fa-gear" aria-hidden="true"></i>
         </button>
 
         <div class="spacer" aria-hidden="true"></div>
 
         <button title="Help" aria-label="Help">
-          <i class="fa-solid fa-circle-question"></i>
+          <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
         </button>
       </div>
     </aside>
@@ -605,13 +622,13 @@
       <div class="topbar" role="banner">
         <div class="search-wrap" aria-hidden="false">
           <div style="font-weight:700;color:#10213a">SukatTown</div>
-          <span class="status-badge" id="connectionStatus">● Connecting...</span>
+          <span class="status-badge offline" id="connectionStatus">● Offline</span>
         </div>
 
         <div style="display:flex;align-items:center;gap:16px;justify-self:end">
           <div class="search" role="search" aria-label="Search">
-            <i class="fa-brands fa-searchengin"></i>
-            <input id="topSearch" type="search" placeholder="Search anything..." aria-label="Search anything" />
+            <i class="fa-brands fa-searchengin" aria-hidden="true"></i>
+            <input id="topSearch" type="search" placeholder="Search anything..." aria-label="Search anything">
           </div>
 
           <!-- PROFILE / GREETING on upper-right -->
@@ -633,27 +650,36 @@
         <!-- LEFT: main cards -->
         <div>
 
-          <!-- top two tiles -->
+          <!-- top three tiles -->
           <div class="cards-top">
             <div class="card big-tile consumption-tile">
-              <div>
-                <div class="tile-title">Today's Consumption</div>
-                <div class="tile-value" id="consumptionValue">22 kWh</div>
-                <div class="tile-sub">Current usage • Real-time ESP32 data</div>
+              <div style="display:flex;align-items:flex-start;justify-content:space-between">
+                <div>
+                  <div class="tile-title">Today's Consumption</div>
+                  <div class="tile-value" id="consumptionValue">22 kWh</div>
+                  <div class="tile-sub">Current usage • Real-time ESP32 data</div>
+                </div>
+                <div class="tile-icon">
+                  <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+                </div>
               </div>
 
               <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
                 <div style="font-size:13px;opacity:.95">Peak: <strong id="peakValue">35 kWh</strong></div>
                 <div style="font-size:13px;opacity:.95">Avg: <strong id="avgValue">18 kWh</strong></div>
-                <div style="font-size:13px;opacity:.95">Cost est.: <strong id="costValue">₱120.50</strong></div>
               </div>
             </div>
 
             <div class="card big-tile power-tile">
-              <div>
-                <div class="tile-title">Voltage Stability</div>
-                <div class="tile-value" id="voltageValue">230 V</div>
-                <div class="tile-sub">Nominal voltage • RMS</div>
+              <div style="display:flex;align-items:flex-start;justify-content:space-between">
+                <div>
+                  <div class="tile-title">Voltage Stability</div>
+                  <div class="tile-value" id="voltageValue">230 V</div>
+                  <div class="tile-sub">Nominal voltage • RMS</div>
+                </div>
+                <div class="tile-icon">
+                  <i class="fa-solid fa-plug" aria-hidden="true"></i>
+                </div>
               </div>
 
               <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:6px">
@@ -661,6 +687,9 @@
                 <div style="text-align:right;font-size:13px">PF: <strong id="pfValue">0.95</strong></div>
               </div>
             </div>
+
+            <!-- Projected Bill Widget (Principal Only) -->
+
           </div>
 
           <!-- Usage trend / mini cards -->
@@ -748,29 +777,40 @@
           <!-- Demo Alert Triggers -->
           <div class="card small-card">
             <div style="font-weight:700;margin-bottom:12px">Demo Controls</div>
+
+            <!-- Account Type Toggle -->
+            <div style="margin-bottom:16px;padding:12px;background:rgba(107,83,245,0.08);border-radius:10px">
+              <div style="font-size:13px;color:var(--muted);margin-bottom:8px" class="">Account Type</div>
+              <div style="display:flex;gap:8px">
+
+
+              </div>
+            </div>
+
             <div style="display:flex;flex-direction:column;gap:8px">
               <button onclick="triggerDemoAlert('hourly')"
-                style="padding:10px;border-radius:8px;border:none;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:white;font-weight:600;cursor:pointer;transition:transform 0.2s"
-                onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                style="padding: 10px; border-radius: 8px; border: none; background: linear-gradient(135deg, rgb(251, 191, 36), rgb(245, 158, 11)); color: white; font-weight: 600; cursor: pointer; transition: transform 0.2s; transform: scale(1);"
+                onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" class="">
                 ⚡ Trigger Hourly Alert
               </button>
               <button onclick="triggerDemoAlert('daily')"
-                style="padding:10px;border-radius:8px;border:none;background:linear-gradient(135deg,#ff6b6b,#ee5a52);color:white;font-weight:600;cursor:pointer;transition:transform 0.2s"
-                onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                style="padding: 10px; border-radius: 8px; border: none; background: linear-gradient(135deg, rgb(255, 107, 107), rgb(238, 90, 82)); color: white; font-weight: 600; cursor: pointer; transition: transform 0.2s; transform: scale(1);"
+                onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" class="">
                 🚨 Trigger Daily Alert
               </button>
               <button onclick="triggerDemoAlert('monthly')"
-                style="padding:10px;border-radius:8px;border:none;background:linear-gradient(135deg,#a34ef2,#6b53f5);color:white;font-weight:600;cursor:pointer;transition:transform 0.2s"
-                onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                style="padding: 10px; border-radius: 8px; border: none; background: linear-gradient(135deg, rgb(163, 78, 242), rgb(107, 83, 245)); color: white; font-weight: 600; cursor: pointer; transition: transform 0.2s; transform: scale(1);"
+                onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" class="">
                 📈 Trigger Monthly Alert
               </button>
               <button onclick="triggerDemoAlert('fire')"
-                style="padding:10px;border-radius:8px;border:none;background:linear-gradient(135deg,#ff4444,#cc0000);color:white;font-weight:600;cursor:pointer;transition:transform 0.2s"
-                onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                style="padding: 10px; border-radius: 8px; border: none; background: linear-gradient(135deg, rgb(255, 68, 68), rgb(204, 0, 0)); color: white; font-weight: 600; cursor: pointer; transition: transform 0.2s; transform: scale(1);"
+                onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" class="">
                 🔥 Trigger Fire Alert
               </button>
             </div>
-            <div class="note" style="margin-top:10px">Click buttons to test alert notifications</div>
+            <div class="note" style="margin-top:10px">Toggle account type to see bill visibility and click buttons to
+              test alert notifications</div>
           </div>
 
         </aside>
@@ -790,6 +830,66 @@
     const COST_PER_KWH = 5.5;
     let alertHistory = [];
     let lastAlertCheck = 0;
+
+    let isPrincipalAccount = true; // Default to principal account
+
+    function setAccountType(type) {
+      isPrincipalAccount = (type === 'principal');
+
+      // Update button styles
+      if (isPrincipalAccount) {
+        $('#principalBtn').css({
+          'background': 'var(--accent-1)',
+          'color': 'white',
+          'border-color': 'var(--accent-1)'
+        });
+        $('#nonPrincipalBtn').css({
+          'background': 'white',
+          'color': '#666',
+          'border-color': '#ddd'
+        });
+      } else {
+        $('#principalBtn').css({
+          'background': 'white',
+          'color': '#666',
+          'border-color': '#ddd'
+        });
+        $('#nonPrincipalBtn').css({
+          'background': 'var(--accent-1)',
+          'color': 'white',
+          'border-color': 'var(--accent-1)'
+        });
+      }
+
+      // Toggle bill widget visibility with animation
+      if (isPrincipalAccount) {
+        $('#billWidget').slideDown(300);
+      } else {
+        $('#billWidget').slideUp(300);
+      }
+    }
+
+    function updateBillProjection(energy) {
+      if (!isPrincipalAccount) return;
+
+      const now = new Date();
+      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      const currentDay = now.getDate();
+      const daysRemaining = daysInMonth - currentDay;
+
+      // Calculate daily average and project for full month
+      const dailyAverage = energy / currentDay;
+      const projectedMonthlyConsumption = dailyAverage * daysInMonth;
+      const projectedBill = projectedMonthlyConsumption * COST_PER_KWH;
+
+      // Calculate month-to-date cost
+      const monthToDateCost = energy * COST_PER_KWH;
+
+      // Update projected bill widget
+      $('#projectedBill').text('₱' + projectedBill.toFixed(2));
+      $('#monthCost').text('₱' + monthToDateCost.toFixed(2));
+      $('#daysRemaining').text(daysRemaining + ' days');
+    }
 
     function fetchSensorData() {
       fetch(API_URL)
@@ -1100,7 +1200,10 @@
       $('#voltageValue').text(voltage.toFixed(1) + ' V');
       $('#frequencyValue').text(frequency.toFixed(1) + ' Hz');
       $('#pfValue').text(pf.toFixed(2));
-      $('#costValue').text('₱' + cost);
+      $('#todayCost').text('₱' + cost);
+
+      // Update bill projection
+      updateBillProjection(energy);
 
       // Calculate period values based on current time and sensor history
       updatePeriodValues();
@@ -1332,6 +1435,7 @@
 
     // Make closeAlert available globally
     window.closeAlert = closeAlert;
+    window.setAccountType = setAccountType;
 
     // Fetch data immediately and every 5 seconds
     $(document).ready(function () {
@@ -1344,6 +1448,8 @@
       setInterval(fetchFireAlerts, 2000); // Check for fire alerts every 3 seconds
     });
   </script>
+
+
 
 </body>
 
