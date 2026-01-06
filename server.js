@@ -214,10 +214,95 @@ app.get("/api/fire-alerts", (req, res) => {
   res.json(latestFireAlert);
 });
 
-// Clear fire alert
+// Get all fire alerts history
+app.get("/api/fire-alerts/history", async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 50;
+    const userId = parseInt(req.query.user_id) || null;
+
+    const snapshot = await db
+      .ref("fire_alerts")
+      .orderByChild("timestamp")
+      .limitToLast(limit)
+      .once("value");
+    
+    let fireAlerts = [];
+
+    snapshot.forEach((child) => {
+      const alert = child.val();
+      if (!userId || alert.user_id === userId) {
+        fireAlerts.push({ 
+          id: child.key, 
+          type: alert.type,
+          flameDetected: alert.flame_detected,
+          smokeLevel: alert.smoke_level,
+          smokeThreshold: alert.smoke_threshold,
+          timestamp: alert.timestamp,
+          userId: alert.user_id
+        });
+      }
+    });
+
+    fireAlerts.reverse(); // Show most recent first
+    console.log(`📤 Sending ${fireAlerts.length} fire alerts from history`);
+    res.json({ success: true, count: fireAlerts.length, data: fireAlerts });
+  } catch (err) {
+    console.error("❌ Firebase query error:", err);
+    res.status(500).json({ success: false, message: "Failed to fetch fire alerts history" });
+  }
+});
+
+// Delete a specific fire alert from history
+app.delete("/api/fire-alerts/:id", async (req, res) => {
+  try {
+    const alertId = req.params.id;
+    await db.ref(`fire_alerts/${alertId}`).remove();
+    
+    console.log(`🗑️ Fire alert ${alertId} deleted from history`);
+    res.json({ success: true, message: "Fire alert deleted successfully" });
+  } catch (err) {
+    console.error("❌ Firebase delete error:", err);
+    res.status(500).json({ success: false, message: "Failed to delete fire alert" });
+  }
+});
+
+// Clear all fire alerts history
+app.delete("/api/fire-alerts/history/clear", async (req, res) => {
+  try {
+    const userId = parseInt(req.query.user_id) || null;
+    
+    if (userId) {
+      // Delete only for specific user
+      const snapshot = await db
+        .ref("fire_alerts")
+        .orderByChild("user_id")
+        .equalTo(userId)
+        .once("value");
+      
+      const updates = {};
+      snapshot.forEach((child) => {
+        updates[`fire_alerts/${child.key}`] = null;
+      });
+      
+      await db.ref().update(updates);
+      console.log(`🗑️ Cleared all fire alerts for user ${userId}`);
+    } else {
+      // Clear all fire alerts
+      await db.ref("fire_alerts").remove();
+      console.log("🗑️ Cleared all fire alerts");
+    }
+    
+    res.json({ success: true, message: "Fire alerts history cleared" });
+  } catch (err) {
+    console.error("❌ Firebase clear error:", err);
+    res.status(500).json({ success: false, message: "Failed to clear fire alerts" });
+  }
+});
+
+// Clear current fire alert notification
 app.delete("/api/fire-alerts", (req, res) => {
   latestFireAlert = null;
-  console.log("🗑️ Fire alert cleared");
+  console.log("🗑️ Fire alert notification cleared");
   res.json({ success: true, message: "Fire alert cleared" });
 });
 
@@ -364,7 +449,7 @@ app.get("/api/stats/energy", async (req, res) => {
   }
 });
 
-// Get all alerts
+// Get all consumption alerts with delete capability
 app.get("/api/alerts", async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 50;
@@ -389,6 +474,20 @@ app.get("/api/alerts", async (req, res) => {
   } catch (err) {
     console.error("❌ Firebase alerts query error:", err);
     res.status(500).json({ success: false, message: "Failed to fetch alerts" });
+  }
+});
+
+// Delete a specific consumption alert
+app.delete("/api/alerts/:id", async (req, res) => {
+  try {
+    const alertId = req.params.id;
+    await db.ref(`alerts/${alertId}`).remove();
+    
+    console.log(`🗑️ Alert ${alertId} deleted`);
+    res.json({ success: true, message: "Alert deleted successfully" });
+  } catch (err) {
+    console.error("❌ Firebase delete error:", err);
+    res.status(500).json({ success: false, message: "Failed to delete alert" });
   }
 });
 
@@ -424,18 +523,22 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend: https://yourusername.github.io/sukattown`);
   console.log(`🔥 Firebase: Connected`);
   console.log(`\n📋 Available Endpoints:`);
-  console.log(`  POST /api/power-data - Receive ESP32 data`);
-  console.log(`  GET  /api/power-data - Get latest data`);
-  console.log(`  POST /api/consumption-alerts - Receive alerts`);
-  console.log(`  GET  /api/consumption-alerts - Get latest alert`);
+  console.log(`  POST   /api/power-data - Receive ESP32 data`);
+  console.log(`  GET    /api/power-data - Get latest data`);
+  console.log(`  POST   /api/consumption-alerts - Receive alerts`);
+  console.log(`  GET    /api/consumption-alerts - Get latest alert`);
   console.log(`  DELETE /api/consumption-alerts - Clear alert`);
-  console.log(`  GET  /api/readings?limit=50&user_id=1 - Get readings`);
-  console.log(`  GET  /api/readings/user/1?limit=50 - Get user readings`);
-  console.log(`  GET  /api/readings/latest?user_id=1 - Get latest reading`);
-  console.log(`  GET  /api/stats/energy?user_id=1 - Get statistics`);
-  console.log(`  GET  /api/alerts?limit=50&user_id=1 - Get all alerts`);
-  console.log(`  POST /api/fire-alerts - Receive fire alerts`);
-  console.log(`  GET  /api/fire-alerts - Get latest fire alert`);
-  console.log(`  DELETE /api/fire-alerts - Clear fire alert`);
-  console.log(`  GET  /api/health - Health check\n`);
+  console.log(`  GET    /api/readings?limit=50&user_id=1 - Get readings`);
+  console.log(`  GET    /api/readings/user/1?limit=50 - Get user readings`);
+  console.log(`  GET    /api/readings/latest?user_id=1 - Get latest reading`);
+  console.log(`  GET    /api/stats/energy?user_id=1 - Get statistics`);
+  console.log(`  GET    /api/alerts?limit=50&user_id=1 - Get all alerts`);
+  console.log(`  DELETE /api/alerts/:id - Delete specific alert`);
+  console.log(`  POST   /api/fire-alerts - Receive fire alerts`);
+  console.log(`  GET    /api/fire-alerts - Get latest fire alert`);
+  console.log(`  GET    /api/fire-alerts/history?limit=50 - Get fire alerts history`);
+  console.log(`  DELETE /api/fire-alerts/:id - Delete specific fire alert`);
+  console.log(`  DELETE /api/fire-alerts/history/clear - Clear all fire alerts`);
+  console.log(`  DELETE /api/fire-alerts - Clear fire alert notification`);
+  console.log(`  GET    /api/health - Health check\n`);
 });

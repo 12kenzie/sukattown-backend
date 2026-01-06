@@ -1410,18 +1410,39 @@
 
       let historyHtml = '';
       alertHistory.forEach(alert => {
-        const typeClass = alert.period === 'hourly' ? 'warning' : '';
-        const icon = alert.period === 'hourly' ? '⚡' : alert.period === 'daily' ? '📊' : '📈';
+        if (alert.period === 'fire') {
+          // Handle fire alerts
+          let fireMessage = '';
+          if (alert.type === 'flame_and_smoke') {
+            fireMessage = `Flame and smoke detected! Smoke: ${alert.smokeLevel}`;
+          } else if (alert.type === 'flame') {
+            fireMessage = 'Flame detected!';
+          } else if (alert.type === 'smoke') {
+            fireMessage = `Smoke detected! Level: ${alert.smokeLevel}`;
+          }
 
-        historyHtml += `
-          <div class="alert-history-item ${typeClass}">
-            <div class="alert-history-item-title">${icon} ${alert.period.charAt(0).toUpperCase() + alert.period.slice(1)} Alert</div>
-            <div class="alert-history-item-message">
-              ${alert.consumption.toFixed(2)} kWh consumed (${alert.percentageOver.toFixed(1)}% over ${alert.limit} kWh limit)
+          historyHtml += `
+            <div class="alert-history-item" style="background:rgba(255,68,68,0.08);border-left-color:#ff4444">
+              <div class="alert-history-item-title">🔥 Fire Alert</div>
+              <div class="alert-history-item-message">${fireMessage}</div>
+              <div class="alert-history-item-time">${alert.timestamp.toLocaleString()}</div>
             </div>
-            <div class="alert-history-item-time">${alert.timestamp.toLocaleString()}</div>
-          </div>
-        `;
+          `;
+        } else {
+          // Handle consumption alerts
+          const typeClass = alert.period === 'hourly' ? 'warning' : '';
+          const icon = alert.period === 'hourly' ? '⚡' : alert.period === 'daily' ? '📊' : '📈';
+
+          historyHtml += `
+            <div class="alert-history-item ${typeClass}">
+              <div class="alert-history-item-title">${icon} ${alert.period.charAt(0).toUpperCase() + alert.period.slice(1)} Alert</div>
+              <div class="alert-history-item-message">
+                ${alert.consumption.toFixed(2)} kWh consumed (${alert.percentageOver.toFixed(1)}% over ${alert.limit} kWh limit)
+              </div>
+              <div class="alert-history-item-time">${alert.timestamp.toLocaleString()}</div>
+            </div>
+          `;
+        }
       });
 
       historyContainer.html(historyHtml);
