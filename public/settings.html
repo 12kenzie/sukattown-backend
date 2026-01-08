@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Emergency Alert System — Settings</title>
+
+  <style>
+    :root{
+      --bg:#f1f6fb;
+      --card:#ffffff;
+      --muted:#667085;
+      --accent-1:#6b53f5;
+      --accent-2:#a34ef2;
+      --nav-bg:#ffffff;
+      --nav-active:rgba(107,83,245,0.12);
+      --shadow-lg:0 12px 36px rgba(12,18,30,0.06);
+      --max-width:1200px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter, Arial, sans-serif;
+      background:linear-gradient(180deg,#f6f9fc 0%, var(--bg) 100%);
+      color:#0f1724;
+      min-height:100vh;
+      display:flex;
+      justify-content:center;
+      padding:28px;
+    }
+    .app{
+      width:100%;
+      max-width:var(--max-width);
+      display:grid;
+      grid-template-columns:72px 1fr;
+      gap:18px;
+    }
+    .left-nav{
+      background:var(--nav-bg);
+      border-radius:14px;
+      padding:16px 10px;
+      box-shadow:0 6px 20px rgba(12,18,30,0.06);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:12px;
+      height:fit-content;
+    }
+    .brand{
+      width:48px;height:48px;border-radius:10px;
+      display:flex;align-items:center;justify-content:center;
+      font-weight:700;font-size:14px;color:var(--accent-2);
+      background:linear-gradient(180deg,rgba(163,78,242,.08),rgba(107,83,245,.06));
+    }
+    .nav{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:6px;
+      align-items:center;
+    }
+    .nav button{
+      width:48px;height:48px;border-radius:12px;border:none;
+      background:transparent;color:#555;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+      transition:.18s;
+    }
+    .nav button:hover{transform:translateY(-4px);color:var(--accent-2)}
+    .nav button.active{background:var(--nav-active);color:var(--accent-2)}
+    .nav .spacer{flex:1}
+    .main{display:flex;flex-direction:column;gap:18px}
+    .topbar{
+      display:grid;grid-template-columns:1fr auto;align-items:center;
+      padding:14px 18px;border-radius:12px;
+      background:var(--card);box-shadow:0 6px 18px rgba(12,18,30,0.06);
+    }
+    .search{
+      width:720px;max-width:100%;display:flex;align-items:center;
+      background:#f9fbff;border-radius:12px;padding:8px 12px;
+      border:1px solid rgba(15,23,36,0.04);
+    }
+    .search svg{width:18px;height:18px;opacity:.7}
+    .search input{
+      border:0;background:transparent;flex:1;padding:8px 10px;font-size:15px;
+    }
+    .profile{display:flex;align-items:center;gap:12px}
+    .hello{font-size:14px;color:var(--muted)}
+    .hello strong{display:block;font-size:15px;color:#0b1220}
+    .avatar{
+      width:44px;height:44px;border-radius:12px;
+      background:linear-gradient(180deg,var(--accent-1),var(--accent-2));
+      display:flex;align-items:center;justify-content:center;
+      color:#fff;font-weight:700;
+    }
+    .content-wrap{padding:14px}
+    .settings-row{
+      display:flex;gap:22px;margin-top:18px;
+      justify-content:center;align-items:stretch;
+    }
+    .card{
+      background:var(--card);border-radius:18px;
+      box-shadow:var(--shadow-lg);padding:22px;
+      display:flex;flex-direction:column;
+      height:100%;flex:1;
+    }
+    .card-title{font-weight:800;font-size:18px;margin-bottom:8px}
+    .muted{color:var(--muted);font-size:13px}
+    .number-input{
+      width:100%;padding:10px;border-radius:12px;
+      border:1px solid #e6e9ef;font-size:15px;
+    }
+    .threshold-card{gap:16px}
+    .center-card{gap:22px}
+    .sms-card{gap:12px}
+    .toggle-row{
+      display:flex;align-items:center;justify-content:space-between;
+    }
+    .toggle-label{font-weight:800;font-size:22px}
+    .switch{position:relative;width:52px;height:30px;cursor:pointer}
+    .switch input{display:none}
+    .switch .track{
+      position:absolute;inset:0;background:#eef2f7;border-radius:999px;
+    }
+    .switch .thumb{
+      position:absolute;left:4px;top:3px;
+      width:24px;height:24px;border-radius:50%;background:#fff;
+      box-shadow:0 4px 10px rgba(12,18,30,0.08);transition:.18s;
+    }
+    .switch input:checked + .track{
+      background:linear-gradient(90deg,var(--accent-1),var(--accent-2));
+    }
+    .switch input:checked + .track .thumb{
+      transform:translateX(22px);
+    }
+    .bottom-actions{
+      position:fixed;bottom:20px;right:24px;
+      display:flex;justify-content:flex-end;
+      width:auto;gap:12px;
+    }
+    .btn{
+      padding:12px 26px;font-size:15px;font-weight:700;
+      border-radius:10px;border:none;cursor:pointer;
+    }
+    .btn.reset{background:#e9edf3;color:#101827}
+    @media(max-width:900px){
+      .settings-row{flex-direction:column}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+
+    <aside class="left-nav">
+      <div class="brand">EL</div>
+      <div class="nav">
+        <button data-page="dashboard">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 10.5L12 4l9 6.5V20H3z"/></svg>
+        </button>
+        <button data-page="reports">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2v10l3-2 2 2 3-5V2zM4 11h6v11H4z"/></svg>
+        </button>
+        <button data-page="alert">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 5v14h18V5H3z"/></svg>
+        </button>
+        <button data-page="settings" class="active">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+        </button>
+        <div class="spacer"></div>
+        <button data-page="help">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/></svg>
+        </button>
+      </div>
+    </aside>
+
+    <div class="main">
+
+      <div class="topbar">
+        <div style="font-weight:700;color:#10213a">Electricity Dashboard</div>
+
+        <div style="display:flex;align-items:center;gap:16px">
+          <div class="search">
+            <svg viewBox="0 0 24 24"><path d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 110-15 7.5 7.5 0 010 15z"/></svg>
+            <input type="search" placeholder="Search anything...">
+          </div>
+
+          <div class="profile">
+            <div class="hello">Hello,<strong>New User</strong></div>
+            <div class="avatar">NU</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-wrap">
+        <div style="font-size:32px;font-weight:800">Settings</div>
+        <div style="color:var(--muted);margin-top:-6px">Customize thresholds & alerts</div>
+
+        <div class="settings-row">
+
+          <div class="card threshold-card">
+            <div class="card-title">Power Threshold</div>
+            <div class="muted">Max Power (Watts)</div>
+            <input class="number-input" id="maxPower" type="number" min="0" max="15000" placeholder="0 – 15000">
+          </div>
+
+          <div class="card center-card">
+            <div class="toggle-row">
+              <div>
+                <div class="muted" style="font-weight:600">Alerts & Notifications</div>
+                <div class="toggle-label" style="margin-top:6px">Enable Notifications</div>
+              </div>
+              <label class="switch">
+                <input id="notifToggle" type="checkbox">
+                <div class="track"><div class="thumb"></div></div>
+              </label>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-label">Sound Alert on Hazard</div>
+              <label class="switch">
+                <input id="soundToggle" type="checkbox">
+                <div class="track"><div class="thumb"></div></div>
+              </label>
+            </div>
+          </div>
+
+          <div class="card sms-card">
+            <div class="card-title">SMS Alerts</div>
+            <div class="muted">Phone Number</div>
+            <input class="number-input" id="smsNumber" type="text">
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-actions">
+    <button class="btn reset" id="resetBtn">Reset</button>
+  </div>
+
+  <script>
+    const maxPower = document.getElementById('maxPower');
+    const notifToggle = document.getElementById('notifToggle');
+    const soundToggle = document.getElementById('soundToggle');
+    const smsNumber = document.getElementById('smsNumber');
+
+    const defaults = { maxPower:3000, notif:true, sound:false, sms:'' };
+
+    function loadDefaults(){
+      maxPower.value = defaults.maxPower;
+      notifToggle.checked = defaults.notif;
+      soundToggle.checked = defaults.sound;
+      smsNumber.value = defaults.sms;
+    }
+
+    function autoSave(){
+      if(maxPower.value > 15000) maxPower.value = 15000;
+      const data = {
+        maxPower:maxPower.value,
+        notif:notifToggle.checked,
+        sound:soundToggle.checked,
+        sms:smsNumber.value
+      };
+      console.log("Auto-saved:", data);
+    }
+
+    loadDefaults();
+
+    [maxPower, notifToggle, soundToggle, smsNumber].forEach(el=>{
+      el.addEventListener('input', autoSave);
+      el.addEventListener('change', autoSave);
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', ()=>{
+      loadDefaults();
+      autoSave();
+    });
+  </script>
+
+</body>
+</html>
