@@ -718,12 +718,17 @@
       const alertId = `alert-${Date.now()}`;
 
       let message = '';
+      let telegramMessage = ''; // Add this
+
       if (alertData.type === 'flame_and_smoke') {
         message = `⚠️ CRITICAL: Flame and smoke detected! Smoke level: ${alertData.smokeLevel}`;
+        telegramMessage = `🚨🔥 CRITICAL FIRE ALERT! 🔥🚨\n\n⚠️ FLAME AND SMOKE DETECTED!\n\nSmoke Level: ${alertData.smokeLevel}\nThreshold: ${alertData.smokeThreshold}\n\nTime: ${new Date().toLocaleString()}\n\n⚠️ IMMEDIATE ACTION REQUIRED!`;
       } else if (alertData.type === 'flame') {
         message = `🔥 Flame detected!`;
+        telegramMessage = `🚨🔥 FIRE ALERT! 🔥🚨\n\n🔥 FLAME DETECTED!\n\nTime: ${new Date().toLocaleString()}\n\n⚠️ Check your property immediately!`;
       } else if (alertData.type === 'smoke') {
         message = `💨 Smoke detected! Level: ${alertData.smokeLevel} (Threshold: ${alertData.smokeThreshold})`;
+        telegramMessage = `🚨💨 SMOKE ALERT! 💨🚨\n\n💨 SMOKE DETECTED!\n\nSmoke Level: ${alertData.smokeLevel}\nThreshold: ${alertData.smokeThreshold}\n\nTime: ${new Date().toLocaleString()}\n\n⚠️ Investigate immediately!`;
       }
 
       const alertHtml = `
@@ -739,11 +744,11 @@
   `;
 
       container.append(alertHtml);
-
-      // Play urgent alarm sound
       playFireAlarmSound();
 
-      // Auto-dismiss after 15 seconds (longer for fire alerts)
+
+      sendTelegramAlert(telegramMessage);
+
       setTimeout(() => {
         closeAlert(alertId);
       }, 15000);
