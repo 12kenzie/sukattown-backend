@@ -1,486 +1,178 @@
-   /* MAIN CSS */
-   :root {
-        --bg: #f6efef;
-        --card: #ffffff;
-        --muted: #667085;
-        --accent-1: #6b53f5;
-        --accent-2: #a34ef2;
-        --nav-bg: #ffffff;
-        --nav-active: rgba(107, 83, 245, 0.12);
-        --max-width: 1200px;
-    }
+<!DOCTYPE html>
+<html lang="en">
 
-    * {
-        box-sizing: border-box
-    }
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" href="/assets/favicon.png" type="image/png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://kit.fontawesome.com/c6249fb7d2.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="styles/consumption-history-styles.css">
+    <title>SukatTown - Consumption History</title>
+</head>
 
-    body {
-        margin: 0;
-        font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        background: linear-gradient(180deg, #f6f9fc 0%, var(--bg) 100%);
-        color: #0f1724;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        min-height: 100vh;
-        display: flex;
-        justify-content: center;
-        padding: 28px;
-    }
+<body>
+    <div class="app">
+        <!-- LEFT NAV -->
+        <aside class="left-nav" aria-hidden="true">
+            <div class="brand">EL</div>
+            <div class="nav" role="navigation" aria-label="Main">
+                <button title="Dashboard" aria-label="Dashboard" onclick="window.location.href='index.html'">
+                    <i class="fa-solid fa-house" aria-hidden="true"></i>
+                </button>
 
-    .app {
-        width: 100%;
-        max-width: var(--max-width);
-        display: grid;
-        grid-template-columns: 72px 1fr;
-        gap: 18px;
-        align-items: start;
-    }
+                <button class="active" title="Consumption" aria-label="Consumption">
+                    <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+                </button>
 
-    /* LEFT NAV */
-    .left-nav {
-        background: var(--nav-bg);
-        border-radius: 14px;
-        padding: 16px 10px;
-        box-shadow: 0 6px 20px rgba(12, 18, 30, 0.06);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 12px;
-        height: fit-content;
-    }
+                <button title="Reports" aria-label="Reports">
+                    <i class="fa-solid fa-chart-area" aria-hidden="true"></i>
+                </button>
 
-    .brand {
-        width: 48px;
-        height: 48px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        color: var(--accent-2);
-        background: linear-gradient(180deg, rgba(163, 78, 242, 0.08), rgba(107, 83, 245, 0.06));
-        font-size: 14px;
-    }
+                <button title="Settings" aria-label="Settings" onclick="window.location.href='settings.html'">
+                    <i class="fa-solid fa-gear" aria-hidden="true"></i>
+                </button>
 
-    .nav {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        margin-top: 6px;
-        align-items: center;
-    }
+                <div class="spacer" aria-hidden="true"></div>
 
-    .nav button {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
-        border: none;
-        background: transparent;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all .18s;
-        color: #555;
-    }
+                <button title="Help" aria-label="Help">
+                    <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
+                </button>
+            </div>
+        </aside>
 
-    .nav button:hover {
-        transform: translateY(-4px);
-        color: var(--accent-2)
-    }
+        <!-- MAIN -->
+        <div class="main">
+            <!-- TOPBAR -->
+            <div class="topbar" role="banner">
+                <div class="search-wrap">
+                    <div style="font-weight:700;color:#10213a">SukatTown</div>
+                    <span class="status-badge offline" id="connectionStatus">● Offline</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:16px;justify-self:end">
+                    <div class="search" role="search" aria-label="Search">
+                        <i class="fa-brands fa-searchengin" aria-hidden="true"></i>
+                        <input id="topSearch" type="search" placeholder="Search anything..."
+                            aria-label="Search anything">
+                    </div>
+                    <div class="topbar-right">
+                        <div class="profile" title="Account">
+                            <div class="hello">
+                                <span style="font-size:13px;color:var(--muted)">Hello,</span>
+                                <strong>New User</strong>
+                            </div>
+                            <div class="avatar" aria-hidden="true">NU</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    .nav button.active {
-        background: var(--nav-active);
-        color: var(--accent-2);
-        box-shadow: inset 0 0 0 1px rgba(107, 83, 245, 0.06);
-    }
+            <!-- CONTENT -->
+            <div style="padding:24px">
+                <div class="page-header" style="margin-bottom:24px">
+                    <div style="font-size:32px;font-weight:800">Consumption History</div>
+                    <div style="color:var(--muted);margin-top:4px">View and analyze your energy usage patterns</div>
+                </div>
 
-    .nav .spacer {
-        flex: 1
-    }
+                <!-- FILTER & STATS ROW -->
+                <div
+                    style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;margin-bottom:24px">
+                    <div class="card">
+                        <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Total Readings</div>
+                        <div style="font-size:28px;font-weight:800" id="totalReadings">0</div>
+                    </div>
+                    <div class="card">
+                        <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Average Power</div>
+                        <div style="font-size:28px;font-weight:800" id="avgPower">0 kW</div>
+                    </div>
+                    <div class="card">
+                        <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Total Energy</div>
+                        <div style="font-size:28px;font-weight:800" id="totalEnergy">0 kWh</div>
+                    </div>
+                    <div class="card">
+                        <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Estimated Cost</div>
+                        <div style="font-size:28px;font-weight:800" id="totalCost">₱0</div>
+                    </div>
+                </div>
 
-    /* MAIN AREA (topbar + content) */
-    .main {
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
-    }
+                <!-- FILTERS -->
+                <div class="card" style="margin-bottom:24px">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px">
+                        <div style="display:flex;gap:12px;flex-wrap:wrap">
+                            <button class="filter-btn active" data-limit="50" onclick="changeLimit(50)">Last 50</button>
+                            <button class="filter-btn" data-limit="100" onclick="changeLimit(100)">Last 100</button>
+                            <button class="filter-btn" data-limit="500" onclick="changeLimit(500)">Last 500</button>
+                            <button class="filter-btn" data-limit="all" onclick="changeLimit('all')">All Data</button>
+                        </div>
+                        <button onclick="refreshData()"
+                            style="padding:10px 20px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--accent-1),var(--accent-2));color:white;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px">
+                            <i class="fa-solid fa-rotate"></i> Refresh
+                        </button>
+                    </div>
+                </div>
 
-    /* TOP BAR */
-    .topbar {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        align-items: center;
-        gap: 16px;
-        padding: 14px 18px;
-        border-radius: 12px;
-        background: var(--card);
-        box-shadow: 0 6px 18px rgba(12, 18, 30, 0.06);
-    }
+                <!-- CHART -->
+                <div class="card" style="margin-bottom:24px">
+                    <div style="font-weight:700;font-size:18px;margin-bottom:16px">Power Consumption Trend</div>
+                    <div style="padding:12px;background:linear-gradient(180deg,#fff,#fbfdff);border-radius:8px">
+                        <canvas id="historyChart" height="80"></canvas>
+                    </div>
+                </div>
 
-    /* SEARCH (centered visually) */
-    .search-wrap {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
+                <!-- DATA TABLE -->
+                <div class="card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                        <div style="font-weight:700;font-size:18px">Reading History</div>
+                        <button onclick="exportToCSV()"
+                            style="padding:8px 16px;border-radius:8px;border:1px solid #e6e9ef;background:white;color:#667085;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px">
+                            <i class="fa-solid fa-download"></i> Export CSV
+                        </button>
+                    </div>
 
-    .search {
-        width: 720px;
-        max-width: calc(100% - 120px);
-        display: flex;
-        align-items: center;
-        background: #f9fbff;
-        border-radius: 12px;
-        padding: 8px 12px;
-        border: 1px solid rgba(15, 23, 36, 0.04);
-        box-shadow: 0 4px 14px rgba(38, 56, 72, 0.03);
-        transition: all 0.5s ease-in-out;
-    }
+                    <div style="overflow-x:auto">
+                        <table style="width:100%;border-collapse:collapse">
+                            <thead>
+                                <tr style="background:#f9fbff;border-bottom:2px solid #e6e9ef">
+                                    <th
+                                        style="padding:12px;text-align:left;font-weight:700;font-size:13px;color:var(--muted)">
+                                        Timestamp</th>
+                                    <th
+                                        style="padding:12px;text-align:right;font-weight:700;font-size:13px;color:var(--muted)">
+                                        Voltage (V)</th>
+                                    <th
+                                        style="padding:12px;text-align:right;font-weight:700;font-size:13px;color:var(--muted)">
+                                        Current (A)</th>
+                                    <th
+                                        style="padding:12px;text-align:right;font-weight:700;font-size:13px;color:var(--muted)">
+                                        Power (W)</th>
+                                    <th
+                                        style="padding:12px;text-align:right;font-weight:700;font-size:13px;color:var(--muted)">
+                                        Energy (kWh)</th>
+                                    <th
+                                        style="padding:12px;text-align:right;font-weight:700;font-size:13px;color:var(--muted)">
+                                        Frequency (Hz)</th>
+                                    <th
+                                        style="padding:12px;text-align:right;font-weight:700;font-size:13px;color:var(--muted)">
+                                        Power Factor</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTable">
+                                <tr>
+                                    <td colspan="7" style="padding:40px;text-align:center;color:var(--muted)">
+                                        <i class="fa-solid fa-spinner fa-spin" style="font-size:24px"></i>
+                                        <div style="margin-top:12px">Loading data...</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    .search:hover {
-        box-shadow: 5px 8px 22px rgba(38, 56, 72, 0.13);
-        transform: translateY(1px);
-    }
-
-    .search input {
-        border: 0;
-        outline: none;
-        background: transparent;
-        padding: 8px 10px;
-        font-size: 15px;
-        color: #0f1724;
-        flex: 1;
-    }
-
-    .topbar-right {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .profile {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 6px 10px;
-        border-radius: 10px;
-    }
-
-    .hello {
-        font-size: 14px;
-        color: var(--muted);
-        text-align: right;
-    }
-
-    .hello strong {
-        display: block;
-        font-size: 15px;
-        color: #0b1220
-    }
-
-    .avatar {
-        width: 44px;
-        height: 44px;
-        border-radius: 12px;
-        background: linear-gradient(180deg, var(--accent-1), var(--accent-2));
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #fff;
-        font-weight: 700;
-        box-shadow: 0 6px 18px rgba(163, 78, 242, 0.16);
-    }
-
-    .status-badge {
-        display: inline-block;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-        background: #e8f5e9;
-        color: #2e7d32;
-    }
-
-    .status-badge.offline {
-        background: #ffebee;
-        color: #c62828;
-    }
-
-    /* GRID CONTENT: left big area (cards) + right side column */
-    .grid {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 320px;
-        gap: 20px;
-        align-items: start;
-    }
-
-    /* All cards */
-    .card {
-        background: var(--card);
-        border-radius: 14px;
-        padding: 18px;
-        box-shadow: 0 10px 30px rgba(12, 18, 30, 0.06);
-        transition: all 0.4s ease-in-out;
-    }
-
-    .card:hover {
-        box-shadow: 0 12px 28px rgba(12, 18, 30, 0.12);
-        transform: translateY(-2px);
-    }
-
-    /* Top cards like reference */
-    .cards-top-three {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 14px;
-        margin-bottom: 10px;
-    }
-
-    .cards-top {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 18px;
-    }
-
-    .big-tile {
-        border-radius: 14px;
-        padding: 18px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        justify-content: space-between;
-    }
-
-    .consumption-tile {
-        background: linear-gradient(135deg, #6b9bf6, #4f6df0);
-        color: white;
-    }
-
-    .power-tile {
-        background: linear-gradient(135deg, #fbbf24, #f59e0b);
-        color: white;
-    }
-
-    .tile-icon {
-        color: white;
-        width: 56px;
-        height: 56px;
-        border-radius: 12px;
-        background: rgba(255, 255, 255, 0.25);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 28px;
-        flex-shrink: 0;
-    }
-
-    .bill-widget {
-        background: linear-gradient(135deg, #5fe57a, #21bf15);
-        color: white;
-    }
-
-    .tile-title {
-        font-weight: 700;
-        font-size: 14px;
-        opacity: 0.95
-    }
-
-    .tile-value {
-        font-size: 32px;
-        font-weight: 800;
-        margin-top: 6px
-    }
-
-    .tile-sub {
-        font-size: 13px;
-        opacity: 0.95;
-    }
-
-    /* usage trend card */
-    .usage {
-        margin-top: 8px;
-    }
-
-    .mini-cards {
-        display: flex;
-        gap: 12px;
-        margin-top: 8px;
-    }
-
-    .mini {
-        background: #fff;
-        border-radius: 10px;
-        padding: 10px;
-        flex: 1;
-        border: 1px solid rgba(15, 23, 36, 0.04);
-        text-align: center;
-    }
-
-    .mini p {
-        margin: 0;
-        font-size: 13px;
-        color: var(--muted)
-    }
-
-    .mini strong {
-        display: block;
-        margin-top: 6px;
-        font-size: 16px
-    }
-
-    /* RIGHT SIDEBAR cards */
-    .side-col {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-    }
-
-    .prediction {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .pred-row {
-        display: flex;
-        gap: 10px;
-    }
-
-    .small-card {
-        background: #f8fafc;
-        border-radius: 10px;
-        padding: 12px;
-        border: 1px solid rgba(15, 23, 36, 0.03);
-    }
-
-    /* footer / notes */
-    .note {
-        color: var(--muted);
-        font-size: 13px;
-        margin-top: 6px
-    }
-
-    /* Alert notification styles */
-    .alert-container {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 9999;
-        max-width: 420px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
-
-    .alert-notification {
-        background: linear-gradient(135deg, #ff6b6b, #ee5a52);
-        color: white;
-        padding: 18px 20px;
-        border-radius: 14px;
-        box-shadow: 0 10px 40px rgba(238, 90, 82, 0.4);
-        display: flex;
-        align-items: flex-start;
-        gap: 14px;
-        animation: slideIn 0.4s ease-out;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .alert-notification.warning {
-        background: linear-gradient(135deg, #fbbf24, #f59e0b);
-        box-shadow: 0 10px 40px rgba(251, 191, 36, 0.4);
-    }
-
-    .alert-notification.info {
-        background: linear-gradient(135deg, #6b9bf6, #4f6df0);
-        box-shadow: 0 10px 40px rgba(107, 155, 246, 0.4);
-    }
-
-    .alert-icon {
-        width: 28px;
-        height: 28px;
-        flex-shrink: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(255, 255, 255, 0.25);
-        border-radius: 8px;
-        font-size: 18px;
-    }
-
-    .alert-content {
-        flex: 1;
-    }
-
-    .alert-title {
-        font-weight: 700;
-        font-size: 15px;
-        margin-bottom: 4px;
-    }
-
-    .alert-message {
-        font-size: 13px;
-        opacity: 0.95;
-        line-height: 1.4;
-    }
-
-    .alert-time {
-        font-size: 11px;
-        opacity: 0.8;
-        margin-top: 4px;
-    }
-
-    .alert-close {
-        background: none;
-        border: none;
-        color: white;
-        cursor: pointer;
-        padding: 4px;
-        opacity: 0.8;
-        transition: opacity 0.2s;
-        font-size: 20px;
-        line-height: 1;
-        width: 24px;
-        height: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .alert-close:hover {
-        opacity: 1;
-    }
-
-    @keyframes slideIn {
-        from {
-            transform: translateX(400px);
-            opacity: 0;
-        }
-
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-
-    @keyframes slideOut {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-
-        to {
-            transform: translateX(400px);
-            opacity: 0;
-        }
-    }
-
-    @keyframes spin {
-        to {
-            transform: rotate(360deg);
-        }
-    }
-
+    <style>
         .filter-btn {
             padding: 10px 20px;
             border-radius: 8px;
@@ -489,53 +181,18 @@
             color: #667085;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            transform: scale(1);
+            transition: all 0.2s;
         }
 
         .filter-btn:hover {
-
             border-color: var(--accent-1);
             color: var(--accent-1);
-            box-shadow: 0 4px 9px rgba(132, 103, 160, 0.3);
-            transform: scale(1.05);
         }
 
         .filter-btn.active {
             background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
             color: white;
             border-color: transparent;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 8px rgba(130, 80, 176, 0.3);
-            transform: scale(0.95); 
-        }
-
-        .refresh-btn {
-            padding: 10px 20px;
-            border-radius: 8px;
-            border: 2px solid var(--accent-1);
-            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 1px 8px rgba(132, 103, 160, 0.3) inset;
-        }
-
-        .refresh-btn:hover {
-            background: white;
-            color: var(--accent-1);
-            border-color: var(--accent-1);
-            box-shadow: 0 4px 9px rgba(132, 103, 160, 0.3);
-            transform: scale(1.05);
-        }
-
-        .refresh-btn:active {
-            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
-            color: white;
-            transition: all 0.3s ease;
-            transform: scale(0.95);
-            box-shadow: 0 2px 6px rgba(132, 103, 160, 0.25) inset;
         }
 
         tbody tr {
@@ -551,125 +208,218 @@
             padding: 14px 12px;
             font-size: 14px;
         }
+    </style>
 
-    .alert-notification.removing {
-        animation: slideOut 0.3s ease-in forwards;
-    }
+    <script>
+        const API_URL = 'https://sukattown-backend.onrender.com';
+        const COST_PER_KWH = 5.5;
+        let currentLimit = 50;
+        let allReadings = [];
+        let historyChartInstance = null;
 
-    .usage-insights {
-        margin-top: 16px;
-    }
-
-    /* Alert history section */
-    .alert-history {
-        max-height: 300px;
-        overflow-y: auto;
-        margin-top: 10px;
-    }
-
-    .alert-history-item {
-        background: rgba(255, 107, 107, 0.08);
-        border-left: 3px solid #ff6b6b;
-        padding: 12px;
-        border-radius: 8px;
-        margin-bottom: 8px;
-        font-size: 13px;
-    }
-
-    .alert-history-item.warning {
-        background: rgba(251, 191, 36, 0.08);
-        border-left-color: #fbbf24;
-    }
-
-    .alert-history-item-title {
-        font-weight: 700;
-        margin-bottom: 4px;
-    }
-
-    .alert-history-item-message {
-        color: var(--muted);
-        font-size: 12px;
-    }
-
-    .alert-history-item-time {
-        color: var(--muted);
-        font-size: 11px;
-        margin-top: 4px;
-    }
-
-    /* Medium screens - show bill widget in separate row */
-    @media (max-width: 1100px) {
-        .cards-top-three {
-            grid-template-columns: 1fr 1fr;
+        function changeLimit(limit) {
+            currentLimit = limit;
+            $('.filter-btn').removeClass('active');
+            $(`.filter-btn[data-limit="${limit}"]`).addClass('active');
+            fetchHistory();
         }
 
-        .cards-top-three .bill-widget {
-            grid-column: 1 / -1;
-            /* Make bill widget span full width */
-        }
-    }
-
-    /* responsive */
-    @media (max-width: 980px) {
-        .app {
-            grid-template-columns: 60px 1fr;
-            gap: 12px;
+        function updateConnectionStatus(connected) {
+            const badge = $('#connectionStatus');
+            if (connected) {
+                badge.removeClass('offline').text('● Connected');
+            } else {
+                badge.addClass('offline').text('● Offline');
+            }
         }
 
-        .search {
-            width: 100%;
-            max-width: 520px;
+        async function fetchHistory() {
+            try {
+                const url = currentLimit === 'all'
+                    ? `${API_URL}/api/readings?limit=10000`
+                    : `${API_URL}/api/readings?limit=${currentLimit}`;
+
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    allReadings = result.data;
+                    updateStats(allReadings);
+                    updateTable(allReadings);
+                    updateChart(allReadings);
+                    updateConnectionStatus(true);
+                } else {
+                    throw new Error('No data received');
+                }
+            } catch (error) {
+                console.error('Error fetching history:', error);
+                updateConnectionStatus(false);
+                $('#historyTable').html(`
+          <tr>
+            <td colspan="7" style="padding:40px;text-align:center;color:#ff6b6b">
+              <i class="fa-solid fa-exclamation-triangle" style="font-size:24px"></i>
+              <div style="margin-top:12px">Failed to load data. Please try again.</div>
+            </td>
+          </tr>
+        `);
+            }
         }
 
-        .grid {
-            grid-template-columns: 1fr;
+        function updateStats(readings) {
+            if (!readings || readings.length === 0) {
+                $('#totalReadings').text('0');
+                $('#avgPower').text('0 kW');
+                $('#totalEnergy').text('0 kWh');
+                $('#totalCost').text('₱0');
+                return;
+            }
+
+            const totalReadings = readings.length;
+            const avgPower = (readings.reduce((sum, r) => sum + (r.power || 0), 0) / totalReadings / 1000).toFixed(2);
+            const maxEnergy = Math.max(...readings.map(r => r.energy || 0));
+            const totalCost = (maxEnergy * COST_PER_KWH).toFixed(2);
+
+            $('#totalReadings').text(totalReadings.toLocaleString());
+            $('#avgPower').text(avgPower + ' kW');
+            $('#totalEnergy').text(maxEnergy.toFixed(2) + ' kWh');
+            $('#totalCost').text('₱' + parseFloat(totalCost).toLocaleString());
         }
 
-        .cards-top-three {
-            grid-template-columns: 1fr 1fr;
+        function updateTable(readings) {
+            if (!readings || readings.length === 0) {
+                $('#historyTable').html(`
+          <tr>
+            <td colspan="7" style="padding:40px;text-align:center;color:var(--muted)">
+              No data available
+            </td>
+          </tr>
+        `);
+                return;
+            }
+
+            let html = '';
+            readings.forEach(reading => {
+                const date = new Date(reading.timestamp);
+                html += `
+          <tr>
+            <td style="font-weight:600">${date.toLocaleString()}</td>
+            <td style="text-align:right">${(reading.voltage || 0).toFixed(1)}</td>
+            <td style="text-align:right">${(reading.current || 0).toFixed(2)}</td>
+            <td style="text-align:right">${(reading.power || 0).toFixed(1)}</td>
+            <td style="text-align:right;font-weight:700;color:var(--accent-1)">${(reading.energy || 0).toFixed(3)}</td>
+            <td style="text-align:right">${(reading.frequency || 0).toFixed(1)}</td>
+            <td style="text-align:right">${(reading.powerFactor || 0).toFixed(2)}</td>
+          </tr>
+        `;
+            });
+            $('#historyTable').html(html);
         }
 
-        .topbar {
-            grid-template-columns: 1fr;
-            row-gap: 10px;
-            align-items: center;
+        function updateChart(readings) {
+            if (!readings || readings.length === 0) return;
+
+            const labels = readings.map(r => {
+                const date = new Date(r.timestamp);
+                return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            });
+            const powerData = readings.map(r => (r.power || 0) / 1000);
+
+            const ctx = document.getElementById('historyChart').getContext('2d');
+
+            if (historyChartInstance) {
+                historyChartInstance.destroy();
+            }
+
+            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(107, 83, 245, 0.3)');
+            gradient.addColorStop(1, 'rgba(107, 83, 245, 0.01)');
+
+            historyChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Power (kW)',
+                        data: powerData,
+                        borderColor: '#6b53f5',
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#6b53f5',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                            titleColor: '#0f1724',
+                            bodyColor: '#6b53f5',
+                            borderColor: 'rgba(107, 83, 245, 0.2)',
+                            borderWidth: 2,
+                            padding: 12,
+                            borderRadius: 8
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(15, 23, 36, 0.05)' },
+                            ticks: {
+                                color: '#667085',
+                                callback: function (value) { return value + ' kW'; }
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                color: '#667085',
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
         }
 
-        .topbar-right {
-            justify-self: end;
+        function exportToCSV() {
+            if (!allReadings || allReadings.length === 0) {
+                alert('No data to export');
+                return;
+            }
+
+            let csv = 'Timestamp,Voltage (V),Current (A),Power (W),Energy (kWh),Frequency (Hz),Power Factor\n';
+
+            allReadings.forEach(reading => {
+                const date = new Date(reading.timestamp);
+                csv += `${date.toLocaleString()},${reading.voltage},${reading.current},${reading.power},${reading.energy},${reading.frequency},${reading.powerFactor}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `sukattown_history_${new Date().getTime()}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
         }
 
-        .alert-container {
-            max-width: 90%;
-            right: 5%;
-        }
-    }
-
-    @media (max-width:560px) {
-        body {
-            padding: 16px
+        function refreshData() {
+            fetchHistory();
         }
 
-        .left-nav {
-            display: none
-        }
+        $(document).ready(function () {
+            fetchHistory();
+            setInterval(refreshData, 30000); // Auto-refresh every 30 seconds
+        });
+    </script>
+</body>
 
-        .app {
-            grid-template-columns: 1fr;
-        }
-
-        .search {
-            max-width: 100%
-        }
-
-        .cards-top-three {
-            grid-template-columns: 1fr;
-        }
-
-        .alert-container {
-            top: 10px;
-            right: 10px;
-            left: 10px;
-            max-width: calc(100% - 20px);
-        }
-    }
+</html>
