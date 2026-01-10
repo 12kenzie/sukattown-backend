@@ -673,27 +673,44 @@
           type = 'info';
       }
 
+      // Show on-screen alert
       const alertHtml = `
-        <div class="alert-notification ${type}" id="${alertId}">
-          <div class="alert-icon">${icon}</div>
-          <div class="alert-content">
-            <div class="alert-title">${title}</div>
-            <div class="alert-message">${message}</div>
-            <div class="alert-time">${new Date().toLocaleTimeString()}</div>
-          </div>
-          <button class="alert-close" onclick="closeAlert('${alertId}')">×</button>
-        </div>
-      `;
+    <div class="alert-notification ${type}" id="${alertId}">
+      <div class="alert-icon">${icon}</div>
+      <div class="alert-content">
+        <div class="alert-title">${title}</div>
+        <div class="alert-message">${message}</div>
+        <div class="alert-time">${new Date().toLocaleTimeString()}</div>
+      </div>
+      <button class="alert-close" onclick="closeAlert('${alertId}')">×</button>
+    </div>
+  `;
 
       container.append(alertHtml);
-
-      // Play sound notification (optional)
       playAlertSound();
 
-      // Auto-dismiss after 10 seconds
+      // ✨ ADD THIS: Send Telegram notification
+      sendTelegramAlert(`${title}\n\n${message}`);
+
       setTimeout(() => {
         closeAlert(alertId);
       }, 10000);
+    }
+
+    function sendTelegramAlert(message) {
+      // Only send if notifications are enabled (check settings)
+      fetch('https://sukattown-backend.onrender.com/api/send-telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: message })
+      })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Telegram notification sent:', data);
+        })
+        .catch(error => {
+          console.error('Failed to send Telegram notification:', error);
+        });
     }
 
     function showFireAlert(alertData) {
@@ -701,12 +718,17 @@
       const alertId = `alert-${Date.now()}`;
 
       let message = '';
+      let telegramMessage = ''; // Add this
+
       if (alertData.type === 'flame_and_smoke') {
         message = `⚠️ CRITICAL: Flame and smoke detected! Smoke level: ${alertData.smokeLevel}`;
+        telegramMessage = `🚨🔥 CRITICAL FIRE ALERT! 🔥🚨\n\n⚠️ FLAME AND SMOKE DETECTED!\n\nSmoke Level: ${alertData.smokeLevel}\nThreshold: ${alertData.smokeThreshold}\n\nTime: ${new Date().toLocaleString()}\n\n⚠️ IMMEDIATE ACTION REQUIRED!`;
       } else if (alertData.type === 'flame') {
         message = `🔥 Flame detected!`;
+        telegramMessage = `🚨🔥 FIRE ALERT! 🔥🚨\n\n🔥 FLAME DETECTED!\n\nTime: ${new Date().toLocaleString()}\n\n⚠️ Check your property immediately!`;
       } else if (alertData.type === 'smoke') {
         message = `💨 Smoke detected! Level: ${alertData.smokeLevel} (Threshold: ${alertData.smokeThreshold})`;
+        telegramMessage = `🚨💨 SMOKE ALERT! 💨🚨\n\n💨 SMOKE DETECTED!\n\nSmoke Level: ${alertData.smokeLevel}\nThreshold: ${alertData.smokeThreshold}\n\nTime: ${new Date().toLocaleString()}\n\n⚠️ Investigate immediately!`;
       }
 
       const alertHtml = `
@@ -722,11 +744,11 @@
   `;
 
       container.append(alertHtml);
-
-      // Play urgent alarm sound
       playFireAlarmSound();
 
-      // Auto-dismiss after 15 seconds (longer for fire alerts)
+
+      sendTelegramAlert(telegramMessage);
+
       setTimeout(() => {
         closeAlert(alertId);
       }, 15000);
