@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -11,58 +12,77 @@
 
   <link rel="stylesheet" href="styles/settings-styles.css">
 
-
   <title>SukatTown Dashboard Settings</title>
 
-  
+
 </head>
 
 <body>
   <div class="app">
 
-    <aside class="left-nav">
+    <!-- LEFT NAV -->
+    <aside class="left-nav" aria-hidden="true">
       <div class="brand">EL</div>
-      <div class="nav">
-        <button data-page="dashboard">
-          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 10.5L12 4l9 6.5V20H3z"/></svg>
+
+      <div class="nav" role="navigation" aria-label="Main">
+        <button title="Dashboard" aria-label="Dashboard">
+          <!-- home icon -->
+          <i class="fa-solid fa-house" aria-hidden="true"></i>
         </button>
-        <button data-page="reports">
-          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2v10l3-2 2 2 3-5V2zM4 11h6v11H4z"/></svg>
+
+        <button title="Consumption" aria-label="Consumption">
+          <i class="fa-solid fa-bolt" aria-hidden="true"></i>
         </button>
-        <button data-page="alert">
-          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 5v14h18V5H3z"/></svg>
+
+        <button title="Reports" aria-label="Reports">
+          <i class="fa-solid fa-chart-area" aria-hidden="true"></i>
         </button>
-        <button data-page="settings" class="active">
-          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+
+        <button class="active" title="Settings" aria-label="Settings">
+          <i class="fa-solid fa-gear" aria-hidden="true"></i>
         </button>
-        <div class="spacer"></div>
-        <button data-page="help">
-          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/></svg>
+
+        <div class="spacer" aria-hidden="true"></div>
+
+        <button title="Help" aria-label="Help">
+          <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
         </button>
       </div>
     </aside>
 
+
     <div class="main">
 
-      <div class="topbar">
-        <div style="font-weight:700;color:#10213a">Electricity Dashboard</div>
+      <div class="topbar" role="banner">
+        <div class="search-wrap" aria-hidden="false">
+          <div style="font-weight:700;color:#10213a">SukatTown</div>
+          <span class="status-badge offline" id="connectionStatus">● Offline</span>
+        </div>
 
-        <div style="display:flex;align-items:center;gap:16px">
-          <div class="search">
-            <svg viewBox="0 0 24 24"><path d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 110-15 7.5 7.5 0 010 15z"/></svg>
-            <input type="search" placeholder="Search anything...">
+        <div style="display:flex;align-items:center;gap:16px;justify-self:end">
+          <div class="search" role="search" aria-label="Search">
+            <i class="fa-brands fa-searchengin" aria-hidden="true"></i>
+            <input id="topSearch" type="search" placeholder="Search anything..." aria-label="Search anything">
           </div>
 
-          <div class="profile">
-            <div class="hello">Hello,<strong>New User</strong></div>
-            <div class="avatar">NU</div>
+          <!-- PROFILE / GREETING on upper-right -->
+          <div class="topbar-right">
+            <div class="profile" title="Account">
+              <div class="hello">
+                <span style="font-size:13px;color:var(--muted)">Hello,</span>
+                <strong>New User</strong>
+              </div>
+              <div class="avatar" aria-hidden="true">NU</div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="content-wrap">
-        <div style="font-size:32px;font-weight:800">Settings</div>
-        <div style="color:var(--muted);margin-top:-6px">Customize thresholds & alerts</div>
+      <div class="content-wrap" style="padding: 24px;">
+        <div class="page-header">
+          <div style="font-size:32px;font-weight:800">Settings</div>
+          <div style="color:var(--muted);margin-top:4px">Customize thresholds & alerts</div>
+        </div>
 
         <div class="settings-row">
 
@@ -73,35 +93,38 @@
           </div>
 
           <div class="card center-card">
-            <div class="toggle-row">
-              <div>
-                <div class="muted" style="font-weight:600">Alerts & Notifications</div>
-                <div class="toggle-label" style="margin-top:6px">Enable Notifications</div>
-              </div>
-              <label class="switch">
-                <input id="notifToggle" type="checkbox">
-                <div class="track"><div class="thumb"></div></div>
-              </label>
-            </div>
+            <div class="card-title">Alerts & Notifications</div>
 
             <div class="toggle-row">
-              <div class="toggle-label">Sound Alert on Hazard</div>
-              <label class="switch">
-                <input id="soundToggle" type="checkbox">
-                <div class="track"><div class="thumb"></div></div>
-              </label>
-            </div>
-          </div>
+    <div class="toggle-label">Enable Notifications</div>
+    <label class="switch">
+      <input id="notifToggle" type="checkbox">
+      <div class="track">
+        <div class="thumb"></div>
+      </div>
+    </label>
+  </div>
 
-          <div class="card sms-card">
-            <div class="card-title">SMS Alerts</div>
-            <div class="muted">Phone Number</div>
-            <input class="number-input" id="smsNumber" type="text">
-          </div>
+  <div class="toggle-row">
+    <div class="toggle-label">Sound Alert on Hazard</div>
+    <label class="switch">
+      <input id="soundToggle" type="checkbox">
+      <div class="track">
+        <div class="thumb"></div>
+      </div>
+    </label>
+  </div>
+  </div>
 
+        <div class="card sms-card">
+          <div class="card-title">SMS Alerts</div>
+          <div class="muted">Phone Number</div>
+          <input class="number-input" id="smsNumber" type="text">
         </div>
+
       </div>
     </div>
+  </div>
   </div>
 
   <div class="bottom-actions">
@@ -114,38 +137,39 @@
     const soundToggle = document.getElementById('soundToggle');
     const smsNumber = document.getElementById('smsNumber');
 
-    const defaults = { maxPower:3000, notif:true, sound:false, sms:'' };
+    const defaults = { maxPower: 3000, notif: true, sound: false, sms: '' };
 
-    function loadDefaults(){
+    function loadDefaults() {
       maxPower.value = defaults.maxPower;
       notifToggle.checked = defaults.notif;
       soundToggle.checked = defaults.sound;
       smsNumber.value = defaults.sms;
     }
 
-    function autoSave(){
-      if(maxPower.value > 15000) maxPower.value = 15000;
+    function autoSave() {
+      if (maxPower.value > 15000) maxPower.value = 15000;
       const data = {
-        maxPower:maxPower.value,
-        notif:notifToggle.checked,
-        sound:soundToggle.checked,
-        sms:smsNumber.value
+        maxPower: maxPower.value,
+        notif: notifToggle.checked,
+        sound: soundToggle.checked,
+        sms: smsNumber.value
       };
       console.log("Auto-saved:", data);
     }
 
     loadDefaults();
 
-    [maxPower, notifToggle, soundToggle, smsNumber].forEach(el=>{
+    [maxPower, notifToggle, soundToggle, smsNumber].forEach(el => {
       el.addEventListener('input', autoSave);
       el.addEventListener('change', autoSave);
     });
 
-    document.getElementById('resetBtn').addEventListener('click', ()=>{
+    document.getElementById('resetBtn').addEventListener('click', () => {
       loadDefaults();
       autoSave();
     });
   </script>
 
 </body>
+
 </html>
