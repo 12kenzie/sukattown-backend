@@ -94,6 +94,64 @@ app.post("/api/power-data", async (req, res) => {
   }
 });
 
+// ACCOUNT REGISTRATION AND LOG IN
+
+app.post("/api/auth/register", async (req, res) => {
+  const { name, email, user_type, password, telegram_chat_id, account_type } = req.body;
+
+  if (!name || !email || !password || !user_type) {
+    return res.status(400).json({ success: false, message: "Missing required fields" });
+  }
+
+  try {
+    // Validate email domain
+    const allowedDomains = ['gmail.com', 'deped.gov.ph', 'depedmarikina.ph'];
+    const emailDomain = email.toLowerCase().split('@')[1];
+    
+    if (!allowedDomains.includes(emailDomain)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid email domain. Only @gmail.com, @deped.gov.ph, and @depedmarikina.ph are allowed." 
+      });
+    }
+
+    // Check if email already exists
+    const snapshot = await db.ref("users").orderByChild("email").equalTo(email.toLowerCase()).once("value");
+    
+    if (snapshot.exists()) {
+      return res.status(400).json({ success: false, message: "Email already registered" });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const userRef = db.ref("users").push();
+    const userId = userRef.key;
+
+    await userRef.set({
+      name,
+      email: email.toLowerCase(),
+      user_type: user_type, // admin, teacher, principal
+      password: hashedPassword,
+      telegram_chat_id: telegram_chat_id || null,
+      account_type: account_type || "principal",
+      created_at: Date.now()
+    });
+
+    console.log(`✅ User registered: ${email} (${user_type})`);
+    res.json({ 
+      success: true, 
+      message: "User registered successfully",
+      userId: userId
+    });
+
+  } catch (error) {
+    console.error("❌ Registration error:", error);
+    res.status(500).json({ success: false, message: "Registration failed" });
+  }
+});
+
 app.get("/api/power-data", (req, res) => {
   console.log("📤 Sending latest PZEM data");
   res.json(latestPZEMData);
