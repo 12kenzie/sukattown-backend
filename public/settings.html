@@ -20,27 +20,36 @@
 <body>
   <div class="app">
 
-    <aside class="left-nav">
+    <!-- LEFT NAV -->
+    <aside class="left-nav" aria-hidden="true">
       <div class="brand">EL</div>
-      <div class="nav">
-        <button data-page="dashboard">
-          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 10.5L12 4l9 6.5V20H3z"/></svg>
+
+      <div class="nav" role="navigation" aria-label="Main">
+        <button title="Dashboard" aria-label="Dashboard">
+          <!-- home icon -->
+          <i class="fa-solid fa-house" aria-hidden="true"></i>
         </button>
-        <button data-page="reports">
-          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2v10l3-2 2 2 3-5V2zM4 11h6v11H4z"/></svg>
+
+        <button title="Consumption" aria-label="Consumption">
+          <i class="fa-solid fa-bolt" aria-hidden="true"></i>
         </button>
-        <button data-page="alert">
-          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 5v14h18V5H3z"/></svg>
+
+        <button title="Reports" aria-label="Reports">
+          <i class="fa-solid fa-chart-area" aria-hidden="true"></i>
         </button>
-        <button data-page="settings" class="active">
-          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+
+        <button class="active" title="Settings" aria-label="Settings">
+          <i class="fa-solid fa-gear" aria-hidden="true"></i>
         </button>
-        <div class="spacer"></div>
-        <button data-page="help">
-          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/></svg>
+
+        <div class="spacer" aria-hidden="true"></div>
+
+        <button title="Help" aria-label="Help">
+          <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
         </button>
       </div>
     </aside>
+
 
     <div class="main">
 
