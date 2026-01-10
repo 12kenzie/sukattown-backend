@@ -25,7 +25,7 @@
       <div class="brand">EL</div>
 
       <div class="nav" role="navigation" aria-label="Main">
-        <button title="Dashboard" aria-label="Dashboard" onclick="window.location.href='index.html'">
+        <button class="active" title="Dashboard" aria-label="Dashboard" onclick="window.location.href='index.html'">
           <i class="fa-solid fa-house" aria-hidden="true"></i>
         </button>
 
@@ -37,7 +37,7 @@
           <i class="fa-solid fa-chart-area" aria-hidden="true"></i>
         </button>
 
-        <button class="active" title="Settings" aria-label="Settings">
+        <button title="Settings" aria-label="Settings" onclick="window.location.href='settings.html'">
           <i class="fa-solid fa-gear" aria-hidden="true"></i>
         </button>
 
@@ -45,6 +45,10 @@
 
         <button title="Help" aria-label="Help">
           <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
+        </button>
+
+        <button title="Logout" aria-label="Logout" onclick="logout()">
+          <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
         </button>
       </div>
     </aside>
@@ -65,13 +69,28 @@
           </div>
 
           <!-- PROFILE / GREETING on upper-right -->
-          <div class="topbar-right">
-            <div class="profile" title="Account">
-              <div class="hello">
-                <span style="font-size:13px;color:var(--muted)">Hello,</span>
-                <strong>New User</strong>
+          <div class="topbar" role="banner">
+            <div class="search-wrap" aria-hidden="false">
+              <div style="font-weight:700;color:#10213a">SukatTown</div>
+              <span class="status-badge offline" id="connectionStatus">● Offline</span>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:16px;justify-self:end">
+              <div class="search" role="search" aria-label="Search">
+                <i class="fa-brands fa-searchengin" aria-hidden="true"></i>
+                <input id="topSearch" type="search" placeholder="Search anything..." aria-label="Search anything">
               </div>
-              <div class="avatar" aria-hidden="true">NU</div>
+
+              <!-- PROFILE / GREETING on upper-right -->
+              <div class="topbar-right">
+                <div class="profile" title="Account">
+                  <div class="hello">
+                    <span style="font-size:13px;color:var(--muted)">Hello,</span>
+                    <strong id="userName">User</strong>
+                  </div>
+                  <div class="avatar" aria-hidden="true" id="userAvatar">U</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
