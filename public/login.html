@@ -77,12 +77,15 @@
           localStorage.setItem('userEmail', data.user.email);
           localStorage.setItem('userType', data.user.user_type);
           localStorage.setItem('accountType', data.user.account_type);
+          localStorage.setItem('schoolId', data.user.school_id);
+          localStorage.setItem('schoolName', data.user.school_name);
+          localStorage.setItem('permissions', JSON.stringify(data.user.permissions || []));
           if (data.user.telegram_chat_id) {
             localStorage.setItem('telegramChatId', data.user.telegram_chat_id);
           }
 
           // Show success message
-          alert(`✅ Welcome back, ${data.user.name}!`);
+          alert(`✅ Welcome back, ${data.user.name}!\n🏫 ${data.user.school_name}`);
           
           // Redirect to dashboard
           window.location.href = 'index.html';
