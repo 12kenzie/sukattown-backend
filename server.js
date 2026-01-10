@@ -654,6 +654,22 @@ app.get("/api/health", async (req, res) => {
   }
 });
 
+// TEMPORARY: Hash password endpoint
+app.post("/api/auth/hash-password", async (req, res) => {
+  const { password } = req.body;
+  
+  if (!password) {
+    return res.status(400).json({ success: false, message: "Password required" });
+  }
+  
+  try {
+    const hash = await bcrypt.hash(password, 10);
+    res.json({ success: true, hash });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Hash generation failed" });
+  }
+});
+
 // STATIC FILES
 app.use(express.static("public"));
 
