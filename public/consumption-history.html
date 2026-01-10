@@ -8,7 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <script src="https://kit.fontawesome.com/c6249fb7d2.js" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="styles/consumption-history-styles.css">
+    <link rel="stylesheet" href="consumption-history-styles.css">
     <title>SukatTown - Consumption History</title>
 </head>
 
@@ -105,8 +105,7 @@
                             <button class="filter-btn" data-limit="500" onclick="changeLimit(500)">Last 500</button>
                             <button class="filter-btn" data-limit="all" onclick="changeLimit('all')">All Data</button>
                         </div>
-                        <button onclick="refreshData()"
-                            style="padding:10px 20px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--accent-1),var(--accent-2));color:white;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px">
+                        <button onclick="refreshData()" class="refresh-btn">
                             <i class="fa-solid fa-rotate"></i> Refresh
                         </button>
                     </div>
@@ -171,44 +170,6 @@
             </div>
         </div>
     </div>
-
-    <style>
-        .filter-btn {
-            padding: 10px 20px;
-            border-radius: 8px;
-            border: 2px solid #e6e9ef;
-            background: white;
-            color: #667085;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .filter-btn:hover {
-            border-color: var(--accent-1);
-            color: var(--accent-1);
-        }
-
-        .filter-btn.active {
-            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
-            color: white;
-            border-color: transparent;
-        }
-
-        tbody tr {
-            border-bottom: 1px solid #f1f3f5;
-            transition: background 0.2s;
-        }
-
-        tbody tr:hover {
-            background: #f9fbff;
-        }
-
-        tbody td {
-            padding: 14px 12px;
-            font-size: 14px;
-        }
-    </style>
 
     <script>
         const API_URL = 'https://sukattown-backend.onrender.com';
