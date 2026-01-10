@@ -74,15 +74,20 @@
     $('#registerForm').on('submit', async function(e) {
       e.preventDefault();
 
-      const name = $('#name').val();
-      const email = $('#email').val().toLowerCase();
+      const name = $('#name').val().trim();
+      const email = $('#email').val().toLowerCase().trim();
       const userType = $('#userType').val();
       const password = $('#password').val();
       const confirmPassword = $('#confirmPassword').val();
-      const telegramChatId = $('#telegramChatId').val();
+      const telegramChatId = $('#telegramChatId').val().trim();
       const accountType = $('#accountType').val();
 
       // Validation
+      if (!name) {
+        alert('❌ Please enter your full name!');
+        return;
+      }
+
       if (!userType) {
         alert('❌ Please select your user type!');
         return;
@@ -108,6 +113,14 @@
       const originalText = submitBtn.text();
       submitBtn.text('Creating account...').prop('disabled', true);
 
+      console.log('📤 Sending registration request:', {
+        name,
+        email,
+        user_type: userType,
+        telegram_chat_id: telegramChatId || null,
+        account_type: accountType
+      });
+
       try {
         const response = await fetch(`${API_URL}/api/auth/register`, {
           method: 'POST',
@@ -123,29 +136,25 @@
         });
 
         const data = await response.json();
+        console.log('📥 Registration response:', data);
 
         if (data.success) {
-          alert(`✅ Account created successfully!\n\nWelcome, ${name}!\n📧 ${email}`);
+          alert(`✅ Account created successfully!\n\nWelcome, ${name}!\n📧 ${email}\n\nYou can now login!`);
           
-          // Store user session
-          localStorage.setItem('userId', data.userId);
-          localStorage.setItem('userName', data.user.name);
-          localStorage.setItem('userEmail', data.user.email);
-          localStorage.setItem('userType', data.user.user_type);
-          localStorage.setItem('accountType', data.user.account_type);
-          if (telegramChatId) {
-            localStorage.setItem('telegramChatId', telegramChatId);
-          }
+          // Clear form
+          $('#registerForm')[0].reset();
           
-          // Redirect to dashboard
-          window.location.href = 'index.html';
+          // Redirect to login
+          setTimeout(() => {
+            window.location.href = 'login.html';
+          }, 1000);
         } else {
           alert('❌ Error: ' + data.message);
           submitBtn.text(originalText).prop('disabled', false);
         }
       } catch (error) {
         console.error('Registration error:', error);
-        alert('❌ Failed to create account. Please check your connection and try again.');
+        alert('❌ Failed to create account. Please check your connection and try again.\n\nError: ' + error.message);
         submitBtn.text(originalText).prop('disabled', false);
       }
     });
