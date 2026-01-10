@@ -670,6 +670,158 @@ app.post("/api/auth/hash-password", async (req, res) => {
   }
 });
 
+// Add this temporary endpoint to your server.js to check what's in Firebase
+// Put this BEFORE app.listen()
+
+app.get("/api/auth/debug-users", async (req, res) => {
+  try {
+    const snapshot = await db.ref("users").once("value");
+    
+    if (!snapshot.exists()) {
+      return res.json({ 
+        success: true, 
+        message: "No users found in database",
+        users: []
+      });
+    }
+
+    const users = [];
+    snapshot.forEach((child) => {
+      const user = child.val();
+      users.push({
+        id: child.key,
+        email: user.email,
+        name: user.name,
+        user_type: user.user_type,
+        account_type: user.account_type,
+        has_password: !!user.password,
+        password_is_hashed: user.password ? user.password.startsWith('$2') : false,
+        password_length: user.password ? user.password.length : 0,
+        created_at: user.created_at,
+        last_login: user.last_login
+      });
+    });
+
+    console.log(`📊 Found ${users.length} users in database`);
+    res.json({ 
+      success: true, 
+      count: users.length,
+      users: users 
+    });
+
+  } catch (error) {
+    console.error("❌ Debug error:", error);
+    res.status(500).json({ success: false, message: "Debug failed" });
+  }
+});
+
+// Test login with detailed logging
+app.post("/api/auth/login-debug", async (req, res) => {
+  const { email, password } = req.body;
+
+  console.log("\n=== LOGIN DEBUG START ===");
+  console.log("📧 Email received:", email);
+  console.log("🔐 Password received:", password ? `${password.substring(0, 3)}***` : "NONE");
+
+  if (!email || !password) {
+    console.log("❌ Missing email or password");
+    return res.status(400).json({ success: false, message: "Email and password are required" });
+  }
+
+  try {
+    const searchEmail = email.toLowerCase();
+    console.log("🔍 Searching for email:", searchEmail);
+
+    const snapshot = await db.ref("users")
+      .orderByChild("email")
+      .equalTo(searchEmail)
+      .once("value");
+    
+    console.log("📊 Query executed, snapshot exists:", snapshot.exists());
+
+    if (!snapshot.exists()) {
+      console.log("❌ No user found with email:", searchEmail);
+      
+      // Let's check ALL users to see what emails exist
+      const allUsers = await db.ref("users").once("value");
+      const emailList = [];
+      allUsers.forEach((child) => {
+        emailList.push(child.val().email);
+      });
+      console.log("📋 All emails in database:", emailList);
+      
+      return res.status(401).json({ 
+        success: false, 
+        message: "Invalid email or password",
+        debug: {
+          searchedFor: searchEmail,
+          availableEmails: emailList
+        }
+      });
+    }
+
+    let user = null;
+    let userId = null;
+
+    snapshot.forEach((child) => {
+      userId = child.key;
+      user = child.val();
+      console.log("👤 Found user:", {
+        id: userId,
+        email: user.email,
+        name: user.name,
+        hasPassword: !!user.password,
+        passwordStartsWith: user.password ? user.password.substring(0, 10) : "NONE"
+      });
+    });
+
+    console.log("🔐 Attempting password comparison...");
+    console.log("   Plain password:", password);
+    console.log("   Hashed password:", user.password.substring(0, 20) + "...");
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    console.log("✅ Password match result:", passwordMatch);
+    
+    if (!passwordMatch) {
+      console.log("❌ Password does not match");
+      return res.status(401).json({ 
+        success: false, 
+        message: "Invalid email or password",
+        debug: {
+          passwordProvided: password.substring(0, 3) + "***",
+          hashExists: !!user.password,
+          hashStartsWith: user.password.substring(0, 10)
+        }
+      });
+    }
+
+    console.log("✅ Login successful!");
+    console.log("=== LOGIN DEBUG END ===\n");
+
+    res.json({ 
+      success: true, 
+      message: "Login successful",
+      userId: userId,
+      user: {
+        name: user.name,
+        email: user.email,
+        user_type: user.user_type,
+        account_type: user.account_type,
+        telegram_chat_id: user.telegram_chat_id
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ Login error:", error);
+    console.log("=== LOGIN DEBUG END (ERROR) ===\n");
+    res.status(500).json({ 
+      success: false, 
+      message: "Login failed",
+      error: error.message 
+    });
+  }
+});
+
 // STATIC FILES
 app.use(express.static("public"));
 
