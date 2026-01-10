@@ -489,21 +489,25 @@
             color: #667085;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.9s;
+            transition: all 0.3s ease;
+            transform: scale(1);
         }
 
         .filter-btn:hover {
+
             border-color: var(--accent-1);
             color: var(--accent-1);
             box-shadow: 0 4px 9px rgba(132, 103, 160, 0.3);
+            transform: scale(1.05);
         }
 
         .filter-btn.active {
             background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
             color: white;
             border-color: transparent;
-            transition: all 0.9s;
-            box-shadow: 0 1px 8px rgba(132, 103, 160, 0.3) inset;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(130, 80, 176, 0.3);
+            transform: scale(0.95); 
         }
 
         .refresh-btn {
@@ -519,10 +523,19 @@
         }
 
         .refresh-btn:hover {
-            background: #edeff1;
+            background: white;
             color: var(--accent-1);
             border-color: var(--accent-1);
             box-shadow: 0 4px 9px rgba(132, 103, 160, 0.3);
+            transform: scale(1.05);
+        }
+
+        .refresh-btn:active {
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            color: white;
+            transition: all 0.3s ease;
+            transform: scale(0.95);
+            box-shadow: 0 2px 6px rgba(132, 103, 160, 0.25) inset;
         }
 
         tbody tr {
