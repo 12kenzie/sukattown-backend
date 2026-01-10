@@ -17,7 +17,7 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   databaseURL:
-    "https://sukattown-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "https://sukattown-c9a3b-default-rtdb.asia-southeast1.firebasedatabase.app/",
 });
 
 const db = admin.database();
