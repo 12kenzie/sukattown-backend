@@ -491,6 +491,22 @@ app.delete("/api/alerts/:id", async (req, res) => {
   }
 });
 
+app.post("/api/send-telegram", async (req, res) => {
+  const { message } = req.body;
+  
+  try {
+    await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      chat_id: process.env.TELEGRAM_CHAT_ID,
+      text: `🚨 SUKATTOWN ALERT 🚨\n\n${message}`,
+      parse_mode: 'HTML'
+    });
+    
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false });
+  }
+});
+
 // HEALTH CHECK
 app.get("/api/health", async (req, res) => {
   try {
