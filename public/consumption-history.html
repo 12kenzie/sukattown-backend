@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" href="/assets/favicon.png" type="image/png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://kit.fontawesome.com/c6249fb7d2.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="styles/consumption-history-styles.css">
+    <title>SukatTown - Consumption History</title>
+</head>
+
+<body>
+    <div class="app">
+        <!-- LEFT NAV -->
+        <aside class="left-nav" aria-hidden="true">
+            <div class="brand">EL</div>
+            <div class="nav" role="navigation" aria-label="Main">
+                <button title="Dashboard" aria-label="Dashboard" onclick="window.location.href='index.html'">
+                    <i class="fa-solid fa-house" aria-hidden="true"></i>
+                </button>
+
+                <button class="active" title="Consumption" aria-label="Consumption">
+                    <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+                </button>
+
+                <button title="Reports" aria-label="Reports">
+                    <i class="fa-solid fa-chart-area" aria-hidden="true"></i>
+                </button>
+
+                <button title="Settings" aria-label="Settings" onclick="window.location.href='settings.html'">
+                    <i class="fa-solid fa-gear" aria-hidden="true"></i>
+                </button>
+
+                <div class="spacer" aria-hidden="true"></div>
+
+                <button title="Help" aria-label="Help">
+                    <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <div class="main">
+            <!-- TOPBAR -->
+            <div class="topbar" role="banner">
+                <div class="search-wrap">
+                    <div style="font-weight:700;color:#10213a">SukatTown</div>
+                    <span class="status-badge offline" id="connectionStatus">● Offline</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:16px;justify-self:end">
+                    <div class="search" role="search" aria-label="Search">
+                        <i class="fa-brands fa-searchengin" aria-hidden="true"></i>
+                        <input id="topSearch" type="search" placeholder="Search anything..."
+                            aria-label="Search anything">
+                    </div>
+                    <div class="topbar-right">
+                        <div class="profile" title="Account">
+                            <div class="hello">
+                                <span style="font-size:13px;color:var(--muted)">Hello,</span>
+                                <strong>New User</strong>
+                            </div>
+                            <div class="avatar" aria-hidden="true">NU</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTENT -->
+            <div style="padding:24px">
+                <div class="page-header" style="margin-bottom:24px">
+                    <div style="font-size:32px;font-weight:800">Consumption History</div>
+                    <div style="color:var(--muted);margin-top:4px">View and analyze your energy usage patterns</div>
+                </div>
+
+                <!-- FILTER & STATS ROW -->
+                <div
+                    style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;margin-bottom:24px">
+                    <div class="card">
+                        <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Total Readings</div>
+                        <div style="font-size:28px;font-weight:800" id="totalReadings">0</div>
+                    </div>
+                    <div class="card">
+                        <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Average Power</div>
+                        <div style="font-size:28px;font-weight:800" id="avgPower">0 kW</div>
+                    </div>
+                    <div class="card">
+                        <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Total Energy</div>
+                        <div style="font-size:28px;font-weight:800" id="totalEnergy">0 kWh</div>
+                    </div>
+                    <div class="card">
+                        <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Estimated Cost</div>
+                        <div style="font-size:28px;font-weight:800" id="totalCost">₱0</div>
+                    </div>
+                </div>
+
+                <!-- FILTERS -->
+                <div class="card" style="margin-bottom:24px">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px">
+                        <div style="display:flex;gap:12px;flex-wrap:wrap">
+                            <button class="filter-btn active" data-limit="50" onclick="changeLimit(50)">Last 50</button>
+                            <button class="filter-btn" data-limit="100" onclick="changeLimit(100)">Last 100</button>
+                            <button class="filter-btn" data-limit="500" onclick="changeLimit(500)">Last 500</button>
+                            <button class="filter-btn" data-limit="all" onclick="changeLimit('all')">All Data</button>
+                        </div>
+                        <button onclick="refreshData()"
+                            style="padding:10px 20px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--accent-1),var(--accent-2));color:white;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px">
+                            <i class="fa-solid fa-rotate"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CHART -->
+                <div class="card" style="margin-bottom:24px">
+                    <div style="font-weight:700;font-size:18px;margin-bottom:16px">Power Consumption Trend</div>
+                    <div style="padding:12px;background:linear-gradient(180deg,#fff,#fbfdff);border-radius:8px">
+                        <canvas id="historyChart" height="80"></canvas>
+                    </div>
+                </div>
+
+                <!-- DATA TABLE -->
+                <div class="card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                        <div style="font-weight:700;font-size:18px">Reading History</div>
+                        <button onclick="exportToCSV()"
+                            style="padding:8px 16px;border-radius:8px;border:1px solid #e6e9ef;background:white;color:#667085;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px">
+                            <i class="fa-solid fa-download"></i> Export CSV
+                        </button>
+                    </div>
+
+                    <div style="overflow-x:auto">
+                        <table style="width:100%;border-collapse:collapse">
+                            <thead>
+                                <tr style="background:#f9fbff;border-bottom:2px solid #e6e9ef">
+                                    <th
+                                        style="padding:12px;text-align:left;font-weight:700;font-size:13px;color:var(--muted)">
+                                        Timestamp</th>
+                                    <th
+                                        style="padding:12px;text-align:right;font-weight:700;font-size:13px;color:var(--muted)">
+                                        Voltage (V)</th>
+                                    <th
+                                        style="padding:12px;text-align:right;font-weight:700;font-size:13px;color:var(--muted)">
+                                        Current (A)</th>
+                                    <th
+                                        style="padding:12px;text-align:right;font-weight:700;font-size:13px;color:var(--muted)">
+                                        Power (W)</th>
+                                    <th
+                                        style="padding:12px;text-align:right;font-weight:700;font-size:13px;color:var(--muted)">
+                                        Energy (kWh)</th>
+                                    <th
+                                        style="padding:12px;text-align:right;font-weight:700;font-size:13px;color:var(--muted)">
+                                        Frequency (Hz)</th>
+                                    <th
+                                        style="padding:12px;text-align:right;font-weight:700;font-size:13px;color:var(--muted)">
+                                        Power Factor</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTable">
+                                <tr>
+                                    <td colspan="7" style="padding:40px;text-align:center;color:var(--muted)">
+                                        <i class="fa-solid fa-spinner fa-spin" style="font-size:24px"></i>
+                                        <div style="margin-top:12px">Loading data...</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .filter-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 2px solid #e6e9ef;
+            background: white;
+            color: #667085;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--accent-1);
+            color: var(--accent-1);
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            color: white;
+            border-color: transparent;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #f1f3f5;
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover {
+            background: #f9fbff;
+        }
+
+        tbody td {
+            padding: 14px 12px;
+            font-size: 14px;
+        }
+    </style>
+
+    <script>
+        const API_URL = 'https://sukattown-backend.onrender.com';
+        const COST_PER_KWH = 5.5;
+        let currentLimit = 50;
+        let allReadings = [];
+        let historyChartInstance = null;
+
+        function changeLimit(limit) {
+            currentLimit = limit;
+            $('.filter-btn').removeClass('active');
+            $(`.filter-btn[data-limit="${limit}"]`).addClass('active');
+            fetchHistory();
+        }
+
+        function updateConnectionStatus(connected) {
+            const badge = $('#connectionStatus');
+            if (connected) {
+                badge.removeClass('offline').text('● Connected');
+            } else {
+                badge.addClass('offline').text('● Offline');
+            }
+        }
+
+        async function fetchHistory() {
+            try {
+                const url = currentLimit === 'all'
+                    ? `${API_URL}/api/readings?limit=10000`
+                    : `${API_URL}/api/readings?limit=${currentLimit}`;
+
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    allReadings = result.data;
+                    updateStats(allReadings);
+                    updateTable(allReadings);
+                    updateChart(allReadings);
+                    updateConnectionStatus(true);
+                } else {
+                    throw new Error('No data received');
+                }
+            } catch (error) {
+                console.error('Error fetching history:', error);
+                updateConnectionStatus(false);
+                $('#historyTable').html(`
+          <tr>
+            <td colspan="7" style="padding:40px;text-align:center;color:#ff6b6b">
+              <i class="fa-solid fa-exclamation-triangle" style="font-size:24px"></i>
+              <div style="margin-top:12px">Failed to load data. Please try again.</div>
+            </td>
+          </tr>
+        `);
+            }
+        }
+
+        function updateStats(readings) {
+            if (!readings || readings.length === 0) {
+                $('#totalReadings').text('0');
+                $('#avgPower').text('0 kW');
+                $('#totalEnergy').text('0 kWh');
+                $('#totalCost').text('₱0');
+                return;
+            }
+
+            const totalReadings = readings.length;
+            const avgPower = (readings.reduce((sum, r) => sum + (r.power || 0), 0) / totalReadings / 1000).toFixed(2);
+            const maxEnergy = Math.max(...readings.map(r => r.energy || 0));
+            const totalCost = (maxEnergy * COST_PER_KWH).toFixed(2);
+
+            $('#totalReadings').text(totalReadings.toLocaleString());
+            $('#avgPower').text(avgPower + ' kW');
+            $('#totalEnergy').text(maxEnergy.toFixed(2) + ' kWh');
+            $('#totalCost').text('₱' + parseFloat(totalCost).toLocaleString());
+        }
+
+        function updateTable(readings) {
+            if (!readings || readings.length === 0) {
+                $('#historyTable').html(`
+          <tr>
+            <td colspan="7" style="padding:40px;text-align:center;color:var(--muted)">
+              No data available
+            </td>
+          </tr>
+        `);
+                return;
+            }
+
+            let html = '';
+            readings.forEach(reading => {
+                const date = new Date(reading.timestamp);
+                html += `
+          <tr>
+            <td style="font-weight:600">${date.toLocaleString()}</td>
+            <td style="text-align:right">${(reading.voltage || 0).toFixed(1)}</td>
+            <td style="text-align:right">${(reading.current || 0).toFixed(2)}</td>
+            <td style="text-align:right">${(reading.power || 0).toFixed(1)}</td>
+            <td style="text-align:right;font-weight:700;color:var(--accent-1)">${(reading.energy || 0).toFixed(3)}</td>
+            <td style="text-align:right">${(reading.frequency || 0).toFixed(1)}</td>
+            <td style="text-align:right">${(reading.powerFactor || 0).toFixed(2)}</td>
+          </tr>
+        `;
+            });
+            $('#historyTable').html(html);
+        }
+
+        function updateChart(readings) {
+            if (!readings || readings.length === 0) return;
+
+            const labels = readings.map(r => {
+                const date = new Date(r.timestamp);
+                return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            });
+            const powerData = readings.map(r => (r.power || 0) / 1000);
+
+            const ctx = document.getElementById('historyChart').getContext('2d');
+
+            if (historyChartInstance) {
+                historyChartInstance.destroy();
+            }
+
+            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(107, 83, 245, 0.3)');
+            gradient.addColorStop(1, 'rgba(107, 83, 245, 0.01)');
+
+            historyChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Power (kW)',
+                        data: powerData,
+                        borderColor: '#6b53f5',
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#6b53f5',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                            titleColor: '#0f1724',
+                            bodyColor: '#6b53f5',
+                            borderColor: 'rgba(107, 83, 245, 0.2)',
+                            borderWidth: 2,
+                            padding: 12,
+                            borderRadius: 8
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(15, 23, 36, 0.05)' },
+                            ticks: {
+                                color: '#667085',
+                                callback: function (value) { return value + ' kW'; }
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                color: '#667085',
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function exportToCSV() {
+            if (!allReadings || allReadings.length === 0) {
+                alert('No data to export');
+                return;
+            }
+
+            let csv = 'Timestamp,Voltage (V),Current (A),Power (W),Energy (kWh),Frequency (Hz),Power Factor\n';
+
+            allReadings.forEach(reading => {
+                const date = new Date(reading.timestamp);
+                csv += `${date.toLocaleString()},${reading.voltage},${reading.current},${reading.power},${reading.energy},${reading.frequency},${reading.powerFactor}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `sukattown_history_${new Date().getTime()}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        function refreshData() {
+            fetchHistory();
+        }
+
+        $(document).ready(function () {
+            fetchHistory();
+            setInterval(refreshData, 30000); // Auto-refresh every 30 seconds
+        });
+    </script>
+</body>
+
+</html>

@@ -25,12 +25,11 @@
       <div class="brand">EL</div>
 
       <div class="nav" role="navigation" aria-label="Main">
-        <button title="Dashboard" aria-label="Dashboard">
-          <!-- home icon -->
+        <button title="Dashboard" aria-label="Dashboard" onclick="window.location.href='index.html'">
           <i class="fa-solid fa-house" aria-hidden="true"></i>
         </button>
 
-        <button title="Consumption" aria-label="Consumption">
+        <button title="Consumption" aria-label="Consumption" onclick="window.location.href='consumption-history.html'">
           <i class="fa-solid fa-bolt" aria-hidden="true"></i>
         </button>
 
@@ -96,35 +95,35 @@
             <div class="card-title">Alerts & Notifications</div>
 
             <div class="toggle-row">
-    <div class="toggle-label">Enable Notifications</div>
-    <label class="switch">
-      <input id="notifToggle" type="checkbox">
-      <div class="track">
-        <div class="thumb"></div>
-      </div>
-    </label>
-  </div>
+              <div class="toggle-label">Enable Notifications</div>
+              <label class="switch">
+                <input id="notifToggle" type="checkbox">
+                <div class="track">
+                  <div class="thumb"></div>
+                </div>
+              </label>
+            </div>
 
-  <div class="toggle-row">
-    <div class="toggle-label">Sound Alert on Hazard</div>
-    <label class="switch">
-      <input id="soundToggle" type="checkbox">
-      <div class="track">
-        <div class="thumb"></div>
-      </div>
-    </label>
-  </div>
-  </div>
+            <div class="toggle-row">
+              <div class="toggle-label">Sound Alert on Hazard</div>
+              <label class="switch">
+                <input id="soundToggle" type="checkbox">
+                <div class="track">
+                  <div class="thumb"></div>
+                </div>
+              </label>
+            </div>
+          </div>
 
-        <div class="card sms-card">
-          <div class="card-title">SMS Alerts</div>
-          <div class="muted">Phone Number</div>
-          <input class="number-input" id="smsNumber" type="text">
+          <div class="card sms-card">
+            <div class="card-title">SMS Alerts</div>
+            <div class="muted">Phone Number</div>
+            <input class="number-input" id="smsNumber" type="text">
+          </div>
+
         </div>
-
       </div>
     </div>
-  </div>
   </div>
 
   <div class="bottom-actions">
