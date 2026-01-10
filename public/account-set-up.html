@@ -4,25 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="/assets/favicon.png" type="image/png">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script> <!-- Jquery-->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script> <!-- Chart.js -->
-  <script src="https://kit.fontawesome.com/c6249fb7d2.js" crossorigin="anonymous"></script>
-
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <link rel="stylesheet" href="styles/account-set-up-styles.css">
   <title>SukatTown Account Set-up</title>
-
-  
 </head>
 
 <body>
-
   <div class="background"></div>
 
   <div class="login-container">
     <div class="login-card">
-
       <div class="tag">⚡ Electricity Dashboard</div>
-
       <h1>Create Account</h1>
       <p>Fill in your details to register</p>
 
@@ -32,21 +24,134 @@
 
         <label>Email Address</label>
         <input id="email" type="email" placeholder="Enter your email" required />
+        <small style="display:block;text-align:left;color:#666;margin-top:4px;font-size:12px">
+          ✅ Accepted: @gmail.com, @deped.gov.ph, @depedmarikina.ph
+        </small>
+
+        <label>User Type</label>
+        <select id="userType" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:12px;margin-top:6px;font-size:15px" required>
+          <option value="">Select user type</option>
+          <option value="admin">Admin (Capstone Team)</option>
+          <option value="teacher">Teacher</option>
+          <option value="principal">Principal/Staff</option>
+        </select>
 
         <label>Password</label>
-        <input id="password" type="password" placeholder="Create a password" required />
+        <input id="password" type="password" placeholder="Create a password (min. 6 characters)" required />
 
         <label>Confirm Password</label>
         <input id="confirmPassword" type="password" placeholder="Confirm your password" required />
 
+        <label>Telegram Chat ID (Optional)</label>
+        <input id="telegramChatId" type="text" placeholder="Your Telegram Chat ID" />
+        <small style="display:block;text-align:left;color:#666;margin-top:4px;font-size:12px">
+          Get your Chat ID from <a href="https://t.me/userinfobot" target="_blank" style="color:#4659ff">@userinfobot</a> on Telegram
+        </small>
+
+        <label>Account Type</label>
+        <select id="accountType" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:12px;margin-top:6px;font-size:15px">
+          <option value="principal">Principal (Bill Payer)</option>
+          <option value="non-principal">Non-Principal (Monitor Only)</option>
+        </select>
+
         <button type="submit" class="login-btn">Create Account</button>
       </form>
 
-      <a href="PROMPT LOGIN.html">Already have an account? Sign in</a>
-
+      <a href="login.html">Already have an account? Sign in</a>
     </div>
   </div>
 
+  <script>
+    const API_URL = 'https://sukattown-backend.onrender.com';
+
+    // Email domain validation
+    function validateEmail(email) {
+      const allowedDomains = ['gmail.com', 'deped.gov.ph', 'depedmarikina.ph'];
+      const domain = email.split('@')[1];
+      return allowedDomains.includes(domain);
+    }
+
+    $('#registerForm').on('submit', async function(e) {
+      e.preventDefault();
+
+      const name = $('#name').val();
+      const email = $('#email').val().toLowerCase();
+      const userType = $('#userType').val();
+      const password = $('#password').val();
+      const confirmPassword = $('#confirmPassword').val();
+      const telegramChatId = $('#telegramChatId').val();
+      const accountType = $('#accountType').val();
+
+      // Validation
+      if (!userType) {
+        alert('❌ Please select your user type!');
+        return;
+      }
+
+      if (!validateEmail(email)) {
+        alert('❌ Invalid email domain!\n\n✅ Accepted domains:\n• @gmail.com\n• @deped.gov.ph\n• @depedmarikina.ph');
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        alert('❌ Passwords do not match!');
+        return;
+      }
+
+      if (password.length < 6) {
+        alert('❌ Password must be at least 6 characters!');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/api/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            email,
+            user_type: userType,
+            password,
+            telegram_chat_id: telegramChatId || null,
+            account_type: accountType
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert(`✅ Account created successfully!\n\nYou can now login with:\n📧 ${email}`);
+          // Store user session
+          localStorage.setItem('userId', data.userId);
+          localStorage.setItem('userName', name);
+          localStorage.setItem('userEmail', email);
+          localStorage.setItem('userType', userType);
+          localStorage.setItem('accountType', accountType);
+          // Redirect to dashboard
+          window.location.href = 'index.html';
+        } else {
+          alert('❌ Error: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Registration error:', error);
+        alert('❌ Failed to create account. Please try again.');
+      }
+    });
+
+    // Auto-detect user type based on email
+    $('#email').on('blur', function() {
+      const email = $(this).val().toLowerCase();
+      const userTypeSelect = $('#userType');
+      
+      if (email.includes('@gmail.com')) {
+        userTypeSelect.val('admin');
+      } else if (email.includes('@deped') || email.includes('@depedmarikina')) {
+        // Let them choose between teacher or principal
+        if (!userTypeSelect.val()) {
+          userTypeSelect.val('teacher');
+        }
+      }
+    });
+  </script>
 </body>
 </html>
-
