@@ -3,149 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Emergency Alert System — Settings</title>
 
-  <style>
-    :root{
-      --bg:#f1f6fb;
-      --card:#ffffff;
-      --muted:#667085;
-      --accent-1:#6b53f5;
-      --accent-2:#a34ef2;
-      --nav-bg:#ffffff;
-      --nav-active:rgba(107,83,245,0.12);
-      --shadow-lg:0 12px 36px rgba(12,18,30,0.06);
-      --max-width:1200px;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:Inter, Arial, sans-serif;
-      background:linear-gradient(180deg,#f6f9fc 0%, var(--bg) 100%);
-      color:#0f1724;
-      min-height:100vh;
-      display:flex;
-      justify-content:center;
-      padding:28px;
-    }
-    .app{
-      width:100%;
-      max-width:var(--max-width);
-      display:grid;
-      grid-template-columns:72px 1fr;
-      gap:18px;
-    }
-    .left-nav{
-      background:var(--nav-bg);
-      border-radius:14px;
-      padding:16px 10px;
-      box-shadow:0 6px 20px rgba(12,18,30,0.06);
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:12px;
-      height:fit-content;
-    }
-    .brand{
-      width:48px;height:48px;border-radius:10px;
-      display:flex;align-items:center;justify-content:center;
-      font-weight:700;font-size:14px;color:var(--accent-2);
-      background:linear-gradient(180deg,rgba(163,78,242,.08),rgba(107,83,245,.06));
-    }
-    .nav{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      margin-top:6px;
-      align-items:center;
-    }
-    .nav button{
-      width:48px;height:48px;border-radius:12px;border:none;
-      background:transparent;color:#555;cursor:pointer;
-      display:flex;align-items:center;justify-content:center;
-      transition:.18s;
-    }
-    .nav button:hover{transform:translateY(-4px);color:var(--accent-2)}
-    .nav button.active{background:var(--nav-active);color:var(--accent-2)}
-    .nav .spacer{flex:1}
-    .main{display:flex;flex-direction:column;gap:18px}
-    .topbar{
-      display:grid;grid-template-columns:1fr auto;align-items:center;
-      padding:14px 18px;border-radius:12px;
-      background:var(--card);box-shadow:0 6px 18px rgba(12,18,30,0.06);
-    }
-    .search{
-      width:720px;max-width:100%;display:flex;align-items:center;
-      background:#f9fbff;border-radius:12px;padding:8px 12px;
-      border:1px solid rgba(15,23,36,0.04);
-    }
-    .search svg{width:18px;height:18px;opacity:.7}
-    .search input{
-      border:0;background:transparent;flex:1;padding:8px 10px;font-size:15px;
-    }
-    .profile{display:flex;align-items:center;gap:12px}
-    .hello{font-size:14px;color:var(--muted)}
-    .hello strong{display:block;font-size:15px;color:#0b1220}
-    .avatar{
-      width:44px;height:44px;border-radius:12px;
-      background:linear-gradient(180deg,var(--accent-1),var(--accent-2));
-      display:flex;align-items:center;justify-content:center;
-      color:#fff;font-weight:700;
-    }
-    .content-wrap{padding:14px}
-    .settings-row{
-      display:flex;gap:22px;margin-top:18px;
-      justify-content:center;align-items:stretch;
-    }
-    .card{
-      background:var(--card);border-radius:18px;
-      box-shadow:var(--shadow-lg);padding:22px;
-      display:flex;flex-direction:column;
-      height:100%;flex:1;
-    }
-    .card-title{font-weight:800;font-size:18px;margin-bottom:8px}
-    .muted{color:var(--muted);font-size:13px}
-    .number-input{
-      width:100%;padding:10px;border-radius:12px;
-      border:1px solid #e6e9ef;font-size:15px;
-    }
-    .threshold-card{gap:16px}
-    .center-card{gap:22px}
-    .sms-card{gap:12px}
-    .toggle-row{
-      display:flex;align-items:center;justify-content:space-between;
-    }
-    .toggle-label{font-weight:800;font-size:22px}
-    .switch{position:relative;width:52px;height:30px;cursor:pointer}
-    .switch input{display:none}
-    .switch .track{
-      position:absolute;inset:0;background:#eef2f7;border-radius:999px;
-    }
-    .switch .thumb{
-      position:absolute;left:4px;top:3px;
-      width:24px;height:24px;border-radius:50%;background:#fff;
-      box-shadow:0 4px 10px rgba(12,18,30,0.08);transition:.18s;
-    }
-    .switch input:checked + .track{
-      background:linear-gradient(90deg,var(--accent-1),var(--accent-2));
-    }
-    .switch input:checked + .track .thumb{
-      transform:translateX(22px);
-    }
-    .bottom-actions{
-      position:fixed;bottom:20px;right:24px;
-      display:flex;justify-content:flex-end;
-      width:auto;gap:12px;
-    }
-    .btn{
-      padding:12px 26px;font-size:15px;font-weight:700;
-      border-radius:10px;border:none;cursor:pointer;
-    }
-    .btn.reset{background:#e9edf3;color:#101827}
-    @media(max-width:900px){
-      .settings-row{flex-direction:column}
-    }
-  </style>
+  <link rel="icon" href="/assets/favicon.png" type="image/png">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script> <!-- Jquery-->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script> <!-- Chart.js -->
+  <script src="https://kit.fontawesome.com/c6249fb7d2.js" crossorigin="anonymous"></script>
+
+  <link rel="stylesheet" href="styles/settings-styles.css">
+
+
+  <title>SukatTown Dashboard Settings</title>
+
+  
 </head>
 
 <body>
