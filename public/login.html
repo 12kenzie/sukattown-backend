@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="/assets/favicon.png" type="image/png">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <link rel="stylesheet" href="styles/login-styles.css">
+  <title>SukatTown Login</title>
+</head>
+
+<body>
+  <div class="background"></div>
+
+  <div class="login-container">
+    <div class="login-card">
+      <div class="tag">⚡ Electricity Dashboard</div>
+      <h1>Welcome Back</h1>
+      <p>Sign in to access your dashboard</p>
+
+      <form id="loginForm">
+        <label>Email Address</label>
+        <input id="email" type="email" placeholder="Enter your email" required />
+
+        <label>Password</label>
+        <input id="password" type="password" placeholder="Enter your password" required />
+
+        <div style="text-align: right; margin-top: -10px; margin-bottom: 16px;">
+          <a href="#" style="font-size: 13px; color: #4659ff; text-decoration: none;">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="login-btn">Sign In</button>
+      </form>
+
+      <a href="./account-set-up.html">Don't have an account? Create one</a>
+
+      <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #eee;">
+        <p style="font-size: 13px; color: #666; margin: 0;">
+          🔒 Your data is secure and encrypted
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'https://sukattown-backend.onrender.com';
+
+    $('#loginForm').on('submit', async function(e) {
+      e.preventDefault();
+
+      const email = $('#email').val().toLowerCase();
+      const password = $('#password').val();
+
+      if (!email || !password) {
+        alert('❌ Please enter both email and password!');
+        return;
+      }
+
+      // Show loading state
+      const submitBtn = $('.login-btn');
+      const originalText = submitBtn.text();
+      submitBtn.text('Signing in...').prop('disabled', true);
+
+      try {
+        const response = await fetch(`${API_URL}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Store user session
+          localStorage.setItem('userId', data.userId);
+          localStorage.setItem('userName', data.user.name);
+          localStorage.setItem('userEmail', data.user.email);
+          localStorage.setItem('userType', data.user.user_type);
+          localStorage.setItem('accountType', data.user.account_type);
+          if (data.user.telegram_chat_id) {
+            localStorage.setItem('telegramChatId', data.user.telegram_chat_id);
+          }
+
+          // Show success message
+          alert(`✅ Welcome back, ${data.user.name}!`);
+          
+          // Redirect to dashboard
+          window.location.href = 'index.html';
+        } else {
+          alert('❌ Error: ' + data.message);
+          submitBtn.text(originalText).prop('disabled', false);
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        alert('❌ Failed to login. Please check your connection and try again.');
+        submitBtn.text(originalText).prop('disabled', false);
+      }
+    });
+
+    // Check if already logged in
+    window.addEventListener('load', function() {
+      const userId = localStorage.getItem('userId');
+      if (userId) {
+        // User is already logged in, redirect to dashboard
+        window.location.href = 'index.html';
+      }
+    });
+
+    // Allow Enter key to submit
+    $('#email, #password').on('keypress', function(e) {
+      if (e.which === 13) {
+        $('#loginForm').submit();
+      }
+    });
+  </script>
+</body>
+</html>

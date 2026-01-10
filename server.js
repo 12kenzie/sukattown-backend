@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const axios = require('axios');
+const bcrypt = require('bcrypt'); // ADD THIS LINE - IMPORTANT!
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -94,8 +95,9 @@ app.post("/api/power-data", async (req, res) => {
   }
 });
 
-// ACCOUNT REGISTRATION AND LOG IN
+// ========== ACCOUNT REGISTRATION AND LOGIN ==========
 
+// REGISTER NEW USER
 app.post("/api/auth/register", async (req, res) => {
   const { name, email, user_type, password, telegram_chat_id, account_type } = req.body;
 
@@ -143,7 +145,13 @@ app.post("/api/auth/register", async (req, res) => {
     res.json({ 
       success: true, 
       message: "User registered successfully",
-      userId: userId
+      userId: userId,
+      user: {
+        name,
+        email: email.toLowerCase(),
+        user_type,
+        account_type: account_type || "principal"
+      }
     });
 
   } catch (error) {
@@ -151,6 +159,64 @@ app.post("/api/auth/register", async (req, res) => {
     res.status(500).json({ success: false, message: "Registration failed" });
   }
 });
+
+// LOGIN USER
+app.post("/api/auth/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ success: false, message: "Email and password are required" });
+  }
+
+  try {
+    // Find user by email
+    const snapshot = await db.ref("users").orderByChild("email").equalTo(email.toLowerCase()).once("value");
+    
+    if (!snapshot.exists()) {
+      return res.status(401).json({ success: false, message: "Invalid email or password" });
+    }
+
+    let user = null;
+    let userId = null;
+
+    snapshot.forEach((child) => {
+      userId = child.key;
+      user = child.val();
+    });
+
+    // Verify password
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    
+    if (!passwordMatch) {
+      return res.status(401).json({ success: false, message: "Invalid email or password" });
+    }
+
+    // Update last login
+    await db.ref(`users/${userId}`).update({
+      last_login: Date.now()
+    });
+
+    console.log(`✅ User logged in: ${email}`);
+    res.json({ 
+      success: true, 
+      message: "Login successful",
+      userId: userId,
+      user: {
+        name: user.name,
+        email: user.email,
+        user_type: user.user_type,
+        account_type: user.account_type,
+        telegram_chat_id: user.telegram_chat_id
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ Login error:", error);
+    res.status(500).json({ success: false, message: "Login failed" });
+  }
+});
+
+// ========== END AUTH ENDPOINTS ==========
 
 app.get("/api/power-data", (req, res) => {
   console.log("📤 Sending latest PZEM data");
@@ -598,6 +664,8 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend: https://yourusername.github.io/sukattown`);
   console.log(`🔥 Firebase: Connected`);
   console.log(`\n📋 Available Endpoints:`);
+  console.log(`  POST   /api/auth/register - Register new user`);
+  console.log(`  POST   /api/auth/login - Login user`);
   console.log(`  POST   /api/power-data - Receive ESP32 data`);
   console.log(`  GET    /api/power-data - Get latest data`);
   console.log(`  POST   /api/consumption-alerts - Receive alerts`);

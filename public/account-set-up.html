@@ -103,6 +103,11 @@
         return;
       }
 
+      // Show loading state
+      const submitBtn = $('.login-btn');
+      const originalText = submitBtn.text();
+      submitBtn.text('Creating account...').prop('disabled', true);
+
       try {
         const response = await fetch(`${API_URL}/api/auth/register`, {
           method: 'POST',
@@ -120,21 +125,28 @@
         const data = await response.json();
 
         if (data.success) {
-          alert(`✅ Account created successfully!\n\nYou can now login with:\n📧 ${email}`);
+          alert(`✅ Account created successfully!\n\nWelcome, ${name}!\n📧 ${email}`);
+          
           // Store user session
           localStorage.setItem('userId', data.userId);
-          localStorage.setItem('userName', name);
-          localStorage.setItem('userEmail', email);
-          localStorage.setItem('userType', userType);
-          localStorage.setItem('accountType', accountType);
+          localStorage.setItem('userName', data.user.name);
+          localStorage.setItem('userEmail', data.user.email);
+          localStorage.setItem('userType', data.user.user_type);
+          localStorage.setItem('accountType', data.user.account_type);
+          if (telegramChatId) {
+            localStorage.setItem('telegramChatId', telegramChatId);
+          }
+          
           // Redirect to dashboard
           window.location.href = 'index.html';
         } else {
           alert('❌ Error: ' + data.message);
+          submitBtn.text(originalText).prop('disabled', false);
         }
       } catch (error) {
         console.error('Registration error:', error);
-        alert('❌ Failed to create account. Please try again.');
+        alert('❌ Failed to create account. Please check your connection and try again.');
+        submitBtn.text(originalText).prop('disabled', false);
       }
     });
 
@@ -149,6 +161,17 @@
         // Let them choose between teacher or principal
         if (!userTypeSelect.val()) {
           userTypeSelect.val('teacher');
+        }
+      }
+    });
+
+    // Check if already logged in
+    window.addEventListener('load', function() {
+      const userId = localStorage.getItem('userId');
+      if (userId) {
+        // User is already logged in, redirect to dashboard
+        if (confirm('You are already logged in. Go to dashboard?')) {
+          window.location.href = 'index.html';
         }
       }
     });
