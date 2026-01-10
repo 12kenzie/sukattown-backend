@@ -381,10 +381,46 @@
     const schoolName = localStorage.getItem('schoolName');
     const accountType = localStorage.getItem('accountType');
 
-    // Check if user is logged in
-    if (!userId || !userType || !schoolId) {
-      alert('⚠️ Please log in to access the dashboard');
-      window.location.href = 'login.html';
+    // DEBUG: Log what we have in localStorage
+    console.log('🔍 Authentication Debug:', {
+      userId,
+      userName,
+      userEmail,
+      userType,
+      schoolId,
+      schoolName,
+      accountType,
+      hasAllRequired: !!(userId && userType && schoolId)
+    });
+
+    // Check if user is logged in - prevent redirect loop
+    function checkAuthentication() {
+      if (!userId || !userType || !schoolId) {
+        console.log('Missing auth data:', { userId, userType, schoolId });
+
+        // Clear incomplete session data
+        localStorage.clear();
+
+        alert('⚠️ Please log in to access the dashboard');
+
+        // Prevent redirect loop by setting a flag
+        if (!sessionStorage.getItem('redirecting')) {
+          sessionStorage.setItem('redirecting', 'true');
+          window.location.href = 'login.html';
+        }
+
+        return false;
+      }
+
+      // Clear redirect flag if authentication is successful
+      sessionStorage.removeItem('redirecting');
+      return true;
+    }
+
+    // Run authentication check
+    if (!checkAuthentication()) {
+      // Stop script execution if not authenticated
+      throw new Error('Authentication required');
     }
 
     // Display user information

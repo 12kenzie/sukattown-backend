@@ -32,7 +32,7 @@
         <button type="submit" class="login-btn">Sign In</button>
       </form>
 
-      <a href="account-set-up.html">Don't have an account? Create one</a>
+      <a href="./account-set-up.html">Don't have an account? Create one</a>
 
       <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #eee;">
         <p style="font-size: 13px; color: #666; margin: 0;">
@@ -48,7 +48,7 @@
     $('#loginForm').on('submit', async function(e) {
       e.preventDefault();
 
-      const email = $('#email').val().toLowerCase().trim();
+      const email = $('#email').val().toLowerCase();
       const password = $('#password').val();
 
       if (!email || !password) {
@@ -61,8 +61,6 @@
       const originalText = submitBtn.text();
       submitBtn.text('Signing in...').prop('disabled', true);
 
-      console.log('📤 Attempting login for:', email);
-
       try {
         const response = await fetch(`${API_URL}/api/auth/login`, {
           method: 'POST',
@@ -71,10 +69,9 @@
         });
 
         const data = await response.json();
-        console.log('📥 Login response:', data);
 
         if (data.success) {
-          // Store user session with school context
+          // Store user session
           localStorage.setItem('userId', data.userId);
           localStorage.setItem('userName', data.user.name);
           localStorage.setItem('userEmail', data.user.email);
@@ -83,20 +80,11 @@
           localStorage.setItem('schoolId', data.user.school_id);
           localStorage.setItem('schoolName', data.user.school_name);
           localStorage.setItem('permissions', JSON.stringify(data.user.permissions || []));
-          
           if (data.user.telegram_chat_id) {
             localStorage.setItem('telegramChatId', data.user.telegram_chat_id);
           }
 
-          console.log('✅ Login successful! Stored user data:', {
-            userId: data.userId,
-            userName: data.user.name,
-            userType: data.user.user_type,
-            schoolId: data.user.school_id,
-            schoolName: data.user.school_name
-          });
-
-          // Show success message with school
+          // Show success message
           alert(`✅ Welcome back, ${data.user.name}!\n🏫 ${data.user.school_name}`);
           
           // Redirect to dashboard
@@ -107,20 +95,23 @@
         }
       } catch (error) {
         console.error('Login error:', error);
-        alert('❌ Failed to login. Please check your connection and try again.\n\nError: ' + error.message);
+        alert('❌ Failed to login. Please check your connection and try again.');
         submitBtn.text(originalText).prop('disabled', false);
       }
     });
 
     // Check if already logged in
-    window.addEventListener('load', function() {
-      const userId = localStorage.getItem('userId');
-      if (userId) {
-        // User is already logged in, redirect to dashboard
-        console.log('User already logged in, redirecting...');
-        window.location.href = 'index.html';
-      }
-    });
+window.addEventListener('load', function() {
+  const userId = localStorage.getItem('userId');
+  const schoolId = localStorage.getItem('schoolId');
+  const userType = localStorage.getItem('userType');
+  
+  // Only redirect if ALL required data is present
+  if (userId && schoolId && userType) {
+    console.log('User already logged in with complete data, redirecting...');
+    window.location.href = 'index.html';
+  }
+});
 
     // Allow Enter key to submit
     $('#email, #password').on('keypress', function(e) {
