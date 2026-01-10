@@ -494,7 +494,7 @@
         }
 
         .filter-btn:hover {
-
+            transition: all 0.3s;
             border-color: var(--accent-1);
             color: var(--accent-1);
             box-shadow: 0 4px 9px rgba(132, 103, 160, 0.3);
@@ -506,7 +506,8 @@
             color: white;
             border-color: transparent;
             box-shadow: 0 4px 8px rgba(130, 80, 176, 0.3) inset;
-            transform: scale(0.95); 
+            transition: all 0.3s;
+            transform: scale(0.95) translateY(-2px);
         }
 
         .refresh-btn {
