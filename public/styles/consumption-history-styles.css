@@ -506,7 +506,7 @@
             color: white;
             border-color: transparent;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 8px rgba(130, 80, 176, 0.3);
+            box-shadow: 0 4px 8px rgba(130, 80, 176, 0.3) inset;
             transform: scale(0.95); 
         }
 
