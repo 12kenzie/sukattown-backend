@@ -1761,6 +1761,45 @@ app.get("/api/schools/:id/invite-code", async (req, res) => {
   }
 });
 
+// Get user ID by email - for ESP32 setup
+app.get("/api/auth/get-user-id", async (req, res) => {
+  try {
+    const email = req.query.email;
+    
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Email required" });
+    }
+
+    const snapshot = await db.ref("users")
+      .orderByChild("email")
+      .equalTo(email.toLowerCase().trim())
+      .once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    let userId = null;
+    let user = null;
+    snapshot.forEach(child => {
+      userId = child.key;
+      user = child.val();
+    });
+
+    res.json({
+      success: true,
+      user_id: userId,
+      school_id: user.school_id,
+      name: user.name,
+      telegram_chat_id: user.telegram_chat_id
+    });
+
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // STATIC FILES
 app.use(express.static("public"));
 
