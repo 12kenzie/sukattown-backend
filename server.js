@@ -113,78 +113,94 @@ app.post("/api/power-data", async (req, res) => {
 
 // ========== ACCOUNT REGISTRATION AND LOGIN ==========
 
-// REGISTER NEW USER
 app.post("/api/auth/register", async (req, res) => {
-  const { name, email, user_type, password, telegram_chat_id, account_type } =
-    req.body;
+  const { name, email, user_type, password, telegram_chat_id, account_type, school_id, school_name, invite_code } = req.body;
 
   if (!name || !email || !password || !user_type) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Missing required fields" });
+    return res.status(400).json({ success: false, message: "Missing required fields" });
   }
 
   try {
     // Validate email domain
-    const allowedDomains = ["gmail.com", "deped.gov.ph", "depedmarikina.ph"];
-    const emailDomain = email.toLowerCase().split("@")[1];
-
+    const allowedDomains = ['gmail.com', 'deped.gov.ph', 'depedmarikina.ph'];
+    const emailDomain = email.toLowerCase().split('@')[1];
+    
     if (!allowedDomains.includes(emailDomain)) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Invalid email domain. Only @gmail.com, @deped.gov.ph, and @depedmarikina.ph are allowed.",
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid email domain. Only @gmail.com, @deped.gov.ph, and @depedmarikina.ph are allowed." 
       });
     }
 
     // Check if email already exists
-    const snapshot = await db
-      .ref("users")
-      .orderByChild("email")
-      .equalTo(email.toLowerCase())
-      .once("value");
-
+    const snapshot = await db.ref("users").orderByChild("email").equalTo(email.toLowerCase()).once("value");
+    
     if (snapshot.exists()) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Email already registered" });
+      return res.status(400).json({ success: false, message: "Email already registered" });
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
     // Handle school assignment
-    let finalSchoolId = req.body.school_id;
-    let finalSchoolName = req.body.school_name;
+    let finalSchoolId = school_id;
+    let finalSchoolName = school_name;
+    let generatedInviteCode = null;
 
-    if (!finalSchoolId) {
-      // Create new school if no school_id provided
-      if (!finalSchoolName) {
-        return res.status(400).json({
-          success: false,
-          message: "School name required for new school",
+    if (school_id) {
+      // ===== JOINING EXISTING SCHOOL - VERIFY INVITE CODE =====
+      const schoolSnapshot = await db.ref(`schools/${school_id}`).once("value");
+      
+      if (!schoolSnapshot.exists()) {
+        return res.status(404).json({ success: false, message: "School not found" });
+      }
+
+      const school = schoolSnapshot.val();
+      finalSchoolName = school.name;
+
+      // SECURITY CHECK: Verify invitation code
+      if (!invite_code || invite_code.toUpperCase() !== school.invite_code) {
+        return res.status(403).json({ 
+          success: false, 
+          message: "Invalid invitation code for this school. Please get the correct code from your school administrator." 
         });
+      }
+
+      console.log(`✅ Valid invite code provided for ${school.name}`);
+
+    } else if (school_name) {
+      // ===== CREATING NEW SCHOOL - GENERATE INVITE CODE =====
+      if (!school_name.trim()) {
+        return res.status(400).json({ success: false, message: "School name required for new school" });
       }
 
       const schoolRef = db.ref("schools").push();
       finalSchoolId = schoolRef.key;
 
+      // Generate 6-character alphanumeric invite code
+      generatedInviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
       await schoolRef.set({
-        name: finalSchoolName,
+        name: school_name.trim(),
         address: "",
         created_at: Date.now(),
         admin_user_id: null,
         members: [],
+        invite_code: generatedInviteCode,
+        privacy: {
+          allowConsumptionView: true,
+          allowBillingView: false
+        }
       });
+
+      console.log(`✅ New school created: ${school_name} with invite code: ${generatedInviteCode}`);
+
     } else {
-      // Get existing school name
-      const schoolSnapshot = await db
-        .ref(`schools/${finalSchoolId}`)
-        .once("value");
-      if (schoolSnapshot.exists()) {
-        finalSchoolName = schoolSnapshot.val().name;
-      }
+      return res.status(400).json({ 
+        success: false, 
+        message: "Either school_id with invite_code OR school_name is required" 
+      });
     }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user
     const userRef = db.ref("users").push();
@@ -193,13 +209,13 @@ app.post("/api/auth/register", async (req, res) => {
     await userRef.set({
       name,
       email: email.toLowerCase(),
-      user_type: user_type,
+      user_type,
       password: hashedPassword,
-      school_id: finalSchoolId, // ← ADD THIS
+      school_id: finalSchoolId,
       telegram_chat_id: telegram_chat_id || null,
       account_type: account_type || "principal",
-      permissions: getPermissionsByUserType(user_type), // ← ADD THIS
-      created_at: Date.now(),
+      permissions: getPermissionsByUserType(user_type),
+      created_at: Date.now()
     });
 
     // Update school members list
@@ -210,20 +226,20 @@ app.post("/api/auth/register", async (req, res) => {
     });
 
     // Set admin if principal or admin
-    if (user_type === "admin" || user_type === "principal") {
+    if (user_type === 'admin' || user_type === 'principal') {
       const schoolData = await db.ref(`schools/${finalSchoolId}`).once("value");
       if (!schoolData.val().admin_user_id) {
         await db.ref(`schools/${finalSchoolId}`).update({
-          admin_user_id: userId,
+          admin_user_id: userId
         });
       }
     }
 
-    console.log(
-      `✅ User registered: ${email} (${user_type}) - School: ${finalSchoolId}`
-    );
-    res.json({
-      success: true,
+    console.log(`✅ User registered: ${email} (${user_type}) - School: ${finalSchoolId}`);
+
+    // Prepare response
+    const response = {
+      success: true, 
       message: "User registered successfully",
       userId: userId,
       schoolId: finalSchoolId,
@@ -233,9 +249,18 @@ app.post("/api/auth/register", async (req, res) => {
         user_type,
         school_id: finalSchoolId,
         school_name: finalSchoolName,
-        account_type: account_type || "principal",
-      },
-    });
+        account_type: account_type || "principal"
+      }
+    };
+
+    // Include invite code ONLY if creating new school
+    if (generatedInviteCode) {
+      response.invite_code = generatedInviteCode;
+      response.message = "School created successfully! Share the invitation code with your staff.";
+    }
+
+    res.json(response);
+
   } catch (error) {
     console.error("❌ Registration error:", error);
     res.status(500).json({ success: false, message: "Registration failed" });
@@ -818,8 +843,7 @@ app.post("/api/auth/hash-password", async (req, res) => {
   }
 });
 
-// Add this temporary endpoint to your server.js to check what's in Firebase
-// Put this BEFORE app.listen()
+// Add this temporary endpoint to server.js to check what's in Firebase
 
 app.get("/api/auth/debug-users", async (req, res) => {
   try {
@@ -975,6 +999,42 @@ app.post("/api/auth/login-debug", async (req, res) => {
       message: "Login failed",
       error: error.message,
     });
+  }
+});
+
+// Get school invite code - only for school admins/principals
+app.get("/api/schools/:id/invite-code", async (req, res) => {
+  try {
+    const schoolId = req.params.id;
+    const userId = req.query.user_id;
+    const userType = req.query.user_type;
+
+    // Get school data
+    const schoolSnapshot = await db.ref(`schools/${schoolId}`).once("value");
+    
+    if (!schoolSnapshot.exists()) {
+      return res.status(404).json({ success: false, message: "School not found" });
+    }
+
+    const school = schoolSnapshot.val();
+
+    // Security: Only school admin/principal or system admin can view invite code
+    if (userType !== 'admin' && school.admin_user_id !== userId) {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Only school administrators can view the invitation code" 
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      invite_code: school.invite_code,
+      school_name: school.name
+    });
+
+  } catch (err) {
+    console.error("❌ Error fetching invite code:", err);
+    res.status(500).json({ success: false });
   }
 });
 

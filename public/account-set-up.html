@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -29,7 +30,9 @@
         </small>
 
         <label>User Type</label>
-        <select id="userType" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:12px;margin-top:6px;font-size:15px" required>
+        <select id="userType"
+          style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:12px;margin-top:6px;font-size:15px"
+          required>
           <option value="">Select user type</option>
           <option value="admin">Admin (Capstone Team)</option>
           <option value="teacher">Teacher</option>
@@ -37,7 +40,9 @@
         </select>
 
         <label>School</label>
-        <select id="schoolOption" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:12px;margin-top:6px;font-size:15px" required>
+        <select id="schoolOption"
+          style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:12px;margin-top:6px;font-size:15px"
+          required>
           <option value="new">Create New School</option>
           <option value="existing">Join Existing School</option>
         </select>
@@ -49,9 +54,18 @@
 
         <div id="existingSchoolSection" style="display:none;">
           <label>Select School</label>
-          <select id="schoolId" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:12px;margin-top:6px;font-size:15px">
+          <select id="schoolId"
+            style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:12px;margin-top:6px;font-size:15px">
             <option value="">Loading schools...</option>
           </select>
+
+          <label style="margin-top:12px">School Invitation Code</label>
+          <input id="inviteCode" type="text" placeholder="Enter 6-character code"
+            style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:12px;margin-top:6px;font-size:15px;text-transform:uppercase"
+            maxlength="6" required />
+          <small style="display:block;text-align:left;color:#666;margin-top:4px;font-size:12px">
+            📧 Get the invitation code from your school administrator
+          </small>
         </div>
 
         <label>Password</label>
@@ -63,11 +77,13 @@
         <label>Telegram Chat ID (Optional)</label>
         <input id="telegramChatId" type="text" placeholder="Get from @userinfobot" />
         <small style="display:block;text-align:left;color:#666;margin-top:4px;font-size:12px">
-          Get your Chat ID from <a href="https://t.me/userinfobot" target="_blank" style="color:#4659ff">@userinfobot</a> on Telegram
+          Get your Chat ID from <a href="https://t.me/userinfobot" target="_blank"
+            style="color:#4659ff">@userinfobot</a> on Telegram
         </small>
 
         <label>Account Type</label>
-        <select id="accountType" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:12px;margin-top:6px;font-size:15px">
+        <select id="accountType"
+          style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:12px;margin-top:6px;font-size:15px">
           <option value="principal">Principal (Bill Payer)</option>
           <option value="non-principal">Non-Principal (Monitor Only)</option>
         </select>
@@ -89,7 +105,7 @@
     }
 
     // Toggle between new/existing school
-    $('#schoolOption').on('change', function() {
+    $('#schoolOption').on('change', function () {
       if ($(this).val() === 'new') {
         $('#newSchoolSection').show();
         $('#existingSchoolSection').hide();
@@ -126,7 +142,7 @@
       }
     }
 
-    $('#registerForm').on('submit', async function(e) {
+    $('#registerForm').on('submit', async function (e) {
       e.preventDefault();
 
       const name = $('#name').val().trim();
@@ -139,6 +155,7 @@
       const schoolOption = $('#schoolOption').val();
       const schoolName = $('#schoolName').val().trim();
       const schoolId = $('#schoolId').val();
+      const inviteCode = $('#inviteCode').val().trim().toUpperCase();
 
       // Validation
       if (!name) {
@@ -161,9 +178,17 @@
         return;
       }
 
-      if (schoolOption === 'existing' && !schoolId) {
-        alert('❌ Please select a school!');
-        return;
+      if (schoolOption === 'existing') {
+        if (!schoolId) {
+          alert('❌ Please select a school!');
+          return;
+        }
+
+        // VALIDATE INVITE CODE
+        if (!inviteCode || inviteCode.length !== 6) {
+          alert('❌ Please enter a valid 6-character invitation code!');
+          return;
+        }
       }
 
       if (password !== confirmPassword) {
@@ -194,6 +219,7 @@
           requestBody.school_name = schoolName;
         } else {
           requestBody.school_id = schoolId;
+          requestBody.invite_code = inviteCode;
         }
 
         console.log('📤 Sending registration:', requestBody);
@@ -208,15 +234,25 @@
         console.log('📥 Registration response:', data);
 
         if (data.success) {
-          alert(`✅ Account created successfully!\n\n` +
-                `Name: ${name}\n` +
-                `Email: ${email}\n` +
-                `School: ${data.user.school_name}\n` +
-                `Type: ${userType}\n\n` +
-                `You can now login!`);
-          
+          let message = `✅ Account created successfully!\n\n` +
+            `Name: ${name}\n` +
+            `Email: ${email}\n` +
+            `School: ${data.user.school_name}\n` +
+            `Type: ${userType}`;
+
+          // Show invite code if new school was created
+          if (data.invite_code) {
+            message += `\n\n🔑 IMPORTANT: Save your school's invitation code:\n\n` +
+              `${data.invite_code}\n\n` +
+              `Share this code with your staff members so they can join your school!`;
+          }
+
+          message += `\n\nYou can now login!`;
+
+          alert(message);
+
           $('#registerForm')[0].reset();
-          
+
           setTimeout(() => {
             window.location.href = 'login.html';
           }, 1000);
@@ -232,10 +268,10 @@
     });
 
     // Auto-detect user type based on email
-    $('#email').on('blur', function() {
+    $('#email').on('blur', function () {
       const email = $(this).val().toLowerCase();
       const userTypeSelect = $('#userType');
-      
+
       if (email.includes('@gmail.com')) {
         userTypeSelect.val('admin');
       } else if (email.includes('@deped') || email.includes('@depedmarikina')) {
@@ -246,7 +282,7 @@
     });
 
     // Check if already logged in
-    window.addEventListener('load', function() {
+    window.addEventListener('load', function () {
       const userId = localStorage.getItem('userId');
       if (userId) {
         if (confirm('You are already logged in. Go to dashboard?')) {
@@ -256,4 +292,5 @@
     });
   </script>
 </body>
+
 </html>
