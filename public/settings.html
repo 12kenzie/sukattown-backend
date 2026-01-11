@@ -362,12 +362,11 @@
     const API_URL = 'https://sukattown-backend.onrender.com';
 
     const maxPower = document.getElementById('maxPower');
-    const notifToggle = document.getElementById('notifToggle');
-    const soundToggle = document.getElementById('soundToggle');
-    const smsNumber = document.getElementById('smsNumber');
-    const telegramChatId = document.getElementById('telegramChatId');
+const notifToggle = document.getElementById('notifToggle');
+const soundToggle = document.getElementById('soundToggle');
+const telegramChatId = document.getElementById('telegramChatId');
 
-    const defaults = { maxPower: 3000, notif: true, sound: false, sms: '' };
+const defaults = { maxPower: 3000, notif: true, sound: false }; 
 
     let userId, userType, schoolId;
 
@@ -447,7 +446,6 @@
       maxPower.value = defaults.maxPower;
       notifToggle.checked = defaults.notif;
       soundToggle.checked = defaults.sound;
-      smsNumber.value = defaults.sms;
     }
 
     function autoSave() {
@@ -456,7 +454,6 @@
         maxPower: maxPower.value,
         notif: notifToggle.checked,
         sound: soundToggle.checked,
-        sms: smsNumber.value
       };
       localStorage.setItem('settings', JSON.stringify(data));
       console.log("Auto-saved:", data);
@@ -509,7 +506,6 @@
       maxPower.value = settings.maxPower || defaults.maxPower;
       notifToggle.checked = settings.notif !== undefined ? settings.notif : defaults.notif;
       soundToggle.checked = settings.sound !== undefined ? settings.sound : defaults.sound;
-      smsNumber.value = settings.sms || defaults.sms;
     } else {
       loadDefaults();
     }
