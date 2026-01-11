@@ -369,7 +369,8 @@
       console.log('  schoolId:', schoolId);
       console.log('  userName:', userName);
 
-      if (!userId) {
+      if (!userId || !userType) {
+        console.log('❌ Missing user credentials, redirecting to login');
         window.location.href = 'login.html';
         return;
       }
@@ -387,6 +388,8 @@
       if (userType === 'principal') {
         loadInviteCode();
       }
+
+      initializeUserTypeFeatures();
     }
 
     async function loadInviteCode() {
@@ -489,40 +492,32 @@
     });
 
     // Show/hide sections based on user type
-    // Show/hide sections based on user type
     function initializeUserTypeFeatures() {
       console.log('🔍 DEBUG - initializeUserTypeFeatures called');
       console.log('  Current userType:', userType);
 
-      // Privacy settings - ONLY for principals
+      const privacySection = document.getElementById('privacySection');
+      const staffSection = document.getElementById('staffSection');
+      const adminSchoolsSection = document.getElementById('adminSchoolsSection');
+
+      // Hide everything by default
+      if (privacySection) privacySection.style.display = 'none';
+      if (staffSection) staffSection.style.display = 'none';
+      if (adminSchoolsSection) adminSchoolsSection.style.display = 'none';
+
+      // Show only what the user should see
       if (userType === 'principal') {
-        console.log('  ✅ Showing privacy section (Principal)');
-        document.getElementById('privacySection').style.display = 'block';
+        console.log('  ✅ Principal - Showing privacy and staff sections');
+        if (privacySection) privacySection.style.display = 'block';
+        if (staffSection) staffSection.style.display = 'block';
         loadPrivacySettings();
-      } else {
-        console.log('  ❌ Hiding privacy section (Not Principal)');
-        document.getElementById('privacySection').style.cssText = 'display: none !important';
-      }
-
-      // Staff management - ONLY for principals
-      if (userType === 'principal') {
-        console.log('  ✅ Showing staff section (Principal)');
-        document.getElementById('staffSection').style.display = 'block';
-      } else {
-        console.log('  ❌ Hiding staff section (Not Principal)');
-        document.getElementById('staffSection').style.cssText = 'display: none !important';
-      }
-
-      // Schools overview - ONLY for admins
-      if (userType === 'admin') {
-        console.log('  ✅ Showing admin schools section (Admin)');
-        document.getElementById('adminSchoolsSection').style.display = 'block';
-      } else {
-        console.log('  ❌ Hiding admin schools section (Not Admin)');
-        document.getElementById('adminSchoolsSection').style.cssText = 'display: none !important';
+      } else if (userType === 'admin') {
+        console.log('  ✅ Admin - Showing schools overview only');
+        if (adminSchoolsSection) adminSchoolsSection.style.display = 'block';
+      } else if (userType === 'teacher') {
+        console.log('  ✅ Teacher - No special sections');
       }
     }
-
     // Load privacy settings
     async function loadPrivacySettings() {
       if (!schoolId) return;
@@ -880,7 +875,7 @@
 
     // Initialize
     loadUserData();
-    initializeUserTypeFeatures();
+   
   </script>
 
 </body>
