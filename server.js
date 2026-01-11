@@ -46,15 +46,39 @@ async function sendTelegramMessage(chatId, text) {
   }
 
   try {
+    const now = new Date();
+    
+    // ISO 8601 format for precise logging
+    const isoTimestamp = now.toISOString();
+    
+    // Human-readable format for Telegram
+    const readableTime = now.toLocaleString('en-PH', { 
+      timeZone: 'Asia/Manila',
+      hour12: false,
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit',
+      fractionalSecondDigits: 3
+    });
+    
+    // Add timestamp footer
+    const messageWithTimestamp = `${text}\n\n⏰ <b>Server Time:</b> ${readableTime}\n🔖 <code>${isoTimestamp}</code>`;
+
     await axios.post(
       `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`,
       {
         chat_id: chatId,
-        text: text,
+        text: messageWithTimestamp,
         parse_mode: "HTML",
       }
     );
-    console.log(`✅ Telegram message sent to ${chatId}`);
+    
+    // Log with ISO timestamp for research data collection
+    console.log(`✅ [${isoTimestamp}] Telegram message sent to ${chatId}`);
+    
   } catch (error) {
     console.error('❌ Failed to send Telegram message:', error.message);
   }
