@@ -82,6 +82,46 @@ async function sendTelegramMessage(chatId, text) {
   }
 }
 
+async function sendConsumptionAlertToTelegram(alertData, userTelegramChatId) {
+  if (!userTelegramChatId) {
+    console.log('⚠️ No Telegram Chat ID for user');
+    return;
+  }
+
+  const message = `
+🚨 <b>SUKATTOWN ALERT</b> 🚨
+
+⚠️ <b>${alertData.period} Limit Exceeded</b>
+
+Consumption: ${alertData.consumption} kWh (Limit: ${alertData.limit} kWh) – ${alertData.percentageOver}% over
+  `;
+
+  await sendTelegramMessage(userTelegramChatId, message);
+}
+
+async function sendFireAlertToTelegram(alertData, userTelegramChatId) {
+  if (!userTelegramChatId) {
+    console.log('⚠️ No Telegram Chat ID for user');
+    return;
+  }
+
+  let message = `
+🚨 <b>SUKATTOWN ALERT</b> 🚨
+
+🔥 <b>${alertData.type}</b>
+  `;
+
+  if (alertData.flameDetected) {
+    message += `\n⚠️ Flame Detected: YES`;
+  }
+  
+  if (alertData.smokeLevel) {
+    message += `\n💨 Smoke Level: ${alertData.smokeLevel} (Threshold: ${alertData.smokeThreshold})`;
+  }
+
+  await sendTelegramMessage(userTelegramChatId, message);
+}
+
 async function sendTelegramInviteCode(chatId, schoolName, inviteCode, principalName) {
   if (!chatId || !process.env.TELEGRAM_BOT_TOKEN) {
     console.log('⚠️ Telegram not configured');
@@ -964,6 +1004,8 @@ app.post("/api/consumption-alerts", async (req, res) => {
 
   try {
     const userId = alertData.user_id || 1;
+    
+    // Save to Firebase
     await db.ref("alerts").push({
       user_id: userId,
       school_id: alertData.school_id || null,
@@ -974,7 +1016,16 @@ app.post("/api/consumption-alerts", async (req, res) => {
       timestamp: latestConsumptionAlert.timestamp,
     });
 
-    console.log("✅ Alert saved to Firebase");
+    // Get user's Telegram Chat ID and send notification
+    const userSnapshot = await db.ref(`users/${userId}`).once("value");
+    if (userSnapshot.exists()) {
+      const user = userSnapshot.val();
+      if (user.telegram_chat_id) {
+        await sendConsumptionAlertToTelegram(latestConsumptionAlert, user.telegram_chat_id);
+      }
+    }
+
+    console.log("✅ Alert saved to Firebase and Telegram sent");
     res.status(200).json({
       success: true,
       message: "Alert received successfully",
@@ -1024,6 +1075,8 @@ app.post("/api/fire-alerts", async (req, res) => {
 
   try {
     const userId = alertData.user_id || 1;
+    
+    // Save to Firebase
     await db.ref("fire_alerts").push({
       user_id: userId,
       school_id: alertData.school_id || null,
@@ -1034,7 +1087,16 @@ app.post("/api/fire-alerts", async (req, res) => {
       timestamp: latestFireAlert.timestamp,
     });
 
-    console.log("✅ Fire alert saved to Firebase");
+    // Get user's Telegram Chat ID and send notification
+    const userSnapshot = await db.ref(`users/${userId}`).once("value");
+    if (userSnapshot.exists()) {
+      const user = userSnapshot.val();
+      if (user.telegram_chat_id) {
+        await sendFireAlertToTelegram(latestFireAlert, user.telegram_chat_id);
+      }
+    }
+
+    console.log("✅ Fire alert saved to Firebase and Telegram sent");
     res.status(200).json({
       success: true,
       message: "Fire alert received successfully",
