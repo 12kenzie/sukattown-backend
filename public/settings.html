@@ -483,25 +483,29 @@
     });
 
     // Show/hide sections based on user type
-    function initializeUserTypeFeatures() {
-      // Privacy settings - ONLY for principals
-      if (userType === 'principal') {
-        document.getElementById('privacySection').style.display = 'block';
-        loadPrivacySettings();
-      } else {
-        document.getElementById('privacySection').style.display = 'none';
-      }
+function initializeUserTypeFeatures() {
+  // Privacy settings - ONLY for principals
+  if (userType === 'principal') {
+    document.getElementById('privacySection').style.display = 'block';
+    loadPrivacySettings();
+  } else {
+    document.getElementById('privacySection').style.display = 'none';
+  }
 
-      // Staff management - ONLY for principals
-      if (userType === 'principal') {
-        document.getElementById('staffSection').style.display = 'block';
-      } else {
-        document.getElementById('staffSection').style.display = 'none';
-      }
+  // Staff management - ONLY for principals
+  if (userType === 'principal') {
+    document.getElementById('staffSection').style.display = 'block';
+  } else {
+    document.getElementById('staffSection').style.display = 'none';
+  }
 
-      // Schools overview - ONLY for admins
-      initializeAdminFeatures();
-    }
+  // Schools overview - ONLY for admins
+  if (userType === 'admin') {
+    document.getElementById('adminSchoolsSection').style.display = 'block';
+  } else {
+    document.getElementById('adminSchoolsSection').style.display = 'none';
+  }
+} 
 
     // Load privacy settings
     async function loadPrivacySettings() {
