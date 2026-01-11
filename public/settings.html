@@ -168,7 +168,7 @@
           </div>
         </div>
 
-        <!-- PRIVACY SETTINGS (Principal/Admin Only) -->
+        <!-- PRIVACY SETTINGS (Principal only, not admins can view it) -->
         <div class="settings-row" style="margin-top: 24px;" id="privacySection">
           <div class="card" style="grid-column: 1 / -1;">
             <div class="card-title">
@@ -363,6 +363,12 @@
       const userName = localStorage.getItem('userName');
       const storedTelegramId = localStorage.getItem('telegramChatId');
 
+      console.log('🔍 DEBUG - User Data Loaded:');
+      console.log('  userId:', userId);
+      console.log('  userType:', userType);
+      console.log('  schoolId:', schoolId);
+      console.log('  userName:', userName);
+
       if (!userId) {
         window.location.href = 'login.html';
         return;
@@ -380,7 +386,7 @@
       // Show invite code section if user is principal or admin
       if (userType === 'principal') {
         loadInviteCode();
-      } 
+      }
     }
 
     async function loadInviteCode() {
@@ -483,27 +489,37 @@
     });
 
     // Show/hide sections based on user type
+    // Show/hide sections based on user type
     function initializeUserTypeFeatures() {
+      console.log('🔍 DEBUG - initializeUserTypeFeatures called');
+      console.log('  Current userType:', userType);
+
       // Privacy settings - ONLY for principals
       if (userType === 'principal') {
+        console.log('  ✅ Showing privacy section (Principal)');
         document.getElementById('privacySection').style.display = 'block';
         loadPrivacySettings();
       } else {
-        document.getElementById('privacySection').style.display = 'none';
+        console.log('  ❌ Hiding privacy section (Not Principal)');
+        document.getElementById('privacySection').style.cssText = 'display: none !important';
       }
 
       // Staff management - ONLY for principals
       if (userType === 'principal') {
+        console.log('  ✅ Showing staff section (Principal)');
         document.getElementById('staffSection').style.display = 'block';
       } else {
-        document.getElementById('staffSection').style.display = 'none';
+        console.log('  ❌ Hiding staff section (Not Principal)');
+        document.getElementById('staffSection').style.cssText = 'display: none !important';
       }
 
       // Schools overview - ONLY for admins
       if (userType === 'admin') {
+        console.log('  ✅ Showing admin schools section (Admin)');
         document.getElementById('adminSchoolsSection').style.display = 'block';
       } else {
-        document.getElementById('adminSchoolsSection').style.display = 'none';
+        console.log('  ❌ Hiding admin schools section (Not Admin)');
+        document.getElementById('adminSchoolsSection').style.cssText = 'display: none !important';
       }
     }
 
