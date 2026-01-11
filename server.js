@@ -116,6 +116,8 @@ app.post("/api/power-data", async (req, res) => {
 app.post("/api/auth/register", async (req, res) => {
   const { name, email, user_type, password, telegram_chat_id, account_type, school_id, school_name, invite_code } = req.body;
 
+  const cleanEmail = email.toLowerCase().trim();
+
   if (!name || !email || !password || !user_type) {
     return res.status(400).json({ success: false, message: "Missing required fields" });
   }
@@ -123,7 +125,7 @@ app.post("/api/auth/register", async (req, res) => {
   try {
     // Validate email domain
     const allowedDomains = ['gmail.com', 'deped.gov.ph', 'depedmarikina.ph'];
-    const emailDomain = email.toLowerCase().split('@')[1];
+    const emailDomain = cleanEmail.split('@')[1];
     
     if (!allowedDomains.includes(emailDomain)) {
       return res.status(400).json({ 
@@ -133,7 +135,7 @@ app.post("/api/auth/register", async (req, res) => {
     }
 
     // Check if email already exists
-    const snapshot = await db.ref("users").orderByChild("email").equalTo(email.toLowerCase()).once("value");
+    const snapshot = await db.ref("users").orderByChild("email").equalTo(cleanEmail).once("value");
     
     if (snapshot.exists()) {
       return res.status(400).json({ success: false, message: "Email already registered" });
@@ -208,7 +210,7 @@ app.post("/api/auth/register", async (req, res) => {
 
     await userRef.set({
       name,
-      email: email.toLowerCase(),
+      email: cleanEmail,
       user_type,
       password: hashedPassword,
       school_id: finalSchoolId,
@@ -245,7 +247,7 @@ app.post("/api/auth/register", async (req, res) => {
       schoolId: finalSchoolId,
       user: {
         name,
-        email: email.toLowerCase(),
+        email: cleanEmail,
         user_type,
         school_id: finalSchoolId,
         school_name: finalSchoolName,
@@ -271,6 +273,8 @@ app.post("/api/auth/register", async (req, res) => {
 app.post("/api/auth/login", async (req, res) => {
   const { email, password } = req.body;
 
+  const cleanEmail = email.toLowerCase().trim();
+
   if (!email || !password) {
     return res
       .status(400)
@@ -282,7 +286,7 @@ app.post("/api/auth/login", async (req, res) => {
     const snapshot = await db
       .ref("users")
       .orderByChild("email")
-      .equalTo(email.toLowerCase())
+      .equalTo(cleanEmail)
       .once("value");
 
     if (!snapshot.exists()) {
@@ -569,7 +573,7 @@ app.delete("/api/fire-alerts", (req, res) => {
 app.get("/api/readings", async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 50;
-    const userId = parseInt(req.query.user_id) || null;
+    const schoolId = req.query.school_id || null;
 
     const snapshot = await db
       .ref("readings")
@@ -580,7 +584,7 @@ app.get("/api/readings", async (req, res) => {
 
     snapshot.forEach((child) => {
       const reading = child.val();
-      if (!userId || reading.user_id === userId) {
+      if (!schoolId || reading.school_id === schoolId) {
         readings.push({ id: child.key, ...reading });
       }
     });
@@ -907,7 +911,7 @@ app.post("/api/auth/login-debug", async (req, res) => {
   }
 
   try {
-    const searchEmail = email.toLowerCase();
+    const searchEmail = cleanEmail;
     console.log("🔍 Searching for email:", searchEmail);
 
     const snapshot = await db
