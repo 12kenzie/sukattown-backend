@@ -25,7 +25,7 @@
       <div class="brand">EL</div>
 
       <div class="nav" role="navigation" aria-label="Main">
-        <button title="Dashboard" aria-label="Dashboard" onclick="window.location.href='index.html'">
+        <button class="active" title="Dashboard" aria-label="Dashboard" onclick="window.location.href='index.html'">
           <i class="fa-solid fa-house" aria-hidden="true"></i>
         </button>
 
@@ -37,7 +37,7 @@
           <i class="fa-solid fa-chart-area" aria-hidden="true"></i>
         </button>
 
-        <button class="active" title="Settings" aria-label="Settings">
+        <button title="Settings" aria-label="Settings" onclick="window.location.href='settings.html'">
           <i class="fa-solid fa-gear" aria-hidden="true"></i>
         </button>
 
@@ -45,6 +45,10 @@
 
         <button title="Help" aria-label="Help">
           <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
+        </button>
+
+        <button title="Logout" aria-label="Logout" onclick="logout()">
+          <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
         </button>
       </div>
     </aside>
@@ -69,11 +73,13 @@
             <div class="profile" title="Account">
               <div class="hello">
                 <span style="font-size:13px;color:var(--muted)">Hello,</span>
-                <strong>New User</strong>
+                <strong id="userName">User</strong>
               </div>
-              <div class="avatar" aria-hidden="true">NU</div>
+              <div class="avatar" aria-hidden="true" id="userAvatar">U</div>
             </div>
           </div>
+
+          
         </div>
       </div>
 

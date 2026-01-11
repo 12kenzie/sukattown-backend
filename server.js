@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
-const axios = require('axios');
+const axios = require("axios");
+const bcrypt = require("bcrypt"); // ADD THIS LINE - IMPORTANT!
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -22,6 +23,20 @@ admin.initializeApp({
 });
 
 const db = admin.database();
+
+// Helper: Get permissions by user type
+function getPermissionsByUserType(userType) {
+  switch (userType) {
+    case "admin":
+      return ["read", "write", "delete", "manage_users", "view_all_schools"];
+    case "principal":
+      return ["read", "write", "delete", "manage_alerts"];
+    case "teacher":
+      return ["read"];
+    default:
+      return ["read"];
+  }
+}
 
 // CORS configuration for GitHub Pages
 app.use(
@@ -74,25 +89,239 @@ app.post("/api/power-data", async (req, res) => {
   };
 
   try {
-    const userId = data.user_id || 1;
-    await db.ref("readings").push({
-      user_id: userId,
-      ...latestPZEMData,
-    });
+  const userId = data.user_id || 1;
+  
+  const reading = {
+    user_id: userId,
+    school_id: data.school_id || null,    // ← ADD THIS
+    ...latestPZEMData,
+  };
+  
+  await db.ref("readings").push(reading);
 
-    console.log("✅ Data saved to Firebase");
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "Data received successfully",
-        data: latestPZEMData,
-      });
+  console.log("✅ Data saved to Firebase");
+  res.status(200).json({
+    success: true,
+    message: "Data received successfully",
+    data: reading,    // ← Changed from latestPZEMData to reading
+  });
   } catch (err) {
     console.error("❌ Firebase error:", err);
     res.status(500).json({ success: false, message: "Firebase save failed" });
   }
 });
+
+// ========== ACCOUNT REGISTRATION AND LOGIN ==========
+
+// REGISTER NEW USER
+app.post("/api/auth/register", async (req, res) => {
+  const { name, email, user_type, password, telegram_chat_id, account_type } =
+    req.body;
+
+  if (!name || !email || !password || !user_type) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Missing required fields" });
+  }
+
+  try {
+    // Validate email domain
+    const allowedDomains = ["gmail.com", "deped.gov.ph", "depedmarikina.ph"];
+    const emailDomain = email.toLowerCase().split("@")[1];
+
+    if (!allowedDomains.includes(emailDomain)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid email domain. Only @gmail.com, @deped.gov.ph, and @depedmarikina.ph are allowed.",
+      });
+    }
+
+    // Check if email already exists
+    const snapshot = await db
+      .ref("users")
+      .orderByChild("email")
+      .equalTo(email.toLowerCase())
+      .once("value");
+
+    if (snapshot.exists()) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Email already registered" });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Handle school assignment
+    let finalSchoolId = req.body.school_id;
+    let finalSchoolName = req.body.school_name;
+
+    if (!finalSchoolId) {
+      // Create new school if no school_id provided
+      if (!finalSchoolName) {
+        return res.status(400).json({
+          success: false,
+          message: "School name required for new school",
+        });
+      }
+
+      const schoolRef = db.ref("schools").push();
+      finalSchoolId = schoolRef.key;
+
+      await schoolRef.set({
+        name: finalSchoolName,
+        address: "",
+        created_at: Date.now(),
+        admin_user_id: null,
+        members: [],
+      });
+    } else {
+      // Get existing school name
+      const schoolSnapshot = await db
+        .ref(`schools/${finalSchoolId}`)
+        .once("value");
+      if (schoolSnapshot.exists()) {
+        finalSchoolName = schoolSnapshot.val().name;
+      }
+    }
+
+    // Create user
+    const userRef = db.ref("users").push();
+    const userId = userRef.key;
+
+    await userRef.set({
+      name,
+      email: email.toLowerCase(),
+      user_type: user_type,
+      password: hashedPassword,
+      school_id: finalSchoolId, // ← ADD THIS
+      telegram_chat_id: telegram_chat_id || null,
+      account_type: account_type || "principal",
+      permissions: getPermissionsByUserType(user_type), // ← ADD THIS
+      created_at: Date.now(),
+    });
+
+    // Update school members list
+    await db.ref(`schools/${finalSchoolId}/members`).transaction((members) => {
+      if (!members) members = [];
+      members.push(userId);
+      return members;
+    });
+
+    // Set admin if principal or admin
+    if (user_type === "admin" || user_type === "principal") {
+      const schoolData = await db.ref(`schools/${finalSchoolId}`).once("value");
+      if (!schoolData.val().admin_user_id) {
+        await db.ref(`schools/${finalSchoolId}`).update({
+          admin_user_id: userId,
+        });
+      }
+    }
+
+    console.log(
+      `✅ User registered: ${email} (${user_type}) - School: ${finalSchoolId}`
+    );
+    res.json({
+      success: true,
+      message: "User registered successfully",
+      userId: userId,
+      schoolId: finalSchoolId,
+      user: {
+        name,
+        email: email.toLowerCase(),
+        user_type,
+        school_id: finalSchoolId,
+        school_name: finalSchoolName,
+        account_type: account_type || "principal",
+      },
+    });
+  } catch (error) {
+    console.error("❌ Registration error:", error);
+    res.status(500).json({ success: false, message: "Registration failed" });
+  }
+});
+
+// LOGIN USER
+app.post("/api/auth/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Email and password are required" });
+  }
+
+  try {
+    // Find user by email
+    const snapshot = await db
+      .ref("users")
+      .orderByChild("email")
+      .equalTo(email.toLowerCase())
+      .once("value");
+
+    if (!snapshot.exists()) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid email or password" });
+    }
+
+    let user = null;
+    let userId = null;
+
+    snapshot.forEach((child) => {
+      userId = child.key;
+      user = child.val();
+    });
+
+    // Verify password
+    const passwordMatch = await bcrypt.compare(password, user.password);
+
+    if (!passwordMatch) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid email or password" });
+    }
+
+    // Get school info
+    let schoolName = "Unknown School";
+    if (user.school_id) {
+      const schoolSnapshot = await db
+        .ref(`schools/${user.school_id}`)
+        .once("value");
+      if (schoolSnapshot.exists()) {
+        schoolName = schoolSnapshot.val().name;
+      }
+    }
+
+    // Update last login
+    await db.ref(`users/${userId}`).update({
+      last_login: Date.now(),
+    });
+
+    console.log(`✅ User logged in: ${email}`);
+    res.json({
+      success: true,
+      message: "Login successful",
+      userId: userId,
+      user: {
+        name: user.name,
+        email: user.email,
+        user_type: user.user_type,
+        school_id: user.school_id,
+        school_name: schoolName,
+        account_type: user.account_type,
+        telegram_chat_id: user.telegram_chat_id,
+        permissions: user.permissions || getPermissionsByUserType(user.user_type)  
+      },
+    });
+  } catch (error) {
+    console.error("❌ Login error:", error);
+    res.status(500).json({ success: false, message: "Login failed" });
+  }
+});
+
+// ========== END AUTH ENDPOINTS ==========
 
 app.get("/api/power-data", (req, res) => {
   console.log("📤 Sending latest PZEM data");
@@ -122,6 +351,7 @@ app.post("/api/consumption-alerts", async (req, res) => {
     const userId = alertData.user_id || 1;
     await db.ref("alerts").push({
       user_id: userId,
+      school_id: alertData.school_id || null,
       period: latestConsumptionAlert.period,
       consumption: latestConsumptionAlert.consumption,
       limit: latestConsumptionAlert.limit,
@@ -130,13 +360,11 @@ app.post("/api/consumption-alerts", async (req, res) => {
     });
 
     console.log("✅ Alert saved to Firebase");
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "Alert received successfully",
-        data: latestConsumptionAlert,
-      });
+    res.status(200).json({
+      success: true,
+      message: "Alert received successfully",
+      data: latestConsumptionAlert,
+    });
   } catch (err) {
     console.error("❌ Firebase error:", err);
     res.status(500).json({ success: false, message: "Firebase save failed" });
@@ -183,6 +411,7 @@ app.post("/api/fire-alerts", async (req, res) => {
     const userId = alertData.user_id || 1;
     await db.ref("fire_alerts").push({
       user_id: userId,
+      school_id: alertData.school_id || null,
       type: latestFireAlert.type,
       flame_detected: latestFireAlert.flameDetected,
       smoke_level: latestFireAlert.smokeLevel,
@@ -191,13 +420,11 @@ app.post("/api/fire-alerts", async (req, res) => {
     });
 
     console.log("✅ Fire alert saved to Firebase");
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "Fire alert received successfully",
-        data: latestFireAlert,
-      });
+    res.status(200).json({
+      success: true,
+      message: "Fire alert received successfully",
+      data: latestFireAlert,
+    });
   } catch (err) {
     console.error("❌ Firebase error:", err);
     res.status(500).json({ success: false, message: "Firebase save failed" });
@@ -226,20 +453,20 @@ app.get("/api/fire-alerts/history", async (req, res) => {
       .orderByChild("timestamp")
       .limitToLast(limit)
       .once("value");
-    
+
     let fireAlerts = [];
 
     snapshot.forEach((child) => {
       const alert = child.val();
       if (!userId || alert.user_id === userId) {
-        fireAlerts.push({ 
-          id: child.key, 
+        fireAlerts.push({
+          id: child.key,
           type: alert.type,
           flameDetected: alert.flame_detected,
           smokeLevel: alert.smoke_level,
           smokeThreshold: alert.smoke_threshold,
           timestamp: alert.timestamp,
-          userId: alert.user_id
+          userId: alert.user_id,
         });
       }
     });
@@ -249,7 +476,9 @@ app.get("/api/fire-alerts/history", async (req, res) => {
     res.json({ success: true, count: fireAlerts.length, data: fireAlerts });
   } catch (err) {
     console.error("❌ Firebase query error:", err);
-    res.status(500).json({ success: false, message: "Failed to fetch fire alerts history" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch fire alerts history" });
   }
 });
 
@@ -258,12 +487,14 @@ app.delete("/api/fire-alerts/:id", async (req, res) => {
   try {
     const alertId = req.params.id;
     await db.ref(`fire_alerts/${alertId}`).remove();
-    
+
     console.log(`🗑️ Fire alert ${alertId} deleted from history`);
     res.json({ success: true, message: "Fire alert deleted successfully" });
   } catch (err) {
     console.error("❌ Firebase delete error:", err);
-    res.status(500).json({ success: false, message: "Failed to delete fire alert" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to delete fire alert" });
   }
 });
 
@@ -271,7 +502,7 @@ app.delete("/api/fire-alerts/:id", async (req, res) => {
 app.delete("/api/fire-alerts/history/clear", async (req, res) => {
   try {
     const userId = parseInt(req.query.user_id) || null;
-    
+
     if (userId) {
       // Delete only for specific user
       const snapshot = await db
@@ -279,12 +510,12 @@ app.delete("/api/fire-alerts/history/clear", async (req, res) => {
         .orderByChild("user_id")
         .equalTo(userId)
         .once("value");
-      
+
       const updates = {};
       snapshot.forEach((child) => {
         updates[`fire_alerts/${child.key}`] = null;
       });
-      
+
       await db.ref().update(updates);
       console.log(`🗑️ Cleared all fire alerts for user ${userId}`);
     } else {
@@ -292,11 +523,13 @@ app.delete("/api/fire-alerts/history/clear", async (req, res) => {
       await db.ref("fire_alerts").remove();
       console.log("🗑️ Cleared all fire alerts");
     }
-    
+
     res.json({ success: true, message: "Fire alerts history cleared" });
   } catch (err) {
     console.error("❌ Firebase clear error:", err);
-    res.status(500).json({ success: false, message: "Failed to clear fire alerts" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to clear fire alerts" });
   }
 });
 
@@ -483,7 +716,7 @@ app.delete("/api/alerts/:id", async (req, res) => {
   try {
     const alertId = req.params.id;
     await db.ref(`alerts/${alertId}`).remove();
-    
+
     console.log(`🗑️ Alert ${alertId} deleted`);
     res.json({ success: true, message: "Alert deleted successfully" });
   } catch (err) {
@@ -494,16 +727,53 @@ app.delete("/api/alerts/:id", async (req, res) => {
 
 app.post("/api/send-telegram", async (req, res) => {
   const { message } = req.body;
-  
+
   try {
-    await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      chat_id: process.env.TELEGRAM_CHAT_ID,
-      text: `🚨 SUKATTOWN ALERT 🚨\n\n${message}`,
-      parse_mode: 'HTML'
-    });
-    
+    await axios.post(
+      `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`,
+      {
+        chat_id: process.env.TELEGRAM_CHAT_ID,
+        text: `🚨 SUKATTOWN ALERT 🚨\n\n${message}`,
+        parse_mode: "HTML",
+      }
+    );
+
     res.json({ success: true });
   } catch (error) {
+    res.status(500).json({ success: false });
+  }
+});
+
+// ========== SCHOOLS ==========
+
+// Get all schools (admin only)
+app.get("/api/schools", async (req, res) => {
+  try {
+    const snapshot = await db.ref("schools").once("value");
+    const schools = [];
+
+    snapshot.forEach((child) => {
+      schools.push({ id: child.key, ...child.val() });
+    });
+
+    res.json({ success: true, count: schools.length, data: schools });
+  } catch (err) {
+    console.error("❌ Query error:", err);
+    res.status(500).json({ success: false });
+  }
+});
+
+// Get school by ID
+app.get("/api/schools/:id", async (req, res) => {
+  try {
+    const snapshot = await db.ref(`schools/${req.params.id}`).once("value");
+    
+    if (!snapshot.exists()) {
+      return res.status(404).json({ success: false, message: "School not found" });
+    }
+
+    res.json({ success: true, data: { id: req.params.id, ...snapshot.val() } });
+  } catch (err) {
     res.status(500).json({ success: false });
   }
 });
@@ -530,6 +800,184 @@ app.get("/api/health", async (req, res) => {
   }
 });
 
+// TEMPORARY: Hash password endpoint
+app.post("/api/auth/hash-password", async (req, res) => {
+  const { password } = req.body;
+
+  if (!password) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Password required" });
+  }
+
+  try {
+    const hash = await bcrypt.hash(password, 10);
+    res.json({ success: true, hash });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Hash generation failed" });
+  }
+});
+
+// Add this temporary endpoint to your server.js to check what's in Firebase
+// Put this BEFORE app.listen()
+
+app.get("/api/auth/debug-users", async (req, res) => {
+  try {
+    const snapshot = await db.ref("users").once("value");
+
+    if (!snapshot.exists()) {
+      return res.json({
+        success: true,
+        message: "No users found in database",
+        users: [],
+      });
+    }
+
+    const users = [];
+    snapshot.forEach((child) => {
+      const user = child.val();
+      users.push({
+        id: child.key,
+        email: user.email,
+        name: user.name,
+        user_type: user.user_type,
+        account_type: user.account_type,
+        has_password: !!user.password,
+        password_is_hashed: user.password
+          ? user.password.startsWith("$2")
+          : false,
+        password_length: user.password ? user.password.length : 0,
+        created_at: user.created_at,
+        last_login: user.last_login,
+      });
+    });
+
+    console.log(`📊 Found ${users.length} users in database`);
+    res.json({
+      success: true,
+      count: users.length,
+      users: users,
+    });
+  } catch (error) {
+    console.error("❌ Debug error:", error);
+    res.status(500).json({ success: false, message: "Debug failed" });
+  }
+});
+
+// Test login with detailed logging
+app.post("/api/auth/login-debug", async (req, res) => {
+  const { email, password } = req.body;
+
+  console.log("\n=== LOGIN DEBUG START ===");
+  console.log("📧 Email received:", email);
+  console.log(
+    "🔐 Password received:",
+    password ? `${password.substring(0, 3)}***` : "NONE"
+  );
+
+  if (!email || !password) {
+    console.log("❌ Missing email or password");
+    return res
+      .status(400)
+      .json({ success: false, message: "Email and password are required" });
+  }
+
+  try {
+    const searchEmail = email.toLowerCase();
+    console.log("🔍 Searching for email:", searchEmail);
+
+    const snapshot = await db
+      .ref("users")
+      .orderByChild("email")
+      .equalTo(searchEmail)
+      .once("value");
+
+    console.log("📊 Query executed, snapshot exists:", snapshot.exists());
+
+    if (!snapshot.exists()) {
+      console.log("❌ No user found with email:", searchEmail);
+
+      // Let's check ALL users to see what emails exist
+      const allUsers = await db.ref("users").once("value");
+      const emailList = [];
+      allUsers.forEach((child) => {
+        emailList.push(child.val().email);
+      });
+      console.log("📋 All emails in database:", emailList);
+
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password",
+        debug: {
+          searchedFor: searchEmail,
+          availableEmails: emailList,
+        },
+      });
+    }
+
+    let user = null;
+    let userId = null;
+
+    snapshot.forEach((child) => {
+      userId = child.key;
+      user = child.val();
+      console.log("👤 Found user:", {
+        id: userId,
+        email: user.email,
+        name: user.name,
+        hasPassword: !!user.password,
+        passwordStartsWith: user.password
+          ? user.password.substring(0, 10)
+          : "NONE",
+      });
+    });
+
+    console.log("🔐 Attempting password comparison...");
+    console.log("   Plain password:", password);
+    console.log("   Hashed password:", user.password.substring(0, 20) + "...");
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    console.log("✅ Password match result:", passwordMatch);
+
+    if (!passwordMatch) {
+      console.log("❌ Password does not match");
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password",
+        debug: {
+          passwordProvided: password.substring(0, 3) + "***",
+          hashExists: !!user.password,
+          hashStartsWith: user.password.substring(0, 10),
+        },
+      });
+    }
+
+    console.log("✅ Login successful!");
+    console.log("=== LOGIN DEBUG END ===\n");
+
+    res.json({
+      success: true,
+      message: "Login successful",
+      userId: userId,
+      user: {
+        name: user.name,
+        email: user.email,
+        user_type: user.user_type,
+        account_type: user.account_type,
+        telegram_chat_id: user.telegram_chat_id,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Login error:", error);
+    console.log("=== LOGIN DEBUG END (ERROR) ===\n");
+    res.status(500).json({
+      success: false,
+      message: "Login failed",
+      error: error.message,
+    });
+  }
+});
+
 // STATIC FILES
 app.use(express.static("public"));
 
@@ -540,6 +988,8 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend: https://yourusername.github.io/sukattown`);
   console.log(`🔥 Firebase: Connected`);
   console.log(`\n📋 Available Endpoints:`);
+  console.log(`  POST   /api/auth/register - Register new user`);
+  console.log(`  POST   /api/auth/login - Login user`);
   console.log(`  POST   /api/power-data - Receive ESP32 data`);
   console.log(`  GET    /api/power-data - Get latest data`);
   console.log(`  POST   /api/consumption-alerts - Receive alerts`);
@@ -553,9 +1003,15 @@ app.listen(PORT, () => {
   console.log(`  DELETE /api/alerts/:id - Delete specific alert`);
   console.log(`  POST   /api/fire-alerts - Receive fire alerts`);
   console.log(`  GET    /api/fire-alerts - Get latest fire alert`);
-  console.log(`  GET    /api/fire-alerts/history?limit=50 - Get fire alerts history`);
+  console.log(
+    `  GET    /api/fire-alerts/history?limit=50 - Get fire alerts history`
+  );
   console.log(`  DELETE /api/fire-alerts/:id - Delete specific fire alert`);
-  console.log(`  DELETE /api/fire-alerts/history/clear - Clear all fire alerts`);
+  console.log(
+    `  DELETE /api/fire-alerts/history/clear - Clear all fire alerts`
+  );
   console.log(`  DELETE /api/fire-alerts - Clear fire alert notification`);
+  console.log(`  GET    /api/schools - Get all schools`);
+  console.log(`  GET    /api/schools/:id - Get school by ID`);
   console.log(`  GET    /api/health - Health check\n`);
 });

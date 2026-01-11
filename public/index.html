@@ -11,7 +11,8 @@
 
   <link rel="stylesheet" href="styles/styles.css">
 
-  <title>SukatTown Dashboard</title>
+  <title>SukatTown Dashboard</title> 
+  <!-- index.html -->
 </head>
 
 <body>
@@ -46,6 +47,10 @@
         <button title="Help" aria-label="Help">
           <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
         </button>
+
+        <button title="Logout" aria-label="Logout" onclick="logout()">
+          <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+        </button>
       </div>
     </aside>
 
@@ -66,13 +71,14 @@
           </div>
 
           <!-- PROFILE / GREETING on upper-right -->
+
           <div class="topbar-right">
             <div class="profile" title="Account">
               <div class="hello">
                 <span style="font-size:13px;color:var(--muted)">Hello,</span>
-                <strong>New User</strong>
+                <strong id="userName">User</strong>
               </div>
-              <div class="avatar" aria-hidden="true">NU</div>
+              <div class="avatar" aria-hidden="true" id="userAvatar">U</div>
             </div>
           </div>
         </div>
@@ -366,6 +372,86 @@
 
     let isPrincipalAccount = true; // Default to principal account
 
+    // User context from localStorage
+    const userId = localStorage.getItem('userId');
+    const userName = localStorage.getItem('userName');
+    const userEmail = localStorage.getItem('userEmail');
+    const userType = localStorage.getItem('userType');
+    const schoolId = localStorage.getItem('schoolId');
+    const schoolName = localStorage.getItem('schoolName');
+    const accountType = localStorage.getItem('accountType');
+
+    // DEBUG: Log what we have in localStorage
+    console.log('🔍 Authentication Debug:', {
+      userId,
+      userName,
+      userEmail,
+      userType,
+      schoolId,
+      schoolName,
+      accountType,
+      hasAllRequired: !!(userId && userType && schoolId)
+    });
+
+    // Check if user is logged in - prevent redirect loop
+    function checkAuthentication() {
+      if (!userId || !userType || !schoolId) {
+        console.log('Missing auth data:', { userId, userType, schoolId });
+
+        // Clear incomplete session data
+        localStorage.clear();
+
+        alert('⚠️ Please log in to access the dashboard');
+
+        // Prevent redirect loop by setting a flag
+        if (!sessionStorage.getItem('redirecting')) {
+          sessionStorage.setItem('redirecting', 'true');
+          window.location.href = 'login.html';
+        }
+
+        return false;
+      }
+
+      // Clear redirect flag if authentication is successful
+      sessionStorage.removeItem('redirecting');
+      return true;
+    }
+
+    // Run authentication check
+    if (!checkAuthentication()) {
+      // Stop script execution if not authenticated
+      throw new Error('Authentication required');
+    }
+
+    // Display user information
+    function displayUserInfo() {
+      if (userName) {
+        $('#userName').text(userName);
+
+        // Set avatar initials
+        const initials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+        $('#userAvatar').text(initials);
+      }
+
+
+      // Update account type toggle based on stored preference
+      if (accountType === 'non-principal') {
+        setAccountType('non-principal');
+      } else {
+        setAccountType('principal');
+      }
+    }
+
+    function logout() {
+      if (confirm('Are you sure you want to logout?')) {
+        localStorage.clear();
+        window.location.href = 'login.html';
+      }
+    }
+
+    // Make logout available globally
+    window.logout = logout;
+
     // AI Insights with REAL data analysis
     function generateAIInsights() {
       $('#aiLoadingIndicator').show();
@@ -563,7 +649,13 @@
     }
 
     function fetchSensorData() {
-      fetch(API_URL)
+      // Add school and user context to API request
+      const params = new URLSearchParams({
+        school_id: schoolId,
+        user_type: userType
+      });
+
+      fetch(`${API_URL}?${params}`)
         .then(response => response.json())
         .then(data => {
           console.log('Fetched data:', data);
@@ -591,11 +683,18 @@
 
     function fetchConsumptionAlerts() {
       const now = Date.now();
-      if (now - lastAlertCheck < 5000) return; // Check every 5 seconds minimum
+      if (now - lastAlertCheck < 5000) return;
 
       lastAlertCheck = now;
 
-      fetch(ALERT_API_URL)
+      // Add school filtering
+      const params = new URLSearchParams({
+        school_id: schoolId,
+        user_type: userType,
+        limit: 10
+      });
+
+      fetch(`${ALERT_API_URL}?${params}`)
         .then(response => response.json())
         .then(data => {
           if (data && data.period) {
@@ -615,7 +714,13 @@
     }
 
     function fetchFireAlerts() {
-      fetch(FIRE_ALERT_API_URL)
+      // Add school filtering
+      const params = new URLSearchParams({
+        school_id: schoolId,
+        user_type: userType
+      });
+
+      fetch(`${FIRE_ALERT_API_URL}?${params}`)
         .then(response => {
           if (!response.ok) {
             if (response.status === 404) {
@@ -1154,14 +1259,17 @@
 
     // Fetch data immediately and every 5 seconds
     $(document).ready(function () {
+      // Display user info first
+      displayUserInfo();
+
       fetchSensorData();
       fetchConsumptionAlerts();
       fetchFireAlerts();
 
       setInterval(fetchSensorData, 5000);
-      setInterval(fetchConsumptionAlerts, 3000); // Check for alerts every 3 seconds
-      setInterval(fetchFireAlerts, 2000); // Check for fire alerts every 2 seconds
-      setInterval(generateAIInsights, 30000); // Update insights every 30 seconds
+      setInterval(fetchConsumptionAlerts, 3000);
+      setInterval(fetchFireAlerts, 2000);
+      setInterval(generateAIInsights, 30000);
     });
   </script>
 
