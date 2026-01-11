@@ -734,6 +734,186 @@ app.get("/api/schools/:id/members", async (req, res) => {
   }
 });
 
+// Get all schools with detailed info (admin only)
+app.get("/api/admin/schools-overview", async (req, res) => {
+  try {
+    const userId = req.query.user_id;
+    const userType = req.query.user_type;
+
+    // Security: Only system admins can access this
+    if (userType !== 'admin') {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Only system administrators can access this overview" 
+      });
+    }
+
+    const schoolsSnapshot = await db.ref("schools").once("value");
+    const schools = [];
+
+    for (const schoolKey of Object.keys(schoolsSnapshot.val() || {})) {
+      const school = schoolsSnapshot.val()[schoolKey];
+      
+      // Count members
+      const memberCount = school.members ? school.members.length : 0;
+
+      // Get principal info
+      let principalName = 'N/A';
+      if (school.admin_user_id) {
+        const principalSnapshot = await db.ref(`users/${school.admin_user_id}`).once("value");
+        if (principalSnapshot.exists()) {
+          principalName = principalSnapshot.val().name;
+        }
+      }
+
+      schools.push({
+        id: schoolKey,
+        name: school.name,
+        address: school.address || 'Not specified',
+        created_at: school.created_at,
+        member_count: memberCount,
+        principal_name: principalName,
+        principal_id: school.admin_user_id,
+        privacy: {
+          allowConsumptionView: school.privacy?.allowConsumptionView !== false,
+          allowBillingView: school.privacy?.allowBillingView === true
+        }
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      count: schools.length,
+      schools 
+    });
+
+  } catch (err) {
+    console.error("❌ Error fetching schools overview:", err);
+    res.status(500).json({ success: false, message: "Failed to fetch schools" });
+  }
+});
+
+// Get school members with privacy check (admin only)
+app.get("/api/admin/schools/:id/members", async (req, res) => {
+  try {
+    const schoolId = req.params.id;
+    const userId = req.query.user_id;
+    const userType = req.query.user_type;
+
+    // Security: Only system admins can access this
+    if (userType !== 'admin') {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Only system administrators can access this" 
+      });
+    }
+
+    // Get school data
+    const schoolSnapshot = await db.ref(`schools/${schoolId}`).once("value");
+    
+    if (!schoolSnapshot.exists()) {
+      return res.status(404).json({ success: false, message: "School not found" });
+    }
+
+    const school = schoolSnapshot.val();
+
+    // Check privacy settings - we'll return the status but let frontend handle display
+    const privacyAllowed = true; // Admins can always attempt, but we return privacy status
+
+    // Get all users for this school
+    const usersSnapshot = await db.ref("users")
+      .orderByChild("school_id")
+      .equalTo(schoolId)
+      .once("value");
+
+    const members = [];
+    usersSnapshot.forEach((child) => {
+      const user = child.val();
+      members.push({
+        id: child.key,
+        name: user.name,
+        email: user.email,
+        user_type: user.user_type,
+        account_type: user.account_type,
+        created_at: user.created_at,
+        last_login: user.last_login,
+        telegram_connected: !!user.telegram_chat_id
+      });
+    });
+
+    res.json({ 
+      success: true, 
+      school_name: school.name,
+      count: members.length,
+      members,
+      privacy: {
+        allowConsumptionView: school.privacy?.allowConsumptionView !== false,
+        allowBillingView: school.privacy?.allowBillingView === true
+      }
+    });
+
+  } catch (err) {
+    console.error("❌ Error fetching members:", err);
+    res.status(500).json({ success: false });
+  }
+});
+
+// Get school consumption data with privacy check (admin only)
+app.get("/api/admin/schools/:id/consumption", async (req, res) => {
+  try {
+    const schoolId = req.params.id;
+    const userType = req.query.user_type;
+    const limit = parseInt(req.query.limit) || 50;
+
+    // Security: Only system admins
+    if (userType !== 'admin') {
+      return res.status(403).json({ success: false, message: "Admin access only" });
+    }
+
+    // Check privacy settings
+    const schoolSnapshot = await db.ref(`schools/${schoolId}`).once("value");
+    if (!schoolSnapshot.exists()) {
+      return res.status(404).json({ success: false, message: "School not found" });
+    }
+
+    const school = schoolSnapshot.val();
+    const allowConsumptionView = school.privacy?.allowConsumptionView !== false;
+
+    if (!allowConsumptionView) {
+      return res.status(403).json({ 
+        success: false, 
+        message: "This school's principal has restricted consumption data access",
+        privacy_restricted: true
+      });
+    }
+
+    // Get consumption data
+    const snapshot = await db.ref("readings")
+      .orderByChild("school_id")
+      .equalTo(schoolId)
+      .limitToLast(limit)
+      .once("value");
+
+    const readings = [];
+    snapshot.forEach((child) => {
+      readings.push({ id: child.key, ...child.val() });
+    });
+
+    readings.reverse();
+
+    res.json({ 
+      success: true, 
+      school_name: school.name,
+      count: readings.length,
+      data: readings 
+    });
+
+  } catch (err) {
+    console.error("❌ Error fetching consumption:", err);
+    res.status(500).json({ success: false });
+  }
+});
+
 // ========== END AUTH ENDPOINTS ==========
 
 app.get("/api/power-data", (req, res) => {
