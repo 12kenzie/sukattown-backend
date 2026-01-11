@@ -34,38 +34,63 @@
           style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:12px;margin-top:6px;font-size:15px"
           required>
           <option value="">Select user type</option>
-          <option value="admin">Admin (Capstone Team)</option>
+          <option value="admin">System Admin (Capstone Team)</option>
           <option value="teacher">Teacher</option>
           <option value="principal">Principal/Staff</option>
         </select>
+        <small id="userTypeHint" style="display:none;text-align:left;color:#666;margin-top:4px;font-size:12px"></small>
 
-        <label>School</label>
-        <select id="schoolOption"
-          style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:12px;margin-top:6px;font-size:15px"
-          required>
-          <option value="new">Create New School</option>
-          <option value="existing">Join Existing School</option>
-        </select>
-
-        <div id="newSchoolSection" style="display:block;">
-          <label>School Name</label>
-          <input id="schoolName" type="text" placeholder="e.g., Marikina High School" />
+        <!-- Admin Invitation Code (Only for Admin) -->
+        <div id="adminInviteSection" style="display:none;">
+          <label>Admin Invitation Code</label>
+          <input id="adminInviteCode" type="text" placeholder="Enter admin code from capstone team"
+            style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:12px;margin-top:6px;font-size:15px;text-transform:uppercase"
+            maxlength="20" />
+          <small style="display:block;text-align:left;color:#ff6b6b;margin-top:4px;font-size:12px">
+            🔒 <strong>Required:</strong> Contact the SukatTown capstone team to get the admin invitation code
+          </small>
         </div>
 
-        <div id="existingSchoolSection" style="display:none;">
-          <label>Select School</label>
-          <select id="schoolId"
-            style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:12px;margin-top:6px;font-size:15px">
-            <option value="">Loading schools...</option>
+        <!-- School Selection (Hidden for Admin) -->
+        <div id="schoolSection">
+          <label>School</label>
+          <select id="schoolOption"
+            style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:12px;margin-top:6px;font-size:15px"
+            required>
+            <option value="new">Create New School</option>
+            <option value="existing">Join Existing School</option>
           </select>
 
-          <label style="margin-top:12px">School Invitation Code</label>
-          <input id="inviteCode" type="text" placeholder="Enter 6-character code"
-            style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:12px;margin-top:6px;font-size:15px;text-transform:uppercase"
-            maxlength="6" required />
-          <small style="display:block;text-align:left;color:#666;margin-top:4px;font-size:12px">
-            📧 Get the invitation code from your school administrator
-          </small>
+          <div id="newSchoolSection" style="display:block;">
+            <label>School Name</label>
+            <input id="schoolName" type="text" placeholder="e.g., Marikina High School" />
+          </div>
+
+          <div id="existingSchoolSection" style="display:none;">
+            <label>Select School</label>
+            <select id="schoolId"
+              style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:12px;margin-top:6px;font-size:15px">
+              <option value="">Loading schools...</option>
+            </select>
+
+            <label style="margin-top:12px">School Invitation Code</label>
+            <input id="inviteCode" type="text" placeholder="Enter 6-character code"
+              style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:12px;margin-top:6px;font-size:15px;text-transform:uppercase"
+              maxlength="6" required />
+            <small style="display:block;text-align:left;color:#666;margin-top:4px;font-size:12px">
+              📧 Get the invitation code from your school administrator
+            </small>
+          </div>
+
+          <!-- Account Type (Only for Teacher/Principal) -->
+          <div id="accountTypeSection">
+            <label>Account Type</label>
+            <select id="accountType"
+              style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:12px;margin-top:6px;font-size:15px">
+              <option value="principal">Principal (Bill Payer)</option>
+              <option value="non-principal">Non-Principal (Monitor Only)</option>
+            </select>
+          </div>
         </div>
 
         <label>Password</label>
@@ -80,13 +105,6 @@
           Get your Chat ID from <a href="https://t.me/userinfobot" target="_blank"
             style="color:#4659ff">@userinfobot</a> on Telegram
         </small>
-
-        <label>Account Type</label>
-        <select id="accountType"
-          style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:12px;margin-top:6px;font-size:15px">
-          <option value="principal">Principal (Bill Payer)</option>
-          <option value="non-principal">Non-Principal (Monitor Only)</option>
-        </select>
 
         <button type="submit" class="login-btn">Create Account</button>
       </form>
@@ -104,20 +122,73 @@
       return allowedDomains.includes(domain);
     }
 
+    $(document).ready(function () {
+      $('#inviteCode').prop('required', false);
+      $('#adminInviteCode').prop('required', false);
+
+      const userId = localStorage.getItem('userId');
+      if (userId) {
+        if (confirm('You are already logged in. Go to dashboard?')) {
+          window.location.href = 'index.html';
+        }
+      }
+    });
+
+    // Handle user type change - show/hide sections
+    $('#userType').on('change', function () {
+      const userType = $(this).val();
+      const schoolSection = $('#schoolSection');
+      const adminInviteSection = $('#adminInviteSection');
+      const userTypeHint = $('#userTypeHint');
+
+      if (userType === 'admin') {
+        // Show admin invite section, hide school section
+        adminInviteSection.show();
+        schoolSection.hide();
+
+        $('#adminInviteCode').prop('required', true);
+        $('#schoolName').prop('required', false);
+        $('#schoolId').prop('required', false);
+        $('#inviteCode').prop('required', false);
+        $('#schoolOption').prop('required', false);
+
+        userTypeHint.text('🔧 System Admins manage the entire platform. You need an admin invitation code from the capstone team.').show();
+      } else {
+        // Hide admin invite section, show school section
+        adminInviteSection.hide();
+        schoolSection.show();
+
+        $('#adminInviteCode').prop('required', false);
+        $('#schoolOption').prop('required', true);
+
+        if (userType === 'teacher') {
+          userTypeHint.text('👨‍🏫 Teachers can monitor their school\'s electricity consumption').show();
+        } else if (userType === 'principal') {
+          userTypeHint.text('👔 Principals manage their school and can view staff members').show();
+        }
+
+        // Trigger school option change to set proper requirements
+        $('#schoolOption').trigger('change');
+      }
+    });
+
     // Toggle between new/existing school
     $('#schoolOption').on('change', function () {
       if ($(this).val() === 'new') {
         $('#newSchoolSection').show();
         $('#existingSchoolSection').hide();
+        $('#accountTypeSection').show();
         $('#schoolName').prop('required', true);
         $('#schoolId').prop('required', false);
-        $('#inviteCode').prop('required', false); // ← ADD THIS
+        $('#inviteCode').prop('required', false);
       } else {
         $('#newSchoolSection').hide();
         $('#existingSchoolSection').show();
+        $('#accountTypeSection').show();
         $('#schoolName').prop('required', false);
         $('#schoolId').prop('required', true);
-        $('#inviteCode').prop('required', true); // ← ADD THIS
+        $('#inviteCode').prop('required', true);
+        loadSchools();
       }
     });
 
@@ -157,6 +228,7 @@
       const schoolName = $('#schoolName').val().trim();
       const schoolId = $('#schoolId').val();
       const inviteCode = $('#inviteCode').val().trim().toUpperCase();
+      const adminInviteCode = $('#adminInviteCode').val().trim().toUpperCase();
 
       // Validation
       if (!name) {
@@ -174,21 +246,31 @@
         return;
       }
 
-      if (schoolOption === 'new' && !schoolName) {
-        alert('❌ Please enter a school name!');
-        return;
+      // Admin invite code validation
+      if (userType === 'admin') {
+        if (!adminInviteCode) {
+          alert('❌ Admin invitation code is required!\n\n🔒 Please contact the SukatTown capstone team to get the admin code.');
+          return;
+        }
       }
 
-      if (schoolOption === 'existing') {
-        if (!schoolId) {
-          alert('❌ Please select a school!');
+      // School validation (only for non-admin users)
+      if (userType !== 'admin') {
+        if (schoolOption === 'new' && !schoolName) {
+          alert('❌ Please enter a school name!');
           return;
         }
 
-        // VALIDATE INVITE CODE
-        if (!inviteCode || inviteCode.length !== 6) {
-          alert('❌ Please enter a valid 6-character invitation code!');
-          return;
+        if (schoolOption === 'existing') {
+          if (!schoolId) {
+            alert('❌ Please select a school!');
+            return;
+          }
+
+          if (!inviteCode || inviteCode.length !== 6) {
+            alert('❌ Please enter a valid 6-character invitation code!');
+            return;
+          }
         }
       }
 
@@ -212,15 +294,22 @@
           email,
           user_type: userType,
           password,
-          telegram_chat_id: telegramChatId || null,
-          account_type: accountType
+          telegram_chat_id: telegramChatId || null
         };
 
-        if (schoolOption === 'new') {
-          requestBody.school_name = schoolName;
+        // Add admin invite code if admin
+        if (userType === 'admin') {
+          requestBody.admin_invite_code = adminInviteCode;
         } else {
-          requestBody.school_id = schoolId;
-          requestBody.invite_code = inviteCode;
+          // Only add school-related fields if not admin
+          requestBody.account_type = accountType;
+
+          if (schoolOption === 'new') {
+            requestBody.school_name = schoolName;
+          } else {
+            requestBody.school_id = schoolId;
+            requestBody.invite_code = inviteCode;
+          }
         }
 
         console.log('📤 Sending registration:', requestBody);
@@ -238,14 +327,20 @@
           let message = `✅ Account created successfully!\n\n` +
             `Name: ${name}\n` +
             `Email: ${email}\n` +
-            `School: ${data.user.school_name}\n` +
             `Type: ${userType}`;
+
+          if (userType !== 'admin') {
+            message += `\nSchool: ${data.user.school_name}`;
+          } else {
+            message += `\nRole: System Administrator`;
+          }
 
           // Show invite code if new school was created
           if (data.invite_code) {
             message += `\n\n🔑 IMPORTANT: Save your school's invitation code:\n\n` +
               `${data.invite_code}\n\n` +
-              `Share this code with your staff members so they can join your school!`;
+              `📋 Copy this code and share it with your staff members so they can join your school!\n\n` +
+              `⚠️ Keep this code secure - anyone with this code can join your school.`;
           }
 
           message += `\n\nYou can now login!`;
@@ -268,30 +363,16 @@
       }
     });
 
-    // Auto-detect user type based on email
-    $('#email').on('blur', function () {
-      const email = $(this).val().toLowerCase();
-      const userTypeSelect = $('#userType');
-
-      if (email.includes('@gmail.com')) {
-        userTypeSelect.val('admin');
-      } else if (email.includes('@deped') || email.includes('@depedmarikina')) {
-        if (!userTypeSelect.val()) {
-          userTypeSelect.val('teacher');
-        }
-      }
+    // Auto-uppercase invite codes
+    $('#inviteCode').on('input', function () {
+      $(this).val($(this).val().toUpperCase());
     });
 
-    // Check if already logged in
-    window.addEventListener('load', function () {
-      const userId = localStorage.getItem('userId');
-      if (userId) {
-        if (confirm('You are already logged in. Go to dashboard?')) {
-          window.location.href = 'index.html';
-        }
-      }
+    $('#adminInviteCode').on('input', function () {
+      $(this).val($(this).val().toUpperCase());
     });
   </script>
+
 </body>
 
 </html>

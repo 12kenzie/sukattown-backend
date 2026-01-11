@@ -161,7 +161,7 @@ app.post("/api/power-data", async (req, res) => {
 // ========== ACCOUNT REGISTRATION AND LOGIN ==========
 
 app.post("/api/auth/register", async (req, res) => {
-  const { name, email, user_type, password, telegram_chat_id, account_type, school_id, school_name, invite_code } = req.body;
+  const { name, email, user_type, password, telegram_chat_id, account_type, school_id, school_name, invite_code, admin_invite_code } = req.body;
 
   const cleanEmail = email.toLowerCase().trim();
 
@@ -188,13 +188,60 @@ app.post("/api/auth/register", async (req, res) => {
       return res.status(400).json({ success: false, message: "Email already registered" });
     }
 
-    // Handle school assignment
+    // ===== ADMIN REGISTRATION - VERIFY ADMIN INVITE CODE =====
+    if (user_type === 'admin') {
+      const ADMIN_CODE = process.env.ADMIN_INVITE_CODE || 'ADMIN2025';
+
+      // SECURITY CHECK: Verify admin invitation code
+      if (!admin_invite_code || admin_invite_code.toUpperCase() !== ADMIN_CODE) {
+        return res.status(403).json({ 
+          success: false, 
+          message: "Invalid admin invitation code. Please contact the capstone team for the correct code." 
+        });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const userRef = db.ref("users").push();
+      const userId = userRef.key;
+
+      await userRef.set({
+        name: name.trim(),
+        email: cleanEmail,
+        user_type: 'admin',
+        password: hashedPassword,
+        school_id: null,  // Admins don't belong to a specific school
+        telegram_chat_id: telegram_chat_id || null,
+        account_type: 'admin',
+        permissions: getPermissionsByUserType('admin'),
+        created_at: Date.now()
+      });
+
+      console.log(`✅ Admin registered: ${email} with invite code: ${admin_invite_code}`);
+
+      return res.json({
+        success: true, 
+        message: "Admin account created successfully",
+        userId: userId,
+        schoolId: null,
+        user: {
+          name,
+          email: cleanEmail,
+          user_type: 'admin',
+          school_id: null,
+          school_name: 'System Administrator',
+          account_type: 'admin'
+        }
+      });
+    }
+
+    // ===== TEACHER/PRINCIPAL REGISTRATION - SCHOOL REQUIRED =====
     let finalSchoolId = school_id;
     let finalSchoolName = school_name;
     let generatedInviteCode = null;
 
     if (school_id) {
-      // ===== JOINING EXISTING SCHOOL - VERIFY INVITE CODE =====
+      // JOINING EXISTING SCHOOL - VERIFY INVITE CODE
       const schoolSnapshot = await db.ref(`schools/${school_id}`).once("value");
       
       if (!schoolSnapshot.exists()) {
@@ -215,7 +262,7 @@ app.post("/api/auth/register", async (req, res) => {
       console.log(`✅ Valid invite code provided for ${school.name}`);
 
     } else if (school_name) {
-      // ===== CREATING NEW SCHOOL - GENERATE INVITE CODE =====
+      // CREATING NEW SCHOOL
       if (!school_name.trim()) {
         return res.status(400).json({ success: false, message: "School name required for new school" });
       }
@@ -244,7 +291,7 @@ app.post("/api/auth/register", async (req, res) => {
     } else {
       return res.status(400).json({ 
         success: false, 
-        message: "Either school_id with invite_code OR school_name is required" 
+        message: "Teachers and Principals must either join an existing school or create a new one" 
       });
     }
 
@@ -274,8 +321,8 @@ app.post("/api/auth/register", async (req, res) => {
       return members;
     });
 
-    // Set admin if principal or admin
-    if (user_type === 'admin' || user_type === 'principal') {
+    // Set admin if principal
+    if (user_type === 'principal') {
       const schoolData = await db.ref(`schools/${finalSchoolId}`).once("value");
       if (!schoolData.val().admin_user_id) {
         await db.ref(`schools/${finalSchoolId}`).update({
