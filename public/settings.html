@@ -381,46 +381,49 @@
     window.logout = logout;
 
     function loadUserData() {
-      userId = localStorage.getItem('userId');
-      userType = localStorage.getItem('userType');
-      schoolId = localStorage.getItem('schoolId');
-      const userName = localStorage.getItem('userName');
-      const storedTelegramId = localStorage.getItem('telegramChatId');
+  userId = localStorage.getItem('userId');
+  userType = localStorage.getItem('userType');
+  schoolId = localStorage.getItem('schoolId');
+  const userName = localStorage.getItem('userName');
+  const accountType = localStorage.getItem('accountType');  // ← ADD THIS
+  const storedTelegramId = localStorage.getItem('telegramChatId');
 
-      console.log('🔍 DEBUG - User Data Loaded:');
-      console.log('  userId:', userId);
-      console.log('  userType:', userType);
-      console.log('  schoolId:', schoolId);
-      console.log('  userName:', userName);
+  console.log('🔍 DEBUG - User Data Loaded:');
+  console.log('  userId:', userId);
+  console.log('  userType:', userType);
+  console.log('  accountType:', accountType);  // ← ADD THIS
+  console.log('  schoolId:', schoolId);
+  console.log('  userName:', userName);
 
-      if (!userId || !userType) {
-        console.log('❌ Missing user credentials, redirecting to login');
-        window.location.href = 'login.html';
-        return;
-      }
+  if (!userId || !userType) {
+    console.log('❌ Missing user credentials, redirecting to login');
+    window.location.href = 'login.html';
+    return;
+  }
 
-      document.getElementById('debugUserId').textContent = userId || 'NULL';
-      document.getElementById('debugUserType').textContent = userType || 'NULL';
-      document.getElementById('debugAccountType').textContent = accountType || 'NULL';
-      document.getElementById('debugSchoolId').textContent = schoolId || 'NULL';
-      document.getElementById('debugUserName').textContent = userName || 'NULL';
+  // Update debug panel
+  document.getElementById('debugUserId').textContent = userId || 'NULL';
+  document.getElementById('debugUserType').textContent = userType || 'NULL';
+  document.getElementById('debugAccountType').textContent = accountType || 'NULL';
+  document.getElementById('debugSchoolId').textContent = schoolId || 'NULL';
+  document.getElementById('debugUserName').textContent = userName || 'NULL';
 
-      // Update UI
-      document.getElementById('userName').textContent = userName || 'User';
-      document.getElementById('userAvatar').textContent = (userName || 'U').charAt(0).toUpperCase();
+  // Update UI
+  document.getElementById('userName').textContent = userName || 'User';
+  document.getElementById('userAvatar').textContent = (userName || 'U').charAt(0).toUpperCase();
 
-      // Load Telegram Chat ID if exists
-      if (storedTelegramId) {
-        telegramChatId.value = storedTelegramId;
-      }
+  // Load Telegram Chat ID if exists
+  if (storedTelegramId) {
+    telegramChatId.value = storedTelegramId;
+  }
 
-      // Show invite code section if user is principal or admin
-      if (userType === 'principal') {
-        loadInviteCode();
-      }
+  // Show invite code section if user is principal
+  if (userType === 'principal' && schoolId) {
+    loadInviteCode();
+  }
 
-      initializeUserTypeFeatures();
-    }
+  initializeUserTypeFeatures();
+} 
 
     async function loadInviteCode() {
       if (!schoolId) return;
