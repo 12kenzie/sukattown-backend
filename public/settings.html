@@ -378,9 +378,9 @@
       }
 
       // Show invite code section if user is principal or admin
-      if (userType === 'principal' || userType === 'admin') {
+      if (userType === 'principal') {
         loadInviteCode();
-      }
+      } 
     }
 
     async function loadInviteCode() {
@@ -483,29 +483,29 @@
     });
 
     // Show/hide sections based on user type
-function initializeUserTypeFeatures() {
-  // Privacy settings - ONLY for principals
-  if (userType === 'principal') {
-    document.getElementById('privacySection').style.display = 'block';
-    loadPrivacySettings();
-  } else {
-    document.getElementById('privacySection').style.display = 'none';
-  }
+    function initializeUserTypeFeatures() {
+      // Privacy settings - ONLY for principals
+      if (userType === 'principal') {
+        document.getElementById('privacySection').style.display = 'block';
+        loadPrivacySettings();
+      } else {
+        document.getElementById('privacySection').style.display = 'none';
+      }
 
-  // Staff management - ONLY for principals
-  if (userType === 'principal') {
-    document.getElementById('staffSection').style.display = 'block';
-  } else {
-    document.getElementById('staffSection').style.display = 'none';
-  }
+      // Staff management - ONLY for principals
+      if (userType === 'principal') {
+        document.getElementById('staffSection').style.display = 'block';
+      } else {
+        document.getElementById('staffSection').style.display = 'none';
+      }
 
-  // Schools overview - ONLY for admins
-  if (userType === 'admin') {
-    document.getElementById('adminSchoolsSection').style.display = 'block';
-  } else {
-    document.getElementById('adminSchoolsSection').style.display = 'none';
-  }
-} 
+      // Schools overview - ONLY for admins
+      if (userType === 'admin') {
+        document.getElementById('adminSchoolsSection').style.display = 'block';
+      } else {
+        document.getElementById('adminSchoolsSection').style.display = 'none';
+      }
+    }
 
     // Load privacy settings
     async function loadPrivacySettings() {
@@ -614,14 +614,6 @@ function initializeUserTypeFeatures() {
 
     let currentModalSchoolId = null;
 
-    // Initialize admin-specific features
-    function initializeAdminFeatures() {
-      if (userType === 'admin') {
-        document.getElementById('adminSchoolsSection').style.display = 'block';
-      } else {
-        document.getElementById('adminSchoolsSection').style.display = 'none';
-      }
-    }
 
     // Load all schools (admin only)
     document.getElementById('loadAllSchoolsBtn')?.addEventListener('click', async function () {
@@ -860,9 +852,6 @@ function initializeUserTypeFeatures() {
       }
     });
 
-    // Call this after loadUserData()
-    initializeAdminFeatures();
-
     // Close modal when clicking outside
     document.getElementById('schoolDetailsModal')?.addEventListener('click', function (e) {
       if (e.target === this) {
@@ -875,6 +864,7 @@ function initializeUserTypeFeatures() {
 
     // Initialize
     loadUserData();
+    initializeUserTypeFeatures();
   </script>
 
 </body>

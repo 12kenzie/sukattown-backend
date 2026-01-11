@@ -135,6 +135,7 @@
     });
 
     // Handle user type change - show/hide sections
+    // Handle user type change - show/hide sections
     $('#userType').on('change', function () {
       const userType = $(this).val();
       const schoolSection = $('#schoolSection');
@@ -142,9 +143,9 @@
       const userTypeHint = $('#userTypeHint');
 
       if (userType === 'admin') {
-        // Show admin invite section, hide school section
-        adminInviteSection.show();
+        // Hide entire school section for admins
         schoolSection.hide();
+        adminInviteSection.show();
 
         $('#adminInviteCode').prop('required', true);
         $('#schoolName').prop('required', false);
@@ -154,7 +155,7 @@
 
         userTypeHint.text('🔧 System Admins manage the entire platform. You need an admin invitation code from the capstone team.').show();
       } else {
-        // Hide admin invite section, show school section
+        // Show school section for teachers and principals
         adminInviteSection.hide();
         schoolSection.show();
 
