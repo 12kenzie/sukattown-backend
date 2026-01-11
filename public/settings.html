@@ -83,6 +83,30 @@
           <div style="color:var(--muted);margin-top:4px">Customize thresholds & alerts</div>
         </div>
 
+        <div style="margin-bottom:24px;padding:16px;background:#f0f9ff;border:2px solid #0ea5e9;border-radius:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <strong style="font-size:16px;color:#0369a1">🔍 User Debug Info</strong>
+              <div style="margin-top:8px;font-size:13px;color:#075985">
+                <div><strong>User ID:</strong> <code id="debugUserId"
+                    style="background:#fff;padding:2px 6px;border-radius:4px">Loading...</code></div>
+                <div><strong>User Type:</strong> <code id="debugUserType"
+                    style="background:#fff;padding:2px 6px;border-radius:4px">Loading...</code></div>
+                <div><strong>Account Type:</strong> <code id="debugAccountType"
+                    style="background:#fff;padding:2px 6px;border-radius:4px">Loading...</code></div>
+                <div><strong>School ID:</strong> <code id="debugSchoolId"
+                    style="background:#fff;padding:2px 6px;border-radius:4px">Loading...</code></div>
+                <div><strong>User Name:</strong> <code id="debugUserName"
+                    style="background:#fff;padding:2px 6px;border-radius:4px">Loading...</code></div>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:13px;color:#075985;margin-bottom:8px"><strong>Visible Sections:</strong></div>
+              <div id="debugVisibleSections" style="font-size:12px;color:#0369a1"></div>
+            </div>
+          </div>
+        </div>
+
         <div class="settings-row">
 
           <div class="card threshold-card">
@@ -115,12 +139,6 @@
             </div>
           </div>
 
-          <div class="card sms-card">
-            <div class="card-title">SMS Alerts</div>
-            <div class="muted">Phone Number</div>
-            <input class="number-input" id="smsNumber" type="text" placeholder="+63 9XX XXX XXXX">
-          </div>
-
         </div>
 
         <!-- NEW TELEGRAM SECTION -->
@@ -129,17 +147,17 @@
             <div class="card-title">
               <i class="fa-brands fa-telegram" style="color:#0088cc"></i> Telegram Integration
             </div>
-            
+
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:16px">
               <div>
                 <div class="muted" style="margin-bottom:8px">Telegram Chat ID</div>
-                <input class="number-input" id="telegramChatId" type="text" 
-                  placeholder="Get from @userinfobot" style="width:100%">
+                <input class="number-input" id="telegramChatId" type="text" placeholder="Get from @userinfobot"
+                  style="width:100%">
                 <small style="display:block;margin-top:8px;color:#666;font-size:12px">
-                  📱 Open <a href="https://t.me/userinfobot" target="_blank" style="color:#0088cc">@userinfobot</a> 
+                  📱 Open <a href="https://t.me/userinfobot" target="_blank" style="color:#0088cc">@userinfobot</a>
                   on Telegram to get your Chat ID
                 </small>
-                <button id="saveTelegramBtn" class="btn" 
+                <button id="saveTelegramBtn" class="btn"
                   style="margin-top:12px;background:#0088cc;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer">
                   Save Telegram ID
                 </button>
@@ -151,7 +169,7 @@
                   <div id="displayInviteCode" style="font-size:32px;font-weight:800;letter-spacing:4px;color:#4659ff">
                     ------
                   </div>
-                  <button id="copyCodeBtn" class="btn" 
+                  <button id="copyCodeBtn" class="btn"
                     style="margin-top:12px;background:#4659ff;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer">
                     📋 Copy Code
                   </button>
@@ -166,9 +184,168 @@
               <strong>💡 Pro Tips:</strong>
               <ul style="margin:8px 0 0 20px;line-height:1.8">
                 <li>Connect Telegram to receive instant alerts about power consumption and fire hazards</li>
-                <li>As a principal/admin, you can retrieve your school's invite code anytime by sending <code style="background:#fff;padding:2px 6px;border-radius:4px">/school_invcode</code> to the bot</li>
+                <li>As a principal/admin, you can retrieve your school's invite code anytime by sending <code
+                    style="background:#fff;padding:2px 6px;border-radius:4px">/school_invcode</code> to the bot</li>
                 <li>The bot will send you notifications for threshold alerts and fire detection</li>
               </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- PRIVACY SETTINGS (Principal only, not admins can view it) -->
+        <div class="settings-row" style="margin-top: 24px;" id="privacySection">
+          <div class="card" style="grid-column: 1 / -1;">
+            <div class="card-title">
+              <i class="fa-solid fa-shield-halved" style="color:#4659ff"></i> Privacy & Data Sharing
+            </div>
+
+            <div
+              style="margin-top:16px;padding:12px;background:#fff3cd;border-radius:8px;font-size:13px;margin-bottom:16px">
+              <strong>⚠️ Ethical Considerations:</strong> Control what data system admins can view from your school
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <strong>Allow Admin to View Consumption Data</strong>
+                <div style="font-size:12px;color:#666;margin-top:4px">
+                  System administrators can view your school's power consumption history
+                </div>
+              </div>
+              <label class="switch">
+                <input id="allowConsumptionToggle" type="checkbox" checked>
+                <div class="track">
+                  <div class="thumb"></div>
+                </div>
+              </label>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <strong>Allow Admin to View Billing Estimates</strong>
+                <div style="font-size:12px;color:#666;margin-top:4px">
+                  System administrators can view your school's estimated electricity costs
+                </div>
+              </div>
+              <label class="switch">
+                <input id="allowBillingToggle" type="checkbox">
+                <div class="track">
+                  <div class="thumb"></div>
+                </div>
+              </label>
+            </div>
+
+            <button id="savePrivacyBtn" class="btn"
+              style="margin-top:16px;background:#4659ff;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer">
+              💾 Save Privacy Settings
+            </button>
+          </div>
+        </div>
+
+        <!-- ADMIN SCHOOLS OVERVIEW (Admin Only) -->
+        <div class="settings-row" style="margin-top: 24px;" id="adminSchoolsSection">
+          <div class="card" style="grid-column: 1 / -1;">
+            <div class="card-title">
+              <i class="fa-solid fa-building-columns" style="color:#4659ff"></i> Schools Overview
+            </div>
+
+            <div
+              style="margin-top:16px;padding:12px;background:#e8f4ff;border-radius:8px;font-size:13px;margin-bottom:16px">
+              <strong>💡 Admin View:</strong> Monitor all schools in the system. Access to detailed data depends on each
+              school's privacy settings.
+            </div>
+
+            <div style="margin-top:16px">
+              <button id="loadAllSchoolsBtn" class="btn"
+                style="background:#4659ff;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer">
+                🏫 Load All Schools
+              </button>
+            </div>
+
+            <div id="schoolsOverviewList" style="display:none;margin-top:16px">
+              <div style="margin-bottom:16px;display:flex;gap:12px;align-items:center">
+                <input type="text" id="schoolSearchInput" placeholder="🔍 Search schools..."
+                  style="flex:1;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px">
+                <div style="color:#666;font-size:13px">
+                  Total: <strong id="totalSchoolsCount">0</strong> schools
+                </div>
+              </div>
+
+              <div id="schoolsGrid"
+                style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">
+                <!-- Schools will be inserted here -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODAL for School Details -->
+        <div id="schoolDetailsModal"
+          style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center">
+          <div
+            style="background:white;border-radius:16px;max-width:800px;width:90%;max-height:80vh;overflow-y:auto;padding:24px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+              <h2 id="modalSchoolName" style="margin:0;font-size:24px">School Details</h2>
+              <button onclick="closeSchoolModal()"
+                style="background:none;border:none;font-size:24px;cursor:pointer;color:#666">×</button>
+            </div>
+
+            <div id="modalPrivacyStatus" style="margin-bottom:16px;padding:12px;border-radius:8px"></div>
+
+            <div style="margin-bottom:20px">
+              <strong>Principal:</strong> <span id="modalPrincipalName"></span>
+            </div>
+
+            <div style="margin-bottom:16px">
+              <button id="modalViewStaffBtn" class="btn"
+                style="background:#4659ff;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;margin-right:8px">
+                👥 View Staff
+              </button>
+              <button id="modalViewConsumptionBtn" class="btn"
+                style="background:#10b981;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer">
+                ⚡ View Consumption
+              </button>
+            </div>
+
+            <div id="modalContent">
+              <!-- Dynamic content -->
+            </div>
+          </div>
+        </div>
+
+        <!-- STAFF MANAGEMENT (Principal Only) -->
+        <div class="settings-row" style="margin-top: 24px;" id="staffSection">
+          <div class="card" style="grid-column: 1 / -1;">
+            <div class="card-title">
+              <i class="fa-solid fa-users" style="color:#4659ff"></i> School Staff Members
+            </div>
+
+            <div style="margin-top:16px">
+              <button id="loadStaffBtn" class="btn"
+                style="background:#4659ff;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer">
+                👥 View Staff Members
+              </button>
+            </div>
+
+            <div id="staffList" style="display:none;margin-top:16px">
+              <table style="width:100%;border-collapse:collapse">
+                <thead>
+                  <tr style="background:#f9fbff;border-bottom:2px solid #e6e9ef">
+                    <th style="padding:12px;text-align:left;font-weight:700;font-size:13px">Name</th>
+                    <th style="padding:12px;text-align:left;font-weight:700;font-size:13px">Email</th>
+                    <th style="padding:12px;text-align:left;font-weight:700;font-size:13px">Role</th>
+                    <th style="padding:12px;text-align:left;font-weight:700;font-size:13px">Account Type</th>
+                    <th style="padding:12px;text-align:center;font-weight:700;font-size:13px">Telegram</th>
+                    <th style="padding:12px;text-align:left;font-weight:700;font-size:13px">Last Login</th>
+                  </tr>
+                </thead>
+                <tbody id="staffTableBody">
+                  <tr>
+                    <td colspan="6" style="padding:20px;text-align:center;color:#666">
+                      Click "View Staff Members" to load
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -185,12 +362,11 @@
     const API_URL = 'https://sukattown-backend.onrender.com';
 
     const maxPower = document.getElementById('maxPower');
-    const notifToggle = document.getElementById('notifToggle');
-    const soundToggle = document.getElementById('soundToggle');
-    const smsNumber = document.getElementById('smsNumber');
-    const telegramChatId = document.getElementById('telegramChatId');
+const notifToggle = document.getElementById('notifToggle');
+const soundToggle = document.getElementById('soundToggle');
+const telegramChatId = document.getElementById('telegramChatId');
 
-    const defaults = { maxPower: 3000, notif: true, sound: false, sms: '' };
+const defaults = { maxPower: 3000, notif: true, sound: false }; 
 
     let userId, userType, schoolId;
 
@@ -204,31 +380,49 @@
     window.logout = logout;
 
     function loadUserData() {
-      userId = localStorage.getItem('userId');
-      userType = localStorage.getItem('userType');
-      schoolId = localStorage.getItem('schoolId');
-      const userName = localStorage.getItem('userName');
-      const storedTelegramId = localStorage.getItem('telegramChatId');
+  userId = localStorage.getItem('userId');
+  userType = localStorage.getItem('userType');
+  schoolId = localStorage.getItem('schoolId');
+  const userName = localStorage.getItem('userName');
+  const accountType = localStorage.getItem('accountType');  // ← ADD THIS
+  const storedTelegramId = localStorage.getItem('telegramChatId');
 
-      if (!userId) {
-        window.location.href = 'login.html';
-        return;
-      }
+  console.log('🔍 DEBUG - User Data Loaded:');
+  console.log('  userId:', userId);
+  console.log('  userType:', userType);
+  console.log('  accountType:', accountType);  // ← ADD THIS
+  console.log('  schoolId:', schoolId);
+  console.log('  userName:', userName);
 
-      // Update UI
-      document.getElementById('userName').textContent = userName || 'User';
-      document.getElementById('userAvatar').textContent = (userName || 'U').charAt(0).toUpperCase();
+  if (!userId || !userType) {
+    console.log('❌ Missing user credentials, redirecting to login');
+    window.location.href = 'login.html';
+    return;
+  }
 
-      // Load Telegram Chat ID if exists
-      if (storedTelegramId) {
-        telegramChatId.value = storedTelegramId;
-      }
+  // Update debug panel
+  document.getElementById('debugUserId').textContent = userId || 'NULL';
+  document.getElementById('debugUserType').textContent = userType || 'NULL';
+  document.getElementById('debugAccountType').textContent = accountType || 'NULL';
+  document.getElementById('debugSchoolId').textContent = schoolId || 'NULL';
+  document.getElementById('debugUserName').textContent = userName || 'NULL';
 
-      // Show invite code section if user is principal or admin
-      if (userType === 'principal' || userType === 'admin') {
-        loadInviteCode();
-      }
-    }
+  // Update UI
+  document.getElementById('userName').textContent = userName || 'User';
+  document.getElementById('userAvatar').textContent = (userName || 'U').charAt(0).toUpperCase();
+
+  // Load Telegram Chat ID if exists
+  if (storedTelegramId) {
+    telegramChatId.value = storedTelegramId;
+  }
+
+  // Show invite code section if user is principal
+  if (userType === 'principal' && schoolId) {
+    loadInviteCode();
+  }
+
+  initializeUserTypeFeatures();
+} 
 
     async function loadInviteCode() {
       if (!schoolId) return;
@@ -252,7 +446,6 @@
       maxPower.value = defaults.maxPower;
       notifToggle.checked = defaults.notif;
       soundToggle.checked = defaults.sound;
-      smsNumber.value = defaults.sms;
     }
 
     function autoSave() {
@@ -261,14 +454,13 @@
         maxPower: maxPower.value,
         notif: notifToggle.checked,
         sound: soundToggle.checked,
-        sms: smsNumber.value
       };
       localStorage.setItem('settings', JSON.stringify(data));
       console.log("Auto-saved:", data);
     }
 
     // Save Telegram Chat ID
-    document.getElementById('saveTelegramBtn').addEventListener('click', async function() {
+    document.getElementById('saveTelegramBtn').addEventListener('click', async function () {
       const chatId = telegramChatId.value.trim();
 
       if (!chatId) {
@@ -298,7 +490,7 @@
     });
 
     // Copy invite code
-    document.getElementById('copyCodeBtn').addEventListener('click', function() {
+    document.getElementById('copyCodeBtn').addEventListener('click', function () {
       const code = document.getElementById('displayInviteCode').textContent;
       navigator.clipboard.writeText(code).then(() => {
         alert('✅ Invitation code copied to clipboard!\n\n' + code);
@@ -314,12 +506,11 @@
       maxPower.value = settings.maxPower || defaults.maxPower;
       notifToggle.checked = settings.notif !== undefined ? settings.notif : defaults.notif;
       soundToggle.checked = settings.sound !== undefined ? settings.sound : defaults.sound;
-      smsNumber.value = settings.sms || defaults.sms;
     } else {
       loadDefaults();
     }
 
-    [maxPower, notifToggle, soundToggle, smsNumber].forEach(el => {
+    [maxPower, notifToggle, soundToggle].forEach(el => {
       el.addEventListener('input', autoSave);
       el.addEventListener('change', autoSave);
     });
@@ -329,8 +520,400 @@
       autoSave();
     });
 
+    // Show/hide sections based on user type
+    function initializeUserTypeFeatures() {
+      console.log('🔍 DEBUG - initializeUserTypeFeatures called');
+      console.log('  Current userType:', userType);
+
+      const privacySection = document.getElementById('privacySection');
+      const staffSection = document.getElementById('staffSection');
+      const adminSchoolsSection = document.getElementById('adminSchoolsSection');
+
+      // Hide everything by default
+      if (privacySection) privacySection.style.display = 'none';
+      if (staffSection) staffSection.style.display = 'none';
+      if (adminSchoolsSection) adminSchoolsSection.style.display = 'none';
+
+      // Show only what the user should see
+      if (userType === 'principal') {
+        console.log('  ✅ Principal - Showing privacy and staff sections');
+        if (privacySection) privacySection.style.display = 'block';
+        if (staffSection) staffSection.style.display = 'block';
+        loadPrivacySettings();
+      } else if (userType === 'admin') {
+        console.log('  ✅ Admin - Showing schools overview only');
+        if (adminSchoolsSection) adminSchoolsSection.style.display = 'block';
+      } else if (userType === 'teacher') {
+        console.log('  ✅ Teacher - No special sections');
+      }
+
+      const visibleSections = [];
+      if (privacySection && privacySection.style.display === 'block') visibleSections.push('✅ Privacy');
+      if (staffSection && staffSection.style.display === 'block') visibleSections.push('✅ Staff');
+      if (adminSchoolsSection && adminSchoolsSection.style.display === 'block') visibleSections.push('✅ Schools Overview');
+
+      if (visibleSections.length === 0) visibleSections.push('❌ None');
+
+      document.getElementById('debugVisibleSections').innerHTML = visibleSections.join('<br>');
+    }
+    // Load privacy settings
+    async function loadPrivacySettings() {
+      if (!schoolId) return;
+
+      try {
+        const response = await fetch(`${API_URL}/api/schools/${schoolId}`);
+        const data = await response.json();
+
+        if (data.success && data.data.privacy) {
+          document.getElementById('allowConsumptionToggle').checked =
+            data.data.privacy.allowConsumptionView !== false;
+          document.getElementById('allowBillingToggle').checked =
+            data.data.privacy.allowBillingView === true;
+        }
+      } catch (error) {
+        console.error('Failed to load privacy settings:', error);
+      }
+    }
+
+    // Save privacy settings
+    document.getElementById('savePrivacyBtn')?.addEventListener('click', async function () {
+      const allowConsumption = document.getElementById('allowConsumptionToggle').checked;
+      const allowBilling = document.getElementById('allowBillingToggle').checked;
+
+      try {
+        const response = await fetch(
+          `${API_URL}/api/schools/${schoolId}/privacy?user_id=${userId}&user_type=${userType}`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              allowConsumptionView: allowConsumption,
+              allowBillingView: allowBilling
+            })
+          }
+        );
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert('✅ Privacy settings saved successfully!');
+        } else {
+          alert('❌ Failed to save privacy settings');
+        }
+      } catch (error) {
+        console.error('Error saving privacy:', error);
+        alert('❌ Error saving privacy settings');
+      }
+    });
+
+    // Load staff members
+    document.getElementById('loadStaffBtn')?.addEventListener('click', async function () {
+      const btn = this;
+      const originalText = btn.textContent;
+      btn.textContent = '⏳ Loading...';
+      btn.disabled = true;
+
+      try {
+        const response = await fetch(
+          `${API_URL}/api/schools/${schoolId}/members?user_id=${userId}&user_type=${userType}`
+        );
+        const data = await response.json();
+
+        if (data.success) {
+          const tbody = document.getElementById('staffTableBody');
+          tbody.innerHTML = '';
+
+          if (data.members.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="padding:20px;text-align:center;color:#666">No staff members found</td></tr>';
+          } else {
+            data.members.forEach(member => {
+              const lastLogin = member.last_login
+                ? new Date(member.last_login).toLocaleDateString()
+                : 'Never';
+
+              const telegramIcon = member.telegram_connected
+                ? '<i class="fa-brands fa-telegram" style="color:#0088cc" title="Connected"></i>'
+                : '<i class="fa-solid fa-minus" style="color:#ccc" title="Not connected"></i>';
+
+              tbody.innerHTML += `
+            <tr style="border-bottom:1px solid #f1f3f5">
+              <td style="padding:12px">${member.name}</td>
+              <td style="padding:12px">${member.email}</td>
+              <td style="padding:12px"><span style="background:#f0f0f0;padding:4px 8px;border-radius:4px;font-size:12px">${member.user_type}</span></td>
+              <td style="padding:12px">${member.account_type || 'N/A'}</td>
+              <td style="padding:12px;text-align:center">${telegramIcon}</td>
+              <td style="padding:12px">${lastLogin}</td>
+            </tr>
+          `;
+            });
+          }
+
+          document.getElementById('staffList').style.display = 'block';
+        } else {
+          alert('❌ Failed to load staff members');
+        }
+      } catch (error) {
+        console.error('Error loading staff:', error);
+        alert('❌ Error loading staff members');
+      } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
+    });
+
+    let currentModalSchoolId = null;
+
+
+    // Load all schools (admin only)
+    document.getElementById('loadAllSchoolsBtn')?.addEventListener('click', async function () {
+      const btn = this;
+      const originalText = btn.textContent;
+      btn.textContent = '⏳ Loading...';
+      btn.disabled = true;
+
+      try {
+        const response = await fetch(
+          `${API_URL}/api/admin/schools-overview?user_id=${userId}&user_type=${userType}`
+        );
+        const data = await response.json();
+
+        if (data.success) {
+          displaySchoolsGrid(data.schools);
+          document.getElementById('schoolsOverviewList').style.display = 'block';
+          document.getElementById('totalSchoolsCount').textContent = data.count;
+        } else {
+          alert('❌ ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error loading schools:', error);
+        alert('❌ Error loading schools');
+      } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
+    });
+
+    function displaySchoolsGrid(schools) {
+      const grid = document.getElementById('schoolsGrid');
+      grid.innerHTML = '';
+
+      if (schools.length === 0) {
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#666">No schools found</div>';
+        return;
+      }
+
+      schools.forEach(school => {
+        const consumptionIcon = school.privacy.allowConsumptionView
+          ? '<i class="fa-solid fa-eye" style="color:#10b981" title="Consumption visible"></i>'
+          : '<i class="fa-solid fa-eye-slash" style="color:#ef4444" title="Consumption hidden"></i>';
+
+        const billingIcon = school.privacy.allowBillingView
+          ? '<i class="fa-solid fa-eye" style="color:#10b981" title="Billing visible"></i>'
+          : '<i class="fa-solid fa-eye-slash" style="color:#ef4444" title="Billing hidden"></i>';
+
+        const createdDate = new Date(school.created_at).toLocaleDateString();
+
+        const card = document.createElement('div');
+        card.style.cssText = 'border:1px solid #e6e9ef;border-radius:12px;padding:16px;cursor:pointer;transition:all 0.2s';
+        card.onmouseover = () => card.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+        card.onmouseout = () => card.style.boxShadow = 'none';
+        card.onclick = () => openSchoolModal(school);
+
+        card.innerHTML = `
+      <div style="font-weight:700;font-size:18px;margin-bottom:8px;color:#0f1724">${school.name}</div>
+      <div style="font-size:13px;color:#666;margin-bottom:12px">
+        👤 ${school.principal_name}<br>
+        👥 ${school.member_count} member${school.member_count !== 1 ? 's' : ''}<br>
+        📅 Created: ${createdDate}
+      </div>
+      <div style="border-top:1px solid #f0f0f0;padding-top:12px;display:flex;justify-content:space-between;font-size:12px">
+        <div>
+          ${consumptionIcon} Consumption
+        </div>
+        <div>
+          ${billingIcon} Billing
+        </div>
+      </div>
+    `;
+
+        grid.appendChild(card);
+      });
+    }
+
+    // Search schools
+    document.getElementById('schoolSearchInput')?.addEventListener('input', function (e) {
+      const searchTerm = e.target.value.toLowerCase();
+      const cards = document.getElementById('schoolsGrid').children;
+
+      Array.from(cards).forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = text.includes(searchTerm) ? 'block' : 'none';
+      });
+    });
+
+    function openSchoolModal(school) {
+      currentModalSchoolId = school.id;
+
+      document.getElementById('modalSchoolName').textContent = school.name;
+      document.getElementById('modalPrincipalName').textContent = school.principal_name;
+
+      // Privacy status
+      const privacyStatus = document.getElementById('modalPrivacyStatus');
+      const consumptionStatus = school.privacy.allowConsumptionView ? '✅ Visible' : '❌ Hidden';
+      const billingStatus = school.privacy.allowBillingView ? '✅ Visible' : '❌ Hidden';
+
+      privacyStatus.innerHTML = `
+    <strong>Privacy Settings:</strong><br>
+    Consumption Data: ${consumptionStatus}<br>
+    Billing Estimates: ${billingStatus}
+  `;
+      privacyStatus.style.background = school.privacy.allowConsumptionView ? '#d1fae5' : '#fee2e2';
+
+      // Store privacy settings for button handlers
+      document.getElementById('modalViewConsumptionBtn').dataset.allowed = school.privacy.allowConsumptionView;
+
+      document.getElementById('modalContent').innerHTML = '<div style="padding:20px;text-align:center;color:#666">Select an action above</div>';
+
+      document.getElementById('schoolDetailsModal').style.display = 'flex';
+    }
+
+    function closeSchoolModal() {
+      document.getElementById('schoolDetailsModal').style.display = 'none';
+      currentModalSchoolId = null;
+    }
+
+    // View staff button
+    document.getElementById('modalViewStaffBtn')?.addEventListener('click', async function () {
+      if (!currentModalSchoolId) return;
+
+      const content = document.getElementById('modalContent');
+      content.innerHTML = '<div style="padding:20px;text-align:center"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</div>';
+
+      try {
+        const response = await fetch(
+          `${API_URL}/api/admin/schools/${currentModalSchoolId}/members?user_id=${userId}&user_type=${userType}`
+        );
+        const data = await response.json();
+
+        if (data.success) {
+          let html = `
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr style="background:#f9fbff;border-bottom:2px solid #e6e9ef">
+              <th style="padding:12px;text-align:left;font-weight:700;font-size:13px">Name</th>
+              <th style="padding:12px;text-align:left;font-weight:700;font-size:13px">Email</th>
+              <th style="padding:12px;text-align:left;font-weight:700;font-size:13px">Role</th>
+              <th style="padding:12px;text-align:center;font-weight:700;font-size:13px">Telegram</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+          if (data.members.length === 0) {
+            html += '<tr><td colspan="4" style="padding:20px;text-align:center;color:#666">No staff members</td></tr>';
+          } else {
+            data.members.forEach(member => {
+              const telegramIcon = member.telegram_connected
+                ? '<i class="fa-brands fa-telegram" style="color:#0088cc"></i>'
+                : '<i class="fa-solid fa-minus" style="color:#ccc"></i>';
+
+              html += `
+            <tr style="border-bottom:1px solid #f1f3f5">
+              <td style="padding:12px">${member.name}</td>
+              <td style="padding:12px;font-size:13px;color:#666">${member.email}</td>
+              <td style="padding:12px"><span style="background:#f0f0f0;padding:4px 8px;border-radius:4px;font-size:12px">${member.user_type}</span></td>
+              <td style="padding:12px;text-align:center">${telegramIcon}</td>
+            </tr>
+          `;
+            });
+          }
+
+          html += '</tbody></table>';
+          content.innerHTML = html;
+        } else {
+          content.innerHTML = `<div style="padding:20px;text-align:center;color:#ef4444">${data.message}</div>`;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        content.innerHTML = '<div style="padding:20px;text-align:center;color:#ef4444">Error loading staff</div>';
+      }
+    });
+
+    // View consumption button
+    document.getElementById('modalViewConsumptionBtn')?.addEventListener('click', async function () {
+      if (!currentModalSchoolId) return;
+
+      const allowed = this.dataset.allowed === 'true';
+
+      if (!allowed) {
+        alert('❌ This school\'s principal has restricted consumption data access.\n\nYou cannot view their consumption history.');
+        return;
+      }
+
+      const content = document.getElementById('modalContent');
+      content.innerHTML = '<div style="padding:20px;text-align:center"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</div>';
+
+      try {
+        const response = await fetch(
+          `${API_URL}/api/admin/schools/${currentModalSchoolId}/consumption?user_id=${userId}&user_type=${userType}&limit=20`
+        );
+        const data = await response.json();
+
+        if (data.success) {
+          let html = `<div style="margin-bottom:12px;font-size:14px;color:#666">Last 20 readings</div>`;
+
+          if (data.count === 0) {
+            html += '<div style="padding:20px;text-align:center;color:#666">No consumption data available</div>';
+          } else {
+            html += `
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="background:#f9fbff;border-bottom:2px solid #e6e9ef">
+                <th style="padding:10px;text-align:left">Timestamp</th>
+                <th style="padding:10px;text-align:right">Power (W)</th>
+                <th style="padding:10px;text-align:right">Energy (kWh)</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+            data.data.forEach(reading => {
+              const date = new Date(reading.timestamp).toLocaleString();
+              html += `
+            <tr style="border-bottom:1px solid #f1f3f5">
+              <td style="padding:10px">${date}</td>
+              <td style="padding:10px;text-align:right">${reading.power.toFixed(1)}</td>
+              <td style="padding:10px;text-align:right;font-weight:600;color:#4659ff">${reading.energy.toFixed(3)}</td>
+            </tr>
+          `;
+            });
+
+            html += '</tbody></table>';
+          }
+
+          content.innerHTML = html;
+        } else {
+          content.innerHTML = `<div style="padding:20px;text-align:center;color:#ef4444">${data.message}</div>`;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        content.innerHTML = '<div style="padding:20px;text-align:center;color:#ef4444">Error loading consumption data</div>';
+      }
+    });
+
+    // Close modal when clicking outside
+    document.getElementById('schoolDetailsModal')?.addEventListener('click', function (e) {
+      if (e.target === this) {
+        closeSchoolModal();
+      }
+    });
+
+    // Make closeSchoolModal available globally
+    window.closeSchoolModal = closeSchoolModal;
+
     // Initialize
     loadUserData();
+
   </script>
 
 </body>

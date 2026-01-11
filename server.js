@@ -46,15 +46,37 @@ async function sendTelegramMessage(chatId, text) {
   }
 
   try {
+    const now = new Date();
+    
+    // ISO 8601 format for precise logging
+    const isoTimestamp = now.toISOString();
+    
+    // Manual formatting for Telegram to ensure milliseconds display
+    const year = now.getFullYear();
+    const month = now.toLocaleString('en-PH', { month: 'short', timeZone: 'Asia/Manila' });
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const milliseconds = String(now.getMilliseconds()).padStart(3, '0');
+    
+    const readableTime = `${year} ${month} ${day}, ${hours}:${minutes}:${seconds}.${milliseconds}`;
+    
+    // Add timestamp footer with both human-readable and ISO format for latency comparison
+    const messageWithTimestamp = `${text}\n\n⏰ <b>Server Time:</b> ${readableTime}\n🔖 <code>${isoTimestamp}</code>`;
+
     await axios.post(
       `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`,
       {
         chat_id: chatId,
-        text: text,
+        text: messageWithTimestamp,
         parse_mode: "HTML",
       }
     );
-    console.log(`✅ Telegram message sent to ${chatId}`);
+    
+    // Log with ISO timestamp for research data collection
+    console.log(`✅ [${isoTimestamp}] Telegram message sent to ${chatId}`);
+    
   } catch (error) {
     console.error('❌ Failed to send Telegram message:', error.message);
   }
@@ -161,7 +183,7 @@ app.post("/api/power-data", async (req, res) => {
 // ========== ACCOUNT REGISTRATION AND LOGIN ==========
 
 app.post("/api/auth/register", async (req, res) => {
-  const { name, email, user_type, password, telegram_chat_id, account_type, school_id, school_name, invite_code } = req.body;
+  const { name, email, user_type, password, telegram_chat_id, account_type, school_id, school_name, invite_code, admin_invite_code } = req.body;
 
   const cleanEmail = email.toLowerCase().trim();
 
@@ -188,13 +210,60 @@ app.post("/api/auth/register", async (req, res) => {
       return res.status(400).json({ success: false, message: "Email already registered" });
     }
 
-    // Handle school assignment
+    // ===== ADMIN REGISTRATION - VERIFY ADMIN INVITE CODE =====
+    if (user_type === 'admin') {
+      const ADMIN_CODE = process.env.ADMIN_INVITE_CODE || 'ADMIN2025';
+
+      // SECURITY CHECK: Verify admin invitation code
+      if (!admin_invite_code || admin_invite_code.toUpperCase() !== ADMIN_CODE) {
+        return res.status(403).json({ 
+          success: false, 
+          message: "Invalid admin invitation code. Please contact the capstone team for the correct code." 
+        });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const userRef = db.ref("users").push();
+      const userId = userRef.key;
+
+      await userRef.set({
+        name: name.trim(),
+        email: cleanEmail,
+        user_type: 'admin',
+        password: hashedPassword,
+        school_id: null,  // Admins don't belong to a specific school
+        telegram_chat_id: telegram_chat_id || null,
+        account_type: 'admin',
+        permissions: getPermissionsByUserType('admin'),
+        created_at: Date.now()
+      });
+
+      console.log(`✅ Admin registered: ${email} with invite code: ${admin_invite_code}`);
+
+      return res.json({
+        success: true, 
+        message: "Admin account created successfully",
+        userId: userId,
+        schoolId: null,
+        user: {
+          name,
+          email: cleanEmail,
+          user_type: 'admin',
+          school_id: null,
+          school_name: 'System Administrator',
+          account_type: 'admin'
+        }
+      });
+    }
+
+    // ===== TEACHER/PRINCIPAL REGISTRATION - SCHOOL REQUIRED =====
     let finalSchoolId = school_id;
     let finalSchoolName = school_name;
     let generatedInviteCode = null;
 
     if (school_id) {
-      // ===== JOINING EXISTING SCHOOL - VERIFY INVITE CODE =====
+      // JOINING EXISTING SCHOOL - VERIFY INVITE CODE
       const schoolSnapshot = await db.ref(`schools/${school_id}`).once("value");
       
       if (!schoolSnapshot.exists()) {
@@ -215,7 +284,7 @@ app.post("/api/auth/register", async (req, res) => {
       console.log(`✅ Valid invite code provided for ${school.name}`);
 
     } else if (school_name) {
-      // ===== CREATING NEW SCHOOL - GENERATE INVITE CODE =====
+      // CREATING NEW SCHOOL
       if (!school_name.trim()) {
         return res.status(400).json({ success: false, message: "School name required for new school" });
       }
@@ -244,7 +313,7 @@ app.post("/api/auth/register", async (req, res) => {
     } else {
       return res.status(400).json({ 
         success: false, 
-        message: "Either school_id with invite_code OR school_name is required" 
+        message: "Teachers and Principals must either join an existing school or create a new one" 
       });
     }
 
@@ -274,8 +343,8 @@ app.post("/api/auth/register", async (req, res) => {
       return members;
     });
 
-    // Set admin if principal or admin
-    if (user_type === 'admin' || user_type === 'principal') {
+    // Set admin if principal
+    if (user_type === 'principal') {
       const schoolData = await db.ref(`schools/${finalSchoolId}`).once("value");
       if (!schoolData.val().admin_user_id) {
         await db.ref(`schools/${finalSchoolId}`).update({
@@ -578,6 +647,292 @@ app.post("/api/telegram/setup-webhook", async (req, res) => {
   } catch (error) {
     console.error('❌ Webhook error:', error.message);
     res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Update school privacy settings (principal/admin only)
+app.put("/api/schools/:id/privacy", async (req, res) => {
+  try {
+    const schoolId = req.params.id;
+    const userId = req.query.user_id;
+    const userType = req.query.user_type;
+    const { allowConsumptionView, allowBillingView } = req.body;
+
+    // Get school data
+    const schoolSnapshot = await db.ref(`schools/${schoolId}`).once("value");
+    
+    if (!schoolSnapshot.exists()) {
+      return res.status(404).json({ success: false, message: "School not found" });
+    }
+
+    const school = schoolSnapshot.val();
+
+    // Security: Only school admin/principal or system admin can update privacy
+    if (userType !== 'admin' && school.admin_user_id !== userId) {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Only school administrators can update privacy settings" 
+      });
+    }
+
+    await db.ref(`schools/${schoolId}/privacy`).update({
+      allowConsumptionView: allowConsumptionView !== undefined ? allowConsumptionView : true,
+      allowBillingView: allowBillingView !== undefined ? allowBillingView : false,
+      updated_at: Date.now()
+    });
+
+    console.log(`✅ Privacy settings updated for school ${schoolId}`);
+    res.json({ success: true, message: "Privacy settings updated" });
+
+  } catch (err) {
+    console.error("❌ Error updating privacy:", err);
+    res.status(500).json({ success: false });
+  }
+});
+
+// Get school members (principal/admin only)
+app.get("/api/schools/:id/members", async (req, res) => {
+  try {
+    const schoolId = req.params.id;
+    const userId = req.query.user_id;
+    const userType = req.query.user_type;
+
+    // Get school data
+    const schoolSnapshot = await db.ref(`schools/${schoolId}`).once("value");
+    
+    if (!schoolSnapshot.exists()) {
+      return res.status(404).json({ success: false, message: "School not found" });
+    }
+
+    const school = schoolSnapshot.val();
+
+    // Security: Only school admin/principal or system admin can view members
+    if (userType !== 'admin' && userType !== 'principal') {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Only administrators can view school members" 
+      });
+    }
+
+    // If not system admin, verify they belong to this school
+    if (userType === 'principal' && school.admin_user_id !== userId) {
+      return res.status(403).json({ 
+        success: false, 
+        message: "You can only view members from your own school" 
+      });
+    }
+
+    // Get all users for this school
+    const usersSnapshot = await db.ref("users")
+      .orderByChild("school_id")
+      .equalTo(schoolId)
+      .once("value");
+
+    const members = [];
+    usersSnapshot.forEach((child) => {
+      const user = child.val();
+      members.push({
+        id: child.key,
+        name: user.name,
+        email: user.email,
+        user_type: user.user_type,
+        account_type: user.account_type,
+        created_at: user.created_at,
+        last_login: user.last_login,
+        telegram_connected: !!user.telegram_chat_id
+      });
+    });
+
+    res.json({ 
+      success: true, 
+      school_name: school.name,
+      count: members.length,
+      members 
+    });
+
+  } catch (err) {
+    console.error("❌ Error fetching members:", err);
+    res.status(500).json({ success: false });
+  }
+});
+
+// Get all schools with detailed info (admin only)
+app.get("/api/admin/schools-overview", async (req, res) => {
+  try {
+    const userId = req.query.user_id;
+    const userType = req.query.user_type;
+
+    // Security: Only system admins can access this
+    if (userType !== 'admin') {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Only system administrators can access this overview" 
+      });
+    }
+
+    const schoolsSnapshot = await db.ref("schools").once("value");
+    const schools = [];
+
+    for (const schoolKey of Object.keys(schoolsSnapshot.val() || {})) {
+      const school = schoolsSnapshot.val()[schoolKey];
+      
+      // Count members
+      const memberCount = school.members ? school.members.length : 0;
+
+      // Get principal info
+      let principalName = 'N/A';
+      if (school.admin_user_id) {
+        const principalSnapshot = await db.ref(`users/${school.admin_user_id}`).once("value");
+        if (principalSnapshot.exists()) {
+          principalName = principalSnapshot.val().name;
+        }
+      }
+
+      schools.push({
+        id: schoolKey,
+        name: school.name,
+        address: school.address || 'Not specified',
+        created_at: school.created_at,
+        member_count: memberCount,
+        principal_name: principalName,
+        principal_id: school.admin_user_id,
+        privacy: {
+          allowConsumptionView: school.privacy?.allowConsumptionView !== false,
+          allowBillingView: school.privacy?.allowBillingView === true
+        }
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      count: schools.length,
+      schools 
+    });
+
+  } catch (err) {
+    console.error("❌ Error fetching schools overview:", err);
+    res.status(500).json({ success: false, message: "Failed to fetch schools" });
+  }
+});
+
+// Get school members with privacy check (admin only)
+app.get("/api/admin/schools/:id/members", async (req, res) => {
+  try {
+    const schoolId = req.params.id;
+    const userId = req.query.user_id;
+    const userType = req.query.user_type;
+
+    // Security: Only system admins can access this
+    if (userType !== 'admin') {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Only system administrators can access this" 
+      });
+    }
+
+    // Get school data
+    const schoolSnapshot = await db.ref(`schools/${schoolId}`).once("value");
+    
+    if (!schoolSnapshot.exists()) {
+      return res.status(404).json({ success: false, message: "School not found" });
+    }
+
+    const school = schoolSnapshot.val();
+
+    // Check privacy settings - we'll return the status but let frontend handle display
+    const privacyAllowed = true; // Admins can always attempt, but we return privacy status
+
+    // Get all users for this school
+    const usersSnapshot = await db.ref("users")
+      .orderByChild("school_id")
+      .equalTo(schoolId)
+      .once("value");
+
+    const members = [];
+    usersSnapshot.forEach((child) => {
+      const user = child.val();
+      members.push({
+        id: child.key,
+        name: user.name,
+        email: user.email,
+        user_type: user.user_type,
+        account_type: user.account_type,
+        created_at: user.created_at,
+        last_login: user.last_login,
+        telegram_connected: !!user.telegram_chat_id
+      });
+    });
+
+    res.json({ 
+      success: true, 
+      school_name: school.name,
+      count: members.length,
+      members,
+      privacy: {
+        allowConsumptionView: school.privacy?.allowConsumptionView !== false,
+        allowBillingView: school.privacy?.allowBillingView === true
+      }
+    });
+
+  } catch (err) {
+    console.error("❌ Error fetching members:", err);
+    res.status(500).json({ success: false });
+  }
+});
+
+// Get school consumption data with privacy check (admin only)
+app.get("/api/admin/schools/:id/consumption", async (req, res) => {
+  try {
+    const schoolId = req.params.id;
+    const userType = req.query.user_type;
+    const limit = parseInt(req.query.limit) || 50;
+
+    // Security: Only system admins
+    if (userType !== 'admin') {
+      return res.status(403).json({ success: false, message: "Admin access only" });
+    }
+
+    // Check privacy settings
+    const schoolSnapshot = await db.ref(`schools/${schoolId}`).once("value");
+    if (!schoolSnapshot.exists()) {
+      return res.status(404).json({ success: false, message: "School not found" });
+    }
+
+    const school = schoolSnapshot.val();
+    const allowConsumptionView = school.privacy?.allowConsumptionView !== false;
+
+    if (!allowConsumptionView) {
+      return res.status(403).json({ 
+        success: false, 
+        message: "This school's principal has restricted consumption data access",
+        privacy_restricted: true
+      });
+    }
+
+    // Get consumption data
+    const snapshot = await db.ref("readings")
+      .orderByChild("school_id")
+      .equalTo(schoolId)
+      .limitToLast(limit)
+      .once("value");
+
+    const readings = [];
+    snapshot.forEach((child) => {
+      readings.push({ id: child.key, ...child.val() });
+    });
+
+    readings.reverse();
+
+    res.json({ 
+      success: true, 
+      school_name: school.name,
+      count: readings.length,
+      data: readings 
+    });
+
+  } catch (err) {
+    console.error("❌ Error fetching consumption:", err);
+    res.status(500).json({ success: false });
   }
 });
 
