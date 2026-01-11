@@ -581,6 +581,112 @@ app.post("/api/telegram/setup-webhook", async (req, res) => {
   }
 });
 
+// Update school privacy settings (principal/admin only)
+app.put("/api/schools/:id/privacy", async (req, res) => {
+  try {
+    const schoolId = req.params.id;
+    const userId = req.query.user_id;
+    const userType = req.query.user_type;
+    const { allowConsumptionView, allowBillingView } = req.body;
+
+    // Get school data
+    const schoolSnapshot = await db.ref(`schools/${schoolId}`).once("value");
+    
+    if (!schoolSnapshot.exists()) {
+      return res.status(404).json({ success: false, message: "School not found" });
+    }
+
+    const school = schoolSnapshot.val();
+
+    // Security: Only school admin/principal or system admin can update privacy
+    if (userType !== 'admin' && school.admin_user_id !== userId) {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Only school administrators can update privacy settings" 
+      });
+    }
+
+    await db.ref(`schools/${schoolId}/privacy`).update({
+      allowConsumptionView: allowConsumptionView !== undefined ? allowConsumptionView : true,
+      allowBillingView: allowBillingView !== undefined ? allowBillingView : false,
+      updated_at: Date.now()
+    });
+
+    console.log(`✅ Privacy settings updated for school ${schoolId}`);
+    res.json({ success: true, message: "Privacy settings updated" });
+
+  } catch (err) {
+    console.error("❌ Error updating privacy:", err);
+    res.status(500).json({ success: false });
+  }
+});
+
+// Get school members (principal/admin only)
+app.get("/api/schools/:id/members", async (req, res) => {
+  try {
+    const schoolId = req.params.id;
+    const userId = req.query.user_id;
+    const userType = req.query.user_type;
+
+    // Get school data
+    const schoolSnapshot = await db.ref(`schools/${schoolId}`).once("value");
+    
+    if (!schoolSnapshot.exists()) {
+      return res.status(404).json({ success: false, message: "School not found" });
+    }
+
+    const school = schoolSnapshot.val();
+
+    // Security: Only school admin/principal or system admin can view members
+    if (userType !== 'admin' && userType !== 'principal') {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Only administrators can view school members" 
+      });
+    }
+
+    // If not system admin, verify they belong to this school
+    if (userType === 'principal' && school.admin_user_id !== userId) {
+      return res.status(403).json({ 
+        success: false, 
+        message: "You can only view members from your own school" 
+      });
+    }
+
+    // Get all users for this school
+    const usersSnapshot = await db.ref("users")
+      .orderByChild("school_id")
+      .equalTo(schoolId)
+      .once("value");
+
+    const members = [];
+    usersSnapshot.forEach((child) => {
+      const user = child.val();
+      members.push({
+        id: child.key,
+        name: user.name,
+        email: user.email,
+        user_type: user.user_type,
+        account_type: user.account_type,
+        created_at: user.created_at,
+        last_login: user.last_login,
+        telegram_connected: !!user.telegram_chat_id
+      });
+    });
+
+    res.json({ 
+      success: true, 
+      school_name: school.name,
+      count: members.length,
+      members 
+    });
+
+  } catch (err) {
+    console.error("❌ Error fetching members:", err);
+    res.status(500).json({ success: false });
+  }
+});
+
 // ========== END AUTH ENDPOINTS ==========
 
 app.get("/api/power-data", (req, res) => {
