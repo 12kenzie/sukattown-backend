@@ -510,7 +510,7 @@ const defaults = { maxPower: 3000, notif: true, sound: false };
       loadDefaults();
     }
 
-    [maxPower, notifToggle, soundToggle, smsNumber].forEach(el => {
+    [maxPower, notifToggle, soundToggle].forEach(el => {
       el.addEventListener('input', autoSave);
       el.addEventListener('change', autoSave);
     });
