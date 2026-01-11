@@ -79,7 +79,7 @@
             </div>
           </div>
 
-          
+
         </div>
       </div>
 
@@ -143,6 +143,16 @@
     const smsNumber = document.getElementById('smsNumber');
 
     const defaults = { maxPower: 3000, notif: true, sound: false, sms: '' };
+
+    function logout() {
+      if (confirm('Are you sure you want to logout?')) {
+        localStorage.clear();
+        window.location.href = 'login.html';
+      }
+    }
+
+    // Make logout available globally
+    window.logout = logout;
 
     function loadDefaults() {
       maxPower.value = defaults.maxPower;

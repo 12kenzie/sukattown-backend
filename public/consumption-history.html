@@ -19,8 +19,7 @@
             <div class="brand">EL</div>
 
             <div class="nav" role="navigation" aria-label="Main">
-                <button title="Dashboard" aria-label="Dashboard"
-                    onclick="window.location.href='index.html'">
+                <button title="Dashboard" aria-label="Dashboard" onclick="window.location.href='index.html'">
                     <i class="fa-solid fa-house" aria-hidden="true"></i>
                 </button>
 
@@ -227,6 +226,16 @@
         let currentLimit = 50;
         let allReadings = [];
         let historyChartInstance = null;
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Make logout available globally
+        window.logout = logout;
 
         function changeLimit(limit) {
             currentLimit = limit;
