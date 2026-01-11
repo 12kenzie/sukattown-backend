@@ -375,6 +375,12 @@
         return;
       }
 
+      document.getElementById('debugUserId').textContent = userId || 'NULL';
+      document.getElementById('debugUserType').textContent = userType || 'NULL';
+      document.getElementById('debugAccountType').textContent = accountType || 'NULL';
+      document.getElementById('debugSchoolId').textContent = schoolId || 'NULL';
+      document.getElementById('debugUserName').textContent = userName || 'NULL';
+
       // Update UI
       document.getElementById('userName').textContent = userName || 'User';
       document.getElementById('userAvatar').textContent = (userName || 'U').charAt(0).toUpperCase();
@@ -517,6 +523,15 @@
       } else if (userType === 'teacher') {
         console.log('  ✅ Teacher - No special sections');
       }
+
+      const visibleSections = [];
+      if (privacySection && privacySection.style.display === 'block') visibleSections.push('✅ Privacy');
+      if (staffSection && staffSection.style.display === 'block') visibleSections.push('✅ Staff');
+      if (adminSchoolsSection && adminSchoolsSection.style.display === 'block') visibleSections.push('✅ Schools Overview');
+
+      if (visibleSections.length === 0) visibleSections.push('❌ None');
+
+      document.getElementById('debugVisibleSections').innerHTML = visibleSections.join('<br>');
     }
     // Load privacy settings
     async function loadPrivacySettings() {
@@ -875,7 +890,7 @@
 
     // Initialize
     loadUserData();
-   
+
   </script>
 
 </body>
