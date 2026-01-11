@@ -984,6 +984,7 @@ app.get("/api/power-data", (req, res) => {
 });
 
 // CONSUMPTION ALERTS ENDPOINTS
+// CONSUMPTION ALERTS ENDPOINTS
 app.post("/api/consumption-alerts", async (req, res) => {
   const alertData = req.body;
   console.log("🚨 Received consumption alert:", alertData);
@@ -1003,7 +1004,7 @@ app.post("/api/consumption-alerts", async (req, res) => {
   };
 
   try {
-    const userId = alertData.user_id || 1;
+    const userId = alertData.user_id; // Keep as string, don't convert to number
     
     // Save to Firebase
     await db.ref("alerts").push({
@@ -1017,19 +1018,87 @@ app.post("/api/consumption-alerts", async (req, res) => {
     });
 
     // Get user's Telegram Chat ID and send notification
-    const userSnapshot = await db.ref(`users/${userId}`).once("value");
-    if (userSnapshot.exists()) {
-      const user = userSnapshot.val();
-      if (user.telegram_chat_id) {
-        await sendConsumptionAlertToTelegram(latestConsumptionAlert, user.telegram_chat_id);
+    if (userId) {
+      const userSnapshot = await db.ref(`users/${userId}`).once("value");
+      if (userSnapshot.exists()) {
+        const user = userSnapshot.val();
+        if (user.telegram_chat_id) {
+          await sendConsumptionAlertToTelegram(latestConsumptionAlert, user.telegram_chat_id);
+          console.log(`✅ Alert sent to Telegram chat: ${user.telegram_chat_id}`);
+        } else {
+          console.log(`⚠️ User ${userId} has no Telegram Chat ID configured`);
+        }
+      } else {
+        console.log(`⚠️ User ${userId} not found in database`);
       }
     }
 
-    console.log("✅ Alert saved to Firebase and Telegram sent");
+    console.log("✅ Alert saved to Firebase");
     res.status(200).json({
       success: true,
       message: "Alert received successfully",
       data: latestConsumptionAlert,
+    });
+  } catch (err) {
+    console.error("❌ Firebase error:", err);
+    res.status(500).json({ success: false, message: "Firebase save failed" });
+  }
+});
+
+// FIRE ALERT ENDPOINTS
+app.post("/api/fire-alerts", async (req, res) => {
+  const alertData = req.body;
+  console.log("🔥 Received fire alert:", alertData);
+
+  if (!alertData.type) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Missing required field: type" });
+  }
+
+  latestFireAlert = {
+    type: alertData.type,
+    flameDetected: alertData.flameDetected || false,
+    smokeLevel: parseInt(alertData.smokeLevel) || 0,
+    smokeThreshold: parseInt(alertData.smokeThreshold) || 400,
+    timestamp: Date.now(),
+  };
+
+  try {
+    const userId = alertData.user_id; // Keep as string, don't convert to number
+    
+    // Save to Firebase
+    await db.ref("fire_alerts").push({
+      user_id: userId,
+      school_id: alertData.school_id || null,
+      type: latestFireAlert.type,
+      flame_detected: latestFireAlert.flameDetected,
+      smoke_level: latestFireAlert.smokeLevel,
+      smoke_threshold: latestFireAlert.smokeThreshold,
+      timestamp: latestFireAlert.timestamp,
+    });
+
+    // Get user's Telegram Chat ID and send notification
+    if (userId) {
+      const userSnapshot = await db.ref(`users/${userId}`).once("value");
+      if (userSnapshot.exists()) {
+        const user = userSnapshot.val();
+        if (user.telegram_chat_id) {
+          await sendFireAlertToTelegram(latestFireAlert, user.telegram_chat_id);
+          console.log(`✅ Fire alert sent to Telegram chat: ${user.telegram_chat_id}`);
+        } else {
+          console.log(`⚠️ User ${userId} has no Telegram Chat ID configured`);
+        }
+      } else {
+        console.log(`⚠️ User ${userId} not found in database`);
+      }
+    }
+
+    console.log("✅ Fire alert saved to Firebase");
+    res.status(200).json({
+      success: true,
+      message: "Fire alert received successfully",
+      data: latestFireAlert,
     });
   } catch (err) {
     console.error("❌ Firebase error:", err);
