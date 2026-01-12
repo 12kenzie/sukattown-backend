@@ -1047,14 +1047,41 @@ app.post("/api/fire-alerts", async (req, res) => {
 });
 
 // Get latest fire alert
-app.get("/api/fire-alerts", (req, res) => {
-  if (!latestFireAlert) {
-    return res
-      .status(404)
-      .json({ success: false, message: "No fire alerts available" });
+app.get("/api/fire-alerts", async (req, res) => {
+  try {
+    const schoolId = req.query.school_id;
+    
+    // Get latest fire alert for this school
+    const snapshot = await db
+      .ref("fire_alerts")
+      .orderByChild("school_id")
+      .equalTo(schoolId)
+      .limitToLast(1)
+      .once("value");
+
+    let latestAlert = null;
+    snapshot.forEach((child) => {
+      latestAlert = { id: child.key, ...child.val() };
+    });
+
+    if (!latestAlert) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "No fire alerts available" 
+      });
+    }
+    
+    res.json({
+      type: latestAlert.type,
+      flameDetected: latestAlert.flame_detected,
+      smokeLevel: latestAlert.smoke_level,
+      smokeThreshold: latestAlert.smoke_threshold,
+      timestamp: latestAlert.timestamp
+    });
+  } catch (err) {
+    console.error("❌ Firebase error:", err);
+    res.status(500).json({ success: false, message: "Query failed" });
   }
-  console.log("📤 Sending latest fire alert");
-  res.json(latestFireAlert);
 });
 
 // Get all fire alerts history
@@ -1159,13 +1186,11 @@ app.delete("/api/fire-alerts", (req, res) => {
 app.get("/api/readings", async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 50;
-    const schoolId = req.query.school_id || null;
+    const schoolId = req.query.school_id;
 
-    const snapshot = await db
-      .ref("readings")
-      .orderByChild("timestamp")
-      .limitToLast(limit)
-      .once("value");
+    let query = db.ref("readings").orderByChild("timestamp").limitToLast(limit);
+    
+    const snapshot = await query.once("value");
     let readings = [];
 
     snapshot.forEach((child) => {
@@ -1302,7 +1327,7 @@ app.get("/api/stats/energy", async (req, res) => {
 app.get("/api/alerts", async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 50;
-    const userId = parseInt(req.query.user_id) || null;
+    const schoolId = req.query.school_id;
 
     const snapshot = await db
       .ref("alerts")
@@ -1313,7 +1338,7 @@ app.get("/api/alerts", async (req, res) => {
 
     snapshot.forEach((child) => {
       const alert = child.val();
-      if (!userId || alert.user_id === userId) {
+      if (!schoolId || alert.school_id === schoolId) {
         alerts.push({ id: child.key, ...alert });
       }
     });
