@@ -1046,10 +1046,17 @@ app.post("/api/fire-alerts", async (req, res) => {
   }
 });
 
-// Get latest fire alert
+// Get latest fire alert (for real-time monitoring)
 app.get("/api/fire-alerts", async (req, res) => {
   try {
     const schoolId = req.query.school_id;
+    
+    if (!schoolId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "school_id required" 
+      });
+    }
     
     // Get latest fire alert for this school
     const snapshot = await db
@@ -1061,7 +1068,7 @@ app.get("/api/fire-alerts", async (req, res) => {
 
     let latestAlert = null;
     snapshot.forEach((child) => {
-      latestAlert = { id: child.key, ...child.val() };
+      latestAlert = child.val();
     });
 
     if (!latestAlert) {
@@ -1071,6 +1078,7 @@ app.get("/api/fire-alerts", async (req, res) => {
       });
     }
     
+    console.log("📤 Sending latest fire alert for school:", schoolId);
     res.json({
       type: latestAlert.type,
       flameDetected: latestAlert.flame_detected,
