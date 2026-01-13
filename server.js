@@ -1058,8 +1058,10 @@ app.get("/api/fire-alerts", async (req, res) => {
       });
     }
     
-    // Get latest fire alert for this school
-    const snapshot = await db
+    console.log(`🔍 Fetching fire alerts for school: ${schoolId}`);
+    
+    // First try to get alerts WITH school_id
+    let snapshot = await db
       .ref("fire_alerts")
       .orderByChild("school_id")
       .equalTo(schoolId)
@@ -1069,16 +1071,41 @@ app.get("/api/fire-alerts", async (req, res) => {
     let latestAlert = null;
     snapshot.forEach((child) => {
       latestAlert = child.val();
+      console.log(`✅ Found alert WITH school_id: ${JSON.stringify(latestAlert)}`);
     });
 
+    // If no alert found WITH school_id, get the latest alert WITHOUT school_id filter
+    // (for backwards compatibility with ESP32 that might not send school_id)
     if (!latestAlert) {
+      console.log(`⚠️ No alert found for school ${schoolId}, checking all alerts...`);
+      
+      snapshot = await db
+        .ref("fire_alerts")
+        .orderByChild("timestamp")
+        .limitToLast(1)
+        .once("value");
+      
+      snapshot.forEach((child) => {
+        const alert = child.val();
+        // Only use this alert if it has no school_id OR matches our school_id
+        if (!alert.school_id || alert.school_id === schoolId) {
+          latestAlert = alert;
+          console.log(`✅ Found alert WITHOUT school_id filter: ${JSON.stringify(latestAlert)}`);
+        }
+      });
+    }
+
+    if (!latestAlert) {
+      console.log(`❌ No fire alerts found at all`);
       return res.status(404).json({ 
         success: false, 
         message: "No fire alerts available" 
       });
     }
     
-    console.log("📤 Sending latest fire alert for school:", schoolId);
+    console.log(`📤 Returning fire alert: ${latestAlert.type}`);
+    
+    // Return the alert data directly (not wrapped in success object)
     res.json({
       type: latestAlert.type,
       flameDetected: latestAlert.flame_detected,
