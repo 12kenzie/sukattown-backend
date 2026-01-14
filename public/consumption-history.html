@@ -227,6 +227,23 @@
         let allReadings = [];
         let historyChartInstance = null;
 
+        // Load user data
+        function loadUserData() {
+            const userName = localStorage.getItem('userName');
+            const userId = localStorage.getItem('userId');
+
+            if (!userId) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Update UI with user's name
+            if (userName) {
+                document.getElementById('userName').textContent = userName;
+                document.getElementById('userAvatar').textContent = userName.charAt(0).toUpperCase();
+            }
+        }
+
         function logout() {
             if (confirm('Are you sure you want to logout?')) {
                 localStorage.clear();
@@ -437,6 +454,7 @@
 
         $(document).ready(function () {
             fetchHistory();
+            loadUserData();
             setInterval(refreshData, 30000); // Auto-refresh every 30 seconds
         });
     </script>
