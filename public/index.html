@@ -455,7 +455,7 @@
       }
     }
 
-    function testTelegramNow() {
+   function testTelegramNow() {
       console.log('🧪 Testing Telegram with:');
       console.log('  schoolId:', schoolId);
       console.log('  userId:', userId);
@@ -488,19 +488,19 @@
       })
         .then(async (res) => {
           const data = await res.json();
+          
+          console.log('📥 Response:', data);
 
-          // ❌ Real failure (HTTP error)
-          if (!res.ok) {
-            alert(data.message || "Failed to send Telegram alert");
-            return;
+          // Check for success in the response data
+          if (data.success) {
+            alert(`✅ Success!\n\nTelegram alert sent to ${data.recipients} user(s)\n\nCheck your Telegram! 📱`);
+          } else {
+            alert(`❌ Failed\n\n${data.message || "Unknown error"}`);
           }
-
-          // ✅ Success
-          alert(data.message || "Telegram alert sent successfully ✅");
         })
         .catch((err) => {
-          console.error(err);
-          alert("Network error while sending Telegram alert");
+          console.error('❌ Network error:', err);
+          alert("❌ Network error\n\nCouldn't connect to server. Please try again.");
         });
 
     } 
