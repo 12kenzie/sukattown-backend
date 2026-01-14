@@ -1392,7 +1392,12 @@ app.delete("/api/alerts/:id", async (req, res) => {
 });
 
 app.post("/api/send-telegram", async (req, res) => {
-  const { message, user_id, school_id, include_admins } = req.body;
+  let { message, user_id, school_id, include_admins } = req.body;
+
+  // Admin-safe default: if no target specified, include admins
+  if (!user_id && !school_id && !include_admins) {
+    include_admins = true;
+  }
 
   if (!message) {
     return res.status(400).json({ success: false, message: "Message required" });
