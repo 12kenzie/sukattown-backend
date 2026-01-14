@@ -1468,16 +1468,19 @@ app.post("/api/send-telegram", async (req, res) => {
     }
 
     // Send message to all recipients
-    const sendPromises = chatIds.map(chatId =>
-      axios.post(
-        `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`,
-        {
-          chat_id: chatId,
-          text: `🚨 SUKATTOWN ALERT 🚨\n\n${message}`,
-          parse_mode: "HTML",
-        }
-      )
+    // Send message to all recipients using the helper function
+    const sendPromises = chatIds.map(chatId => 
+      sendTelegramMessage(chatId, `🚨 SUKATTOWN ALERT 🚨\n\n${message}`)
     );
+
+    await Promise.all(sendPromises);
+
+    console.log(`✅ Telegram alerts sent to ${chatIds.length} recipients`);
+    res.json({ 
+      success: true, 
+      recipients: chatIds.length,
+      message: `Alert sent to ${chatIds.length} user(s)` 
+    }); 
 
     await Promise.all(sendPromises);
 
