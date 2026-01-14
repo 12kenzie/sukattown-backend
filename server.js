@@ -965,9 +965,11 @@ app.post("/api/consumption-alerts", async (req, res) => {
 
   try {
     const userId = alertData.user_id || 1;
+    const schoolId = alertData.school_id || null;
+    
     await db.ref("alerts").push({
       user_id: userId,
-      school_id: alertData.school_id || null,
+      school_id: schoolId,
       period: latestConsumptionAlert.period,
       consumption: latestConsumptionAlert.consumption,
       limit: latestConsumptionAlert.limit,
@@ -976,6 +978,29 @@ app.post("/api/consumption-alerts", async (req, res) => {
     });
 
     console.log("✅ Alert saved to Firebase");
+    
+    // ========== ADD TELEGRAM NOTIFICATION HERE ==========
+    if (schoolId) {
+      const alertMessage = `⚡ <b>CONSUMPTION ALERT!</b>\n\n` +
+        `Period: ${latestConsumptionAlert.period}\n` +
+        `Consumption: ${latestConsumptionAlert.consumption} kWh\n` +
+        `Limit: ${latestConsumptionAlert.limit} kWh\n` +
+        `Over by: ${latestConsumptionAlert.percentageOver.toFixed(1)}%\n` +
+        `Time: ${new Date().toLocaleString()}`;
+      
+      try {
+        await axios.post(`${API_URL || 'http://localhost:3000'}/api/send-telegram`, {
+          message: alertMessage,
+          school_id: schoolId
+          // Don't include_admins for routine consumption alerts
+        });
+        console.log("✅ Consumption alert Telegram notification sent");
+      } catch (telegramError) {
+        console.error("❌ Failed to send Telegram notification:", telegramError.message);
+      }
+    }
+    // ====================================================
+
     res.status(200).json({
       success: true,
       message: "Alert received successfully",
@@ -1025,9 +1050,11 @@ app.post("/api/fire-alerts", async (req, res) => {
 
   try {
     const userId = alertData.user_id || 1;
+    const schoolId = alertData.school_id || null;
+    
     await db.ref("fire_alerts").push({
       user_id: userId,
-      school_id: alertData.school_id || null,
+      school_id: schoolId,
       type: latestFireAlert.type,
       flame_detected: latestFireAlert.flameDetected,
       smoke_level: latestFireAlert.smokeLevel,
@@ -1036,6 +1063,29 @@ app.post("/api/fire-alerts", async (req, res) => {
     });
 
     console.log("✅ Fire alert saved to Firebase");
+    
+    // ========== ADD TELEGRAM NOTIFICATION HERE ==========
+    if (schoolId) {
+      const alertMessage = `🔥 <b>FIRE ALERT!</b>\n\n` +
+        `Type: ${latestFireAlert.type}\n` +
+        `Flame Detected: ${latestFireAlert.flameDetected ? 'YES ⚠️' : 'No'}\n` +
+        `Smoke Level: ${latestFireAlert.smokeLevel}\n` +
+        `Threshold: ${latestFireAlert.smokeThreshold}\n` +
+        `Time: ${new Date().toLocaleString()}`;
+      
+      try {
+        await axios.post(`${API_URL || 'http://localhost:3000'}/api/send-telegram`, {
+          message: alertMessage,
+          school_id: schoolId,
+          include_admins: true  // Send to school + all admins
+        });
+        console.log("✅ Fire alert Telegram notification sent");
+      } catch (telegramError) {
+        console.error("❌ Failed to send Telegram notification:", telegramError.message);
+      }
+    }
+    // ====================================================
+
     res.status(200).json({
       success: true,
       message: "Fire alert received successfully",
@@ -1700,6 +1750,48 @@ app.get("/api/schools/:id/invite-code", async (req, res) => {
   } catch (err) {
     console.error("❌ Error fetching invite code:", err);
     res.status(500).json({ success: false });
+  }
+});
+
+// Test Telegram configuration
+app.get("/api/telegram/test", async (req, res) => {
+  const { chat_id, message } = req.query;
+  
+  if (!process.env.TELEGRAM_BOT_TOKEN) {
+    return res.json({ 
+      success: false, 
+      error: "TELEGRAM_BOT_TOKEN not configured in environment variables" 
+    });
+  }
+  
+  if (!chat_id) {
+    return res.json({ 
+      success: false, 
+      error: "Please provide chat_id as query parameter" 
+    });
+  }
+  
+  try {
+    const response = await axios.post(
+      `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`,
+      {
+        chat_id: chat_id,
+        text: message || "🧪 Test message from SukatTown!",
+        parse_mode: "HTML"
+      }
+    );
+    
+    res.json({ 
+      success: true, 
+      message: "Test message sent!",
+      telegram_response: response.data 
+    });
+  } catch (error) {
+    res.json({ 
+      success: false, 
+      error: error.message,
+      details: error.response?.data 
+    });
   }
 });
 
