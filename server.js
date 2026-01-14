@@ -1397,6 +1397,13 @@ app.post("/api/send-telegram", async (req, res) => {
 
   let { message, user_id, school_id, include_admins } = req.body;
 
+  if (school_id === "undefined" || school_id === "null") {
+    school_id = undefined;
+  }
+  if (user_id === "undefined" || user_id === "null") {
+    user_id = undefined;
+  }
+
   // Admin-safe default: if no target specified, include admins
   if (!user_id && !school_id && !include_admins) {
     include_admins = true;
