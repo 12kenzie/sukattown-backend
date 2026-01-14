@@ -475,28 +475,35 @@
 
       console.log('📤 Sending test message...');
 
-      fetch('https://sukattown-backend.onrender.com/api/send-telegram', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: testMessage,
-          school_id: schoolId
-        })
+      const payload = {
+        message: testMessage,
+        school_id: schoolId,
+        include_admins: false
+      };
+
+      fetch("https://sukattown-backend.onrender.com/api/send-telegram", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
       })
-        .then(response => response.json())
-        .then(data => {
-          console.log('📥 Telegram response:', data);
-          if (data.success) {
-            alert(`✅ Telegram test successful!\n\nMessage sent to ${data.recipients} user(s)\n\n📱 Check your Telegram app!`);
-          } else {
-            alert(`❌ Telegram test failed!\n\n${data.message}\n\nCheck:\n1. Did you save your Telegram Chat ID in Settings?\n2. Is TELEGRAM_BOT_TOKEN configured on the server?`);
+        .then(async (res) => {
+          const data = await res.json();
+
+          // ❌ Real failure (HTTP error)
+          if (!res.ok) {
+            alert(data.message || "Failed to send Telegram alert");
+            return;
           }
+
+          // ✅ Success
+          alert(data.message || "Telegram alert sent successfully ✅");
         })
-        .catch(error => {
-          console.error('❌ Error:', error);
-          alert(`❌ Network error!\n\n${error.message}\n\nCheck your internet connection and try again.`);
+        .catch((err) => {
+          console.error(err);
+          alert("Network error while sending Telegram alert");
         });
-    }
+
+    } 
 
     // Make functions globally available
     window.testTelegramNow = testTelegramNow;
