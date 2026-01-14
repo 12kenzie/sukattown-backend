@@ -62,9 +62,10 @@ async function sendTelegramMessage(chatId, text) {
     
     const readableTime = `${year} ${month} ${day}, ${hours}:${minutes}:${seconds}.${milliseconds}`;
     
-    // Add timestamp footer with both human-readable and ISO format for latency comparison
+    // Add timestamp footer with both human-readable and ISO format
     const messageWithTimestamp = `${text}\n\n⏰ <b>Server Time:</b> ${readableTime}\n🔖 <code>${isoTimestamp}</code>`;
-
+    
+    // Send directly to the specified chatId
     await axios.post(
       `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`,
       {
@@ -1341,21 +1342,93 @@ app.delete("/api/alerts/:id", async (req, res) => {
 });
 
 app.post("/api/send-telegram", async (req, res) => {
-  const { message } = req.body;
+  const { message, user_id, school_id, include_admins } = req.body;
+
+  if (!message) {
+    return res.status(400).json({ success: false, message: "Message required" });
+  }
 
   try {
-    await axios.post(
-      `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`,
-      {
-        chat_id: process.env.TELEGRAM_CHAT_ID,
-        text: `🚨 SUKATTOWN ALERT 🚨\n\n${message}`,
-        parse_mode: "HTML",
+    let chatIds = [];
+
+    // If user_id provided, send to that specific user
+    if (user_id) {
+      const userSnapshot = await db.ref(`users/${user_id}`).once("value");
+      if (userSnapshot.exists() && userSnapshot.val().telegram_chat_id) {
+        chatIds.push(userSnapshot.val().telegram_chat_id);
       }
+    }
+
+    // If school_id provided, send to all users in that school
+    if (school_id) {
+      const schoolSnapshot = await db.ref(`schools/${school_id}`).once("value");
+      if (schoolSnapshot.exists()) {
+        const members = schoolSnapshot.val().members || [];
+        
+        for (const memberId of members) {
+          const memberSnapshot = await db.ref(`users/${memberId}`).once("value");
+          if (memberSnapshot.exists() && memberSnapshot.val().telegram_chat_id) {
+            const chatId = memberSnapshot.val().telegram_chat_id;
+            if (!chatIds.includes(chatId)) {
+              chatIds.push(chatId);
+            }
+          }
+        }
+      }
+    }
+
+    // If include_admins is true, add all admins
+    if (include_admins) {
+      const adminSnapshot = await db.ref("users")
+        .orderByChild("user_type")
+        .equalTo("admin")
+        .once("value");
+      
+      adminSnapshot.forEach((child) => {
+        const admin = child.val();
+        if (admin.telegram_chat_id && !chatIds.includes(admin.telegram_chat_id)) {
+          chatIds.push(admin.telegram_chat_id);
+        }
+      });
+    }
+
+    // Remove duplicates and filter out null/empty values
+    chatIds = [...new Set(chatIds)].filter(id => id);
+
+    if (chatIds.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "No Telegram chat IDs found for recipients" 
+      });
+    }
+
+    // Send message to all recipients
+    const sendPromises = chatIds.map(chatId =>
+      axios.post(
+        `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`,
+        {
+          chat_id: chatId,
+          text: `🚨 SUKATTOWN ALERT 🚨\n\n${message}`,
+          parse_mode: "HTML",
+        }
+      )
     );
 
-    res.json({ success: true });
+    await Promise.all(sendPromises);
+
+    console.log(`✅ Telegram alerts sent to ${chatIds.length} recipients`);
+    res.json({ 
+      success: true, 
+      recipients: chatIds.length,
+      message: `Alert sent to ${chatIds.length} user(s)` 
+    });
   } catch (error) {
-    res.status(500).json({ success: false });
+    console.error("❌ Telegram send error:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to send Telegram alert",
+      error: error.message 
+    });
   }
 });
 
