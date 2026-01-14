@@ -1,7 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
-const bcrypt = require("bcrypt"); // ADD THIS LINE - IMPORTANT!
+const bcrypt = require("bcrypt"); 
+const telegramBot = require('./telegramBot');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -36,76 +37,6 @@ function getPermissionsByUserType(userType) {
     default:
       return ["read"];
   }
-}
-
-// TELEGRAM HELPER FUNCTIONS
-async function sendTelegramMessage(chatId, text) {
-  if (!process.env.TELEGRAM_BOT_TOKEN) {
-    console.log('⚠️ TELEGRAM_BOT_TOKEN not configured');
-    return;
-  }
-
-  try {
-    const now = new Date();
-    
-    // ISO 8601 format for precise logging
-    const isoTimestamp = now.toISOString();
-    
-    // Manual formatting for Telegram to ensure milliseconds display
-    const year = now.getFullYear();
-    const month = now.toLocaleString('en-PH', { month: 'short', timeZone: 'Asia/Manila' });
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    const milliseconds = String(now.getMilliseconds()).padStart(3, '0');
-    
-    const readableTime = `${year} ${month} ${day}, ${hours}:${minutes}:${seconds}.${milliseconds}`;
-    
-    // Add timestamp footer with both human-readable and ISO format
-    const messageWithTimestamp = `${text}\n\n⏰ <b>Server Time:</b> ${readableTime}\n🔖 <code>${isoTimestamp}</code>`;
-    
-    // Send directly to the specified chatId
-    await axios.post(
-      `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`,
-      {
-        chat_id: chatId,
-        text: messageWithTimestamp,
-        parse_mode: "HTML",
-      }
-    );
-    
-    // Log with ISO timestamp for research data collection
-    console.log(`✅ [${isoTimestamp}] Telegram message sent to ${chatId}`);
-    
-  } catch (error) {
-    console.error('❌ Failed to send Telegram message:', error.message);
-  }
-}
-
-async function sendTelegramInviteCode(chatId, schoolName, inviteCode, principalName) {
-  if (!chatId || !process.env.TELEGRAM_BOT_TOKEN) {
-    console.log('⚠️ Telegram not configured');
-    return;
-  }
-
-  const message = `
-🏫 <b>School Created Successfully!</b>
-
-👤 Principal: ${principalName}
-🏫 School: ${schoolName}
-
-🔑 <b>INVITATION CODE:</b>
-<code>${inviteCode}</code>
-
-📋 Share this code with your staff members so they can join your school on SukatTown.
-
-⚠️ <b>Keep this code secure!</b>
-
-💡 Tip: Send /school_invcode anytime to retrieve this code.
-  `;
-
-  await sendTelegramMessage(chatId, message);
 }
 
 // CORS configuration for GitHub Pages
@@ -358,11 +289,11 @@ app.post("/api/auth/register", async (req, res) => {
 
     if (generatedInviteCode && telegram_chat_id) {
       await sendTelegramInviteCode(
-        telegram_chat_id, 
-        school_name.trim(), 
-        generatedInviteCode, 
-        name.trim()
-      );
+      telegram_chat_id, 
+      school_name.trim(), 
+      generatedInviteCode, 
+      name.trim()
+    ); 
     }
 
     // Prepare response
@@ -513,142 +444,11 @@ app.put("/api/users/:userId/telegram", async (req, res) => {
   }
 });
 
-// TELEGRAM BOT WEBHOOK HANDLER
-app.post("/api/telegram/webhook", async (req, res) => {
-  try {
-    const { message } = req.body;
-
-    if (!message || !message.text) {
-      return res.sendStatus(200);
-    }
-
-    const chatId = message.chat.id;
-    const text = message.text.trim();
-
-    console.log(`📱 Telegram command: ${text} from ${chatId}`);
-
-    // /start command
-    if (text === '/start') {
-      await sendTelegramMessage(chatId, 
-        `🏫 <b>Welcome to SukatTown Bot!</b>\n\n` +
-        `Available commands:\n` +
-        `/school_invcode - Get your school's invitation code\n` +
-        `/help - Show all commands\n` +
-        `/myid - Get your Chat ID\n\n` +
-        `Your Chat ID: <code>${chatId}</code>`
-      );
-      return res.sendStatus(200);
-    }
-
-    // /help command
-    if (text === '/help') {
-      await sendTelegramMessage(chatId,
-        `📚 <b>SukatTown Bot Commands</b>\n\n` +
-        `🔑 /school_invcode - Get your school's invitation code\n` +
-        `ℹ️ /help - Show this help message\n` +
-        `🆔 /myid - Get your Telegram Chat ID`
-      );
-      return res.sendStatus(200);
-    }
-
-    // /myid command
-    if (text === '/myid') {
-      await sendTelegramMessage(chatId,
-        `🆔 <b>Your Telegram Chat ID:</b>\n\n` +
-        `<code>${chatId}</code>\n\n` +
-        `Copy this and paste in SukatTown Settings.`
-      );
-      return res.sendStatus(200);
-    }
-
-    // /school_invcode command
-    if (text === '/school_invcode') {
-      const snapshot = await db.ref("users")
-        .orderByChild("telegram_chat_id")
-        .equalTo(chatId.toString())
-        .once("value");
-
-      if (!snapshot.exists()) {
-        await sendTelegramMessage(chatId,
-          `❌ <b>Not Found</b>\n\n` +
-          `Your Telegram is not connected.\n\n` +
-          `Steps:\n` +
-          `1. Login to SukatTown\n` +
-          `2. Go to Settings\n` +
-          `3. Add Chat ID: <code>${chatId}</code>`
-        );
-        return res.sendStatus(200);
-      }
-
-      let user = null;
-      snapshot.forEach(child => {
-        user = child.val();
-      });
-
-      if (user.user_type !== 'principal' && user.user_type !== 'admin') {
-        await sendTelegramMessage(chatId,
-          `⚠️ <b>Access Denied</b>\n\n` +
-          `Only principals/admins can view the invitation code.\n\n` +
-          `Your role: ${user.user_type}`
-        );
-        return res.sendStatus(200);
-      }
-
-      const schoolSnapshot = await db.ref(`schools/${user.school_id}`).once("value");
-      
-      if (!schoolSnapshot.exists()) {
-        await sendTelegramMessage(chatId, `❌ School not found.`);
-        return res.sendStatus(200);
-      }
-
-      const school = schoolSnapshot.val();
-
-      await sendTelegramMessage(chatId,
-        `🏫 <b>${school.name}</b>\n\n` +
-        `🔑 <b>Invitation Code:</b>\n` +
-        `<code>${school.invite_code}</code>\n\n` +
-        `📋 Share with staff to join your school.\n\n` +
-        `⚠️ Keep confidential!`
-      );
-
-      return res.sendStatus(200);
-    }
-
-    // Unknown command
-    await sendTelegramMessage(chatId, `❓ Unknown command. Type /help`);
-    res.sendStatus(200);
-
-  } catch (error) {
-    console.error("❌ Telegram webhook error:", error);
-    res.sendStatus(200);
-  }
-});
-
 // SETUP TELEGRAM WEBHOOK
 app.post("/api/telegram/setup-webhook", async (req, res) => {
-  if (!process.env.TELEGRAM_BOT_TOKEN) {
-    return res.json({ success: false, message: "Bot token not configured" });
-  }
-
   const webhookUrl = `https://sukattown-backend.onrender.com/api/telegram/webhook`;
-
-  try {
-    const response = await axios.post(
-      `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/setWebhook`,
-      { url: webhookUrl, allowed_updates: ["message"] }
-    );
-
-    if (response.data.ok) {
-      console.log(`✅ Telegram webhook set to: ${webhookUrl}`);
-      res.json({ success: true, message: "Webhook setup successful" });
-    } else {
-      console.error('❌ Webhook setup failed:', response.data);
-      res.json({ success: false, message: "Webhook setup failed" });
-    }
-  } catch (error) {
-    console.error('❌ Webhook error:', error.message);
-    res.status(500).json({ success: false, message: error.message });
-  }
+  const result = await telegramBot.setupWebhook(webhookUrl, process.env.TELEGRAM_BOT_TOKEN);
+  res.json(result);
 });
 
 // Update school privacy settings (principal/admin only)
