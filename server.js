@@ -1392,6 +1392,9 @@ app.delete("/api/alerts/:id", async (req, res) => {
 });
 
 app.post("/api/send-telegram", async (req, res) => {
+
+  console.log("📩 send-telegram called with body:", req.body);
+
   let { message, user_id, school_id, include_admins } = req.body;
 
   // Admin-safe default: if no target specified, include admins
