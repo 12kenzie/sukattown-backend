@@ -1470,7 +1470,7 @@ app.post("/api/send-telegram", async (req, res) => {
     // Send message to all recipients
     // Send message to all recipients using the helper function
     const sendPromises = chatIds.map(chatId => 
-      sendTelegramMessage(chatId, `🚨 SUKATTOWN ALERT 🚨\n\n${message}`)
+      telegramBot.sendTelegramMessage(chatId, `🚨 SUKATTOWN ALERT 🚨\n\n${message}`)
     );
 
     await Promise.all(sendPromises);
