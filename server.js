@@ -288,12 +288,13 @@ app.post("/api/auth/register", async (req, res) => {
     console.log(`✅ User registered: ${email} (${user_type}) - School: ${finalSchoolId}`);
 
     if (generatedInviteCode && telegram_chat_id) {
-      await sendTelegramInviteCode(
-      telegram_chat_id, 
-      school_name.trim(), 
-      generatedInviteCode, 
-      name.trim()
-    ); 
+     await telegramBot.sendInviteCode(
+        telegram_chat_id, 
+        school_name.trim(), 
+        generatedInviteCode, 
+        name.trim(),
+        process.env.TELEGRAM_BOT_TOKEN
+      ); 
     }
 
     // Prepare response
@@ -449,6 +450,14 @@ app.post("/api/telegram/setup-webhook", async (req, res) => {
   const webhookUrl = `https://sukattown-backend.onrender.com/api/telegram/webhook`;
   const result = await telegramBot.setupWebhook(webhookUrl, process.env.TELEGRAM_BOT_TOKEN);
   res.json(result);
+});
+
+// TELEGRAM BOT WEBHOOK HANDLER
+app.post("/api/telegram/webhook", async (req, res) => {
+  console.log("🔔 WEBHOOK RECEIVED:", JSON.stringify(req.body, null, 2));
+  const result = await telegramBot.handleWebhook(req, db, process.env.TELEGRAM_BOT_TOKEN);
+  console.log("📤 WEBHOOK RESULT:", result);
+  res.sendStatus(result.success ? 200 : 500);
 });
 
 // Update school privacy settings (principal/admin only)
