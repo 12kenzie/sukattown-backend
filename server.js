@@ -822,55 +822,69 @@ app.post("/api/consumption-alerts", async (req, res) => {
 });
 
 // Get latest consumption alert from Firebase
-app.get("/api/consumption-alerts", async (req, res) => {
+app.post("/api/consumption-alerts", async (req, res) => {
+  const alertData = req.body;
+  console.log("🚨 Received consumption alert:", alertData);
+
+  if (!alertData.period || !alertData.consumption || !alertData.limit) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Missing required fields" });
+  }
+
+  latestConsumptionAlert = {
+    period: alertData.period,
+    consumption: parseFloat(alertData.consumption),
+    limit: parseFloat(alertData.limit),
+    percentageOver: parseFloat(alertData.percentageOver || 0),
+    timestamp: Date.now(),
+  };
+
   try {
-    const schoolId = req.query.school_id || null;
+    const userId = alertData.user_id || 1;
+    const schoolId = alertData.school_id || null;
     
-    // Get the most recent consumption alert from Firebase
-    const snapshot = await db
-      .ref("alerts")
-      .orderByChild("timestamp")
-      .limitToLast(1)
-      .once("value");
-
-    if (!snapshot.exists()) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "No alerts available" 
-      });
-    }
-
-    let latestAlert = null;
-    snapshot.forEach((child) => {
-      const alert = child.val();
-      // Filter by school if specified
-      if (!schoolId || alert.school_id === schoolId) {
-        latestAlert = {
-          period: alert.period,
-          consumption: alert.consumption,
-          limit: alert.limit,
-          percentageOver: alert.percentage_over,
-          timestamp: alert.timestamp,
-          school_id: alert.school_id
-        };
-      }
+    await db.ref("alerts").push({
+      user_id: userId,
+      school_id: schoolId,
+      period: latestConsumptionAlert.period,
+      consumption: latestConsumptionAlert.consumption,
+      limit: latestConsumptionAlert.limit,
+      percentage_over: latestConsumptionAlert.percentageOver,
+      timestamp: latestConsumptionAlert.timestamp,
     });
 
-    if (!latestAlert) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "No alerts for this school" 
+    console.log("✅ Alert saved to Firebase");
+    
+    // Send Telegram in background
+    if (schoolId) {
+      const alertMessage = `⚡ <b>CONSUMPTION ALERT!</b>\n\n` +
+        `Period: ${latestConsumptionAlert.period}\n` +
+        `Consumption: ${latestConsumptionAlert.consumption} kWh\n` +
+        `Limit: ${latestConsumptionAlert.limit} kWh\n` +
+        `Over by: ${latestConsumptionAlert.percentageOver.toFixed(1)}%\n` +
+        `Time: ${new Date().toLocaleString()}`;
+      
+      axios.post(`${process.env.API_URL || 'http://localhost:3000'}/api/send-telegram`, {
+        message: alertMessage,
+        school_id: schoolId
+      }).then(() => {
+        console.log("✅ Consumption alert Telegram notification sent");
+      }).catch(telegramError => {
+        console.error("❌ Failed to send Telegram notification:", telegramError.message);
       });
     }
 
-    console.log("📤 Sending latest consumption alert from Firebase");
-    res.json(latestAlert);
+    // ✅ Send response immediately
+    res.status(200).json({
+      success: true,
+      message: "Alert received successfully",
+      data: latestConsumptionAlert,
+    });
+
   } catch (err) {
-    console.error("❌ Firebase query error:", err);
-    res.status(500).json({ 
-      success: false, 
-      message: "Failed to fetch alerts" 
-    });
+    console.error("❌ Firebase error:", err);
+    res.status(500).json({ success: false, message: "Firebase save failed" });
   }
 });
 
@@ -949,56 +963,73 @@ app.post("/api/fire-alerts", async (req, res) => {
   }
 });
 
-// Get latest fire alert from Firebase
-app.get("/api/fire-alerts", async (req, res) => {
+// FIRE ALERT ENDPOINTS
+// Receive fire alert from ESP32
+app.post("/api/fire-alerts", async (req, res) => {
+  const alertData = req.body;
+  console.log("🔥 Received fire alert:", alertData);
+
+  if (!alertData.type) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Missing required field: type" });
+  }
+
+  latestFireAlert = {
+    type: alertData.type,
+    flameDetected: alertData.flameDetected || false,
+    smokeLevel: parseInt(alertData.smokeLevel) || 0,
+    smokeThreshold: parseInt(alertData.smokeThreshold) || 400,
+    timestamp: Date.now(),
+  };
+
   try {
-    const schoolId = req.query.school_id || null;
+    const userId = alertData.user_id || 1;
+    const schoolId = alertData.school_id || null;
     
-    // Get the most recent fire alert from Firebase
-    const snapshot = await db
-      .ref("fire_alerts")
-      .orderByChild("timestamp")
-      .limitToLast(1)
-      .once("value");
-
-    if (!snapshot.exists()) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "No fire alerts available" 
-      });
-    }
-
-    let latestAlert = null;
-    snapshot.forEach((child) => {
-      const alert = child.val();
-      // Filter by school if specified, otherwise return the latest
-      if (!schoolId || alert.school_id === schoolId) {
-        latestAlert = {
-          type: alert.type,
-          flameDetected: alert.flame_detected,
-          smokeLevel: alert.smoke_level,
-          smokeThreshold: alert.smoke_threshold,
-          timestamp: alert.timestamp,
-          school_id: alert.school_id
-        };
-      }
+    await db.ref("fire_alerts").push({
+      user_id: userId,
+      school_id: schoolId,
+      type: latestFireAlert.type,
+      flame_detected: latestFireAlert.flameDetected,
+      smoke_level: latestFireAlert.smokeLevel,
+      smoke_threshold: latestFireAlert.smokeThreshold,
+      timestamp: latestFireAlert.timestamp,
     });
 
-    if (!latestAlert) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "No fire alerts for this school" 
+    console.log("✅ Fire alert saved to Firebase");
+    
+    // Send Telegram notification (but DON'T await it)
+    if (schoolId) {
+      const alertMessage = `🔥 <b>FIRE ALERT!</b>\n\n` +
+        `Type: ${latestFireAlert.type}\n` +
+        `Flame Detected: ${latestFireAlert.flameDetected ? 'YES ⚠️' : 'No'}\n` +
+        `Smoke Level: ${latestFireAlert.smokeLevel}\n` +
+        `Threshold: ${latestFireAlert.smokeThreshold}\n` +
+        `Time: ${new Date().toLocaleString()}`;
+      
+      // Send telegram in background - don't block response
+      axios.post(`${process.env.API_URL || 'http://localhost:3000'}/api/send-telegram`, {
+        message: alertMessage,
+        school_id: schoolId,
+        include_admins: true
+      }).then(() => {
+        console.log("✅ Fire alert Telegram notification sent");
+      }).catch(telegramError => {
+        console.error("❌ Failed to send Telegram notification:", telegramError.message);
       });
     }
 
-    console.log("📤 Sending latest fire alert from Firebase");
-    res.json(latestAlert);
+    // ✅ SEND RESPONSE IMMEDIATELY - Don't wait for Telegram
+    res.status(200).json({
+      success: true,
+      message: "Fire alert received successfully",
+      data: latestFireAlert,
+    });
+
   } catch (err) {
-    console.error("❌ Firebase query error:", err);
-    res.status(500).json({ 
-      success: false, 
-      message: "Failed to fetch fire alerts" 
-    });
+    console.error("❌ Firebase error:", err);
+    res.status(500).json({ success: false, message: "Firebase save failed" });
   }
 });
 
@@ -1374,16 +1405,7 @@ app.post("/api/send-telegram", async (req, res) => {
       success: true, 
       recipients: chatIds.length,
       message: `Alert sent to ${chatIds.length} user(s)` 
-    }); 
-
-    await Promise.all(sendPromises);
-
-    console.log(`✅ Telegram alerts sent to ${chatIds.length} recipients`);
-    res.json({ 
-      success: true, 
-      recipients: chatIds.length,
-      message: `Alert sent to ${chatIds.length} user(s)` 
-    });
+    });  
   } catch (error) {
     console.error("❌ Telegram send error:", error);
     res.status(500).json({ 
