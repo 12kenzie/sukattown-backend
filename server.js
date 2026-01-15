@@ -821,14 +821,57 @@ app.post("/api/consumption-alerts", async (req, res) => {
   }
 });
 
-app.get("/api/consumption-alerts", (req, res) => {
-  if (!latestConsumptionAlert) {
-    return res
-      .status(404)
-      .json({ success: false, message: "No alerts available" });
+// Get latest consumption alert from Firebase
+app.get("/api/consumption-alerts", async (req, res) => {
+  try {
+    const schoolId = req.query.school_id || null;
+    
+    // Get the most recent consumption alert from Firebase
+    const snapshot = await db
+      .ref("alerts")
+      .orderByChild("timestamp")
+      .limitToLast(1)
+      .once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "No alerts available" 
+      });
+    }
+
+    let latestAlert = null;
+    snapshot.forEach((child) => {
+      const alert = child.val();
+      // Filter by school if specified
+      if (!schoolId || alert.school_id === schoolId) {
+        latestAlert = {
+          period: alert.period,
+          consumption: alert.consumption,
+          limit: alert.limit,
+          percentageOver: alert.percentage_over,
+          timestamp: alert.timestamp,
+          school_id: alert.school_id
+        };
+      }
+    });
+
+    if (!latestAlert) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "No alerts for this school" 
+      });
+    }
+
+    console.log("📤 Sending latest consumption alert from Firebase");
+    res.json(latestAlert);
+  } catch (err) {
+    console.error("❌ Firebase query error:", err);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to fetch alerts" 
+    });
   }
-  console.log("📤 Sending latest consumption alert");
-  res.json(latestConsumptionAlert);
 });
 
 app.delete("/api/consumption-alerts", (req, res) => {
@@ -906,15 +949,57 @@ app.post("/api/fire-alerts", async (req, res) => {
   }
 });
 
-// Get latest fire alert
-app.get("/api/fire-alerts", (req, res) => {
-  if (!latestFireAlert) {
-    return res
-      .status(404)
-      .json({ success: false, message: "No fire alerts available" });
+// Get latest fire alert from Firebase
+app.get("/api/fire-alerts", async (req, res) => {
+  try {
+    const schoolId = req.query.school_id || null;
+    
+    // Get the most recent fire alert from Firebase
+    const snapshot = await db
+      .ref("fire_alerts")
+      .orderByChild("timestamp")
+      .limitToLast(1)
+      .once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "No fire alerts available" 
+      });
+    }
+
+    let latestAlert = null;
+    snapshot.forEach((child) => {
+      const alert = child.val();
+      // Filter by school if specified, otherwise return the latest
+      if (!schoolId || alert.school_id === schoolId) {
+        latestAlert = {
+          type: alert.type,
+          flameDetected: alert.flame_detected,
+          smokeLevel: alert.smoke_level,
+          smokeThreshold: alert.smoke_threshold,
+          timestamp: alert.timestamp,
+          school_id: alert.school_id
+        };
+      }
+    });
+
+    if (!latestAlert) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "No fire alerts for this school" 
+      });
+    }
+
+    console.log("📤 Sending latest fire alert from Firebase");
+    res.json(latestAlert);
+  } catch (err) {
+    console.error("❌ Firebase query error:", err);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to fetch fire alerts" 
+    });
   }
-  console.log("📤 Sending latest fire alert");
-  res.json(latestFireAlert);
 });
 
 // Get all fire alerts history
