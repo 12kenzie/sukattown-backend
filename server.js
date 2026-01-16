@@ -6,6 +6,21 @@ const telegramBot = require('./telegramBot');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const performanceLogger = require('./logger'); // import the middleware
+
+const app = express();
+app.use(performanceLogger);
+
+// Example route
+app.get('/api/power-data', (req, res) => {
+  setTimeout(() => {
+    res.json({ voltage: 230, current: 5 });
+  }, 200);
+});
+
+app.listen(3000, () => console.log('Server running on port 3000'));
+
+
 // Firebase Admin SDK
 const admin = require("firebase-admin");
 
