@@ -8,7 +8,6 @@ const PORT = process.env.PORT || 3000;
 
 const performanceLogger = require('./logger'); // import the middleware
 
-const app = express();
 app.use(performanceLogger);
 
 // Example route
