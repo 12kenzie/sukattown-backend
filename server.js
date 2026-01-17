@@ -1162,8 +1162,9 @@ app.delete("/api/alerts/:id", async (req, res) => {
   }
 });
 
-app.post("/api/send-telegram", async (req, res) => {
+// In server.js, replace the /api/send-telegram endpoint with this:
 
+app.post("/api/send-telegram", async (req, res) => {
   console.log("📩 send-telegram called with body:", req.body);
 
   let { message, user_id, school_id, include_admins } = req.body;
@@ -1238,8 +1239,7 @@ app.post("/api/send-telegram", async (req, res) => {
       });
     }
 
-    // Send message to all recipients
-    // Send message to all recipients using the helper function
+    // ✅ Send message to all recipients ONCE
     const sendPromises = chatIds.map(chatId => 
       telegramBot.sendTelegramMessage(chatId, `🚨 SUKATTOWN ALERT 🚨\n\n${message}`, process.env.TELEGRAM_BOT_TOKEN)
     );
@@ -1247,20 +1247,14 @@ app.post("/api/send-telegram", async (req, res) => {
     await Promise.all(sendPromises);
 
     console.log(`✅ Telegram alerts sent to ${chatIds.length} recipients`);
-    res.json({ 
-      success: true, 
-      recipients: chatIds.length,
-      message: `Alert sent to ${chatIds.length} user(s)` 
-    }); 
-
-    await Promise.all(sendPromises);
-
-    console.log(`✅ Telegram alerts sent to ${chatIds.length} recipients`);
+    
+    // ✅ Send response ONCE - removed duplicate Promise.all
     res.json({ 
       success: true, 
       recipients: chatIds.length,
       message: `Alert sent to ${chatIds.length} user(s)` 
     });
+
   } catch (error) {
     console.error("❌ Telegram send error:", error);
     res.status(500).json({ 
