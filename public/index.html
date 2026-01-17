@@ -382,7 +382,6 @@
     const COST_PER_KWH = 5.5;
     let alertHistory = [];
     let lastAlertCheck = 0;
-    let processedAlertIds = new Set(); // Track processed alerts to prevent duplicates
 
     let isPrincipalAccount = true; // Default to principal account
 
@@ -456,7 +455,7 @@
       }
     }
 
-    function testTelegramNow() {
+   function testTelegramNow() {
       console.log('🧪 Testing Telegram with:');
       console.log('  schoolId:', schoolId);
       console.log('  userId:', userId);
@@ -489,7 +488,7 @@
       })
         .then(async (res) => {
           const data = await res.json();
-
+          
           console.log('📥 Response:', data);
 
           // Check for success in the response data
@@ -504,12 +503,13 @@
           alert("❌ Network error\n\nCouldn't connect to server. Please try again.");
         });
 
-    }
+    } 
 
     // Make functions globally available
     window.testTelegramNow = testTelegramNow;
-
-
+    window.closeAlert = closeAlert;
+    window.setAccountType = setAccountType;
+    window.triggerDemoAlert = triggerDemoAlert;
 
     function logout() {
       if (confirm('Are you sure you want to logout?')) {
@@ -750,87 +750,72 @@
         });
     }
 
-    
-   function fetchConsumptionAlerts() {
-  const now = Date.now();
-  if (now - lastAlertCheck < 5000) return;
+    function fetchConsumptionAlerts() {
+      const now = Date.now();
+      if (now - lastAlertCheck < 5000) return;
 
-  lastAlertCheck = now;
+      lastAlertCheck = now;
 
-  const params = new URLSearchParams({
-    school_id: schoolId,
-    user_type: userType,
-    limit: 10
-  });
+      // Add school filtering
+      const params = new URLSearchParams({
+        school_id: schoolId,
+        user_type: userType,
+        limit: 10
+      });
 
-  fetch(`${ALERT_API_URL}?${params}`)
-    .then(response => response.json())
-    .then(data => {
-      if (data && data.period) {
-        const alertId = `${data.period}-${data.timestamp}`;
-        
-        // ✅ Skip alerts created in the last 10 seconds (from demo buttons)
-        const alertAge = Date.now() - data.timestamp;
-        if (alertAge < 10000) {
-          console.log('⏭️ Skipping recent alert (likely from demo):', alertId, `Age: ${alertAge}ms`);
-          return;
-        }
+      fetch(`${ALERT_API_URL}?${params}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data && data.period) {
+            const alertId = `${data.period}-${data.timestamp}`;
 
-        // Check if already shown
-        const existingAlert = alertHistory.find(a => a.id === alertId);
-        if (!existingAlert) {
-          showAlert(data);
-          addToAlertHistory(data, alertId);
-        }
-      }
-    })
-    .catch(error => {
-      console.error('Error fetching alerts:', error);
-    });
-} 
+            // Check if this alert was already shown
+            const existingAlert = alertHistory.find(a => a.id === alertId);
+            if (!existingAlert) {
+              showAlert(data);
+              addToAlertHistory(data, alertId);
+            }
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching alerts:', error);
+        });
+    }
 
+    function fetchFireAlerts() {
+      // Add school filtering
+      const params = new URLSearchParams({
+        school_id: schoolId,
+        user_type: userType
+      });
 
-  function fetchFireAlerts() {
-  const params = new URLSearchParams({
-    school_id: schoolId,
-    user_type: userType
-  });
+      fetch(`${FIRE_ALERT_API_URL}?${params}`)
+        .then(response => {
+          if (!response.ok) {
+            if (response.status === 404) {
+              return null;
+            }
+            throw new Error(`HTTP ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (data && data.type) {
+            const alertId = `fire-${data.timestamp}`;
 
-  fetch(`${FIRE_ALERT_API_URL}?${params}`)
-    .then(response => {
-      if (!response.ok) {
-        if (response.status === 404) {
-          return null;
-        }
-        throw new Error(`HTTP ${response.status}`);
-      }
-      return response.json();
-    })
-    .then(data => {
-      if (data && data.type) {
-        const alertId = `fire-${data.timestamp}`;
-        
-        // ✅ Skip alerts created in the last 10 seconds (from demo buttons)
-        const alertAge = Date.now() - data.timestamp;
-        if (alertAge < 10000) {
-          console.log('⏭️ Skipping recent fire alert (likely from demo):', alertId, `Age: ${alertAge}ms`);
-          return;
-        }
+            const existingAlert = alertHistory.find(a => a.id === alertId);
+            if (!existingAlert) {
+              showFireAlert(data);
+              addFireToAlertHistory(data, alertId);
+            }
+          }
+        })
+        .catch(error => {
+          // Silently handle errors
+        });
+    }
 
-        const existingAlert = alertHistory.find(a => a.id === alertId);
-        if (!existingAlert) {
-          showFireAlert(data);
-          addFireToAlertHistory(data, alertId);
-        }
-      }
-    })
-    .catch(error => {
-      // Silently handle errors
-    });
-}
-    
-
-    function showAlert(alertData, sendTelegram = true) {
+    function showAlert(alertData) {
       const container = $('#alertContainer');
       const alertId = `alert-${Date.now()}`;
 
@@ -878,6 +863,8 @@
       container.append(alertHtml);
       playAlertSound();
 
+      // ✨ ADD THIS: Send Telegram notification
+      sendTelegramAlert(`${title}\n\n${message}`);
 
       setTimeout(() => {
         closeAlert(alertId);
@@ -914,12 +901,12 @@
         });
     }
 
-    function showFireAlert(alertData, sendTelegram = true) {
+    function showFireAlert(alertData) {
       const container = $('#alertContainer');
       const alertId = `alert-${Date.now()}`;
 
       let message = '';
-      let telegramMessage = '';
+      let telegramMessage = ''; // Add this
 
       if (alertData.type === 'flame_and_smoke') {
         message = `⚠️ CRITICAL: Flame and smoke detected! Smoke level: ${alertData.smokeLevel}`;
@@ -947,7 +934,8 @@
       container.append(alertHtml);
       playFireAlarmSound();
 
-      
+
+      sendTelegramAlert(telegramMessage);
 
       setTimeout(() => {
         closeAlert(alertId);
@@ -1077,73 +1065,6 @@
 
       historyContainer.html(historyHtml);
     }
-
-    function triggerDemoAlert(period) {
-  if (period === 'fire') {
-    const fireTypes = ['flame', 'smoke', 'flame_and_smoke'];
-    const randomType = fireTypes[Math.floor(Math.random() * fireTypes.length)];
-
-    const timestamp = Date.now();
-    const demoFireAlert = {
-      type: randomType,
-      flameDetected: randomType !== 'smoke',
-      smokeLevel: Math.floor(Math.random() * 600) + 400,
-      smokeThreshold: 400,
-      timestamp: timestamp
-    };
-
-    const alertId = `fire-${timestamp}`;
-    
-    // ✅ Show immediately on screen
-    showFireAlert(demoFireAlert);
-    addFireToAlertHistory(demoFireAlert, alertId);
-    
-    // ✅ Save to Firebase (backend will send Telegram)
-    saveFireAlertToBackend(demoFireAlert);
-
-    console.log('✅ Demo fire alert triggered and saved:', alertId);
-    return;
-  }
-
-  let consumption, limit, percentageOver;
-
-  switch (period) {
-    case 'hourly':
-      limit = 2.0;
-      consumption = 2.5 + Math.random() * 0.5;
-      break;
-    case 'daily':
-      limit = 30.0;
-      consumption = 35.0 + Math.random() * 5.0;
-      break;
-    case 'monthly':
-      limit = 500.0;
-      consumption = 550.0 + Math.random() * 50.0;
-      break;
-  }
-
-  percentageOver = parseFloat((((consumption - limit) / limit) * 100).toFixed(2));
-
-  const timestamp = Date.now();
-  const demoAlert = {
-    period: period,
-    consumption: consumption,
-    limit: limit,
-    percentageOver: percentageOver,
-    timestamp: timestamp
-  };
-
-  const alertId = `${period}-${timestamp}`;
-
-  // ✅ Show immediately on screen
-  showAlert(demoAlert);
-  addToAlertHistory(demoAlert, alertId);
-  
-  // ✅ Save to Firebase (backend will send Telegram)
-  saveAlertToBackend(demoAlert);
-
-  console.log('✅ Demo alert triggered and saved:', alertId);
-}
 
     function playAlertSound() {
       // Create a simple beep sound using Web Audio API
@@ -1362,77 +1283,68 @@
       });
     }
 
-    // ADD THIS NEW FUNCTION to save alerts to Firebase via backend
-    function saveAlertToBackend(alertData) {
-      console.log('💾 Saving alert to backend:', alertData);
+    function triggerDemoAlert(period) {
+      if (period === 'fire') {
+        // Fire alert demo
+        const fireTypes = ['flame', 'smoke', 'flame_and_smoke'];
+        const randomType = fireTypes[Math.floor(Math.random() * fireTypes.length)];
 
-      const payload = {
-        period: alertData.period,
-        consumption: alertData.consumption,
-        limit: alertData.limit,
-        percentageOver: alertData.percentageOver,
-        user_id: userId,
-        school_id: schoolId
+        const demoFireAlert = {
+          type: randomType,
+          flameDetected: randomType !== 'smoke',
+          smokeLevel: Math.floor(Math.random() * 600) + 400,
+          smokeThreshold: 400,
+          timestamp: Date.now()
+        };
+
+        const alertId = `demo-fire-${Date.now()}`;
+        showFireAlert(demoFireAlert);
+        addFireToAlertHistory(demoFireAlert, alertId);
+        return;
+      }
+
+      let consumption, limit, percentageOver;
+
+      switch (period) {
+        case 'hourly':
+          limit = 2.0;
+          consumption = 2.5 + Math.random() * 0.5; // 2.5-3.0 kWh
+          break;
+        case 'daily':
+          limit = 30.0;
+          consumption = 35.0 + Math.random() * 5.0; // 35-40 kWh
+          break;
+        case 'monthly':
+          limit = 500.0;
+          consumption = 550.0 + Math.random() * 50.0; // 550-600 kWh
+          break;
+      }
+
+      percentageOver = parseFloat((((consumption - limit) / limit) * 100).toFixed(2));
+
+      const demoAlert = {
+        period: period,
+        consumption: consumption,
+        limit: limit,
+        percentageOver: percentageOver,
+        timestamp: Date.now()
       };
 
-      fetch('https://sukattown-backend.onrender.com/api/consumption-alerts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            console.log('✅ Alert saved to Firebase successfully');
-          } else {
-            console.error('❌ Failed to save alert:', data.message);
-          }
-        })
-        .catch(error => {
-          console.error('❌ Error saving alert to backend:', error);
-        });
+      const alertId = `demo-${period}-${Date.now()}`;
+      showAlert(demoAlert);
+      addToAlertHistory(demoAlert, alertId);
     }
 
-    function saveFireAlertToBackend(alertData) {
-      console.log('💾 Saving fire alert to backend:', alertData);
 
-      const payload = {
-        type: alertData.type,
-        flameDetected: alertData.flameDetected,
-        smokeLevel: alertData.smokeLevel,
-        smokeThreshold: alertData.smokeThreshold,
-        user_id: userId,
-        school_id: schoolId
-      };
-
-      fetch('https://sukattown-backend.onrender.com/api/fire-alerts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            console.log('✅ Fire alert saved to Firebase successfully');
-          } else {
-            console.error('❌ Failed to save fire alert:', data.message);
-          }
-        })
-        .catch(error => {
-          console.error('❌ Error saving fire alert to backend:', error);
-        });
-    }
-
-     
-
-    // Make sure these are at the end
+    // Make closeAlert available globally
     window.closeAlert = closeAlert;
     window.setAccountType = setAccountType;
-    window.triggerDemoAlert = triggerDemoAlert; // Don't forget this!
 
     // Fetch data immediately and every 5 seconds
     $(document).ready(function () {
+      // Display user info first
       displayUserInfo();
+
       fetchSensorData();
       fetchConsumptionAlerts();
       fetchFireAlerts();
@@ -1443,6 +1355,9 @@
       setInterval(generateAIInsights, 30000);
     });
   </script>
+
+
+
 </body>
 
 </html>
