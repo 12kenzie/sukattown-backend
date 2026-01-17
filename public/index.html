@@ -751,7 +751,7 @@
     }
 
     
-    function fetchConsumptionAlerts() {
+   function fetchConsumptionAlerts() {
   const now = Date.now();
   if (now - lastAlertCheck < 5000) return;
 
@@ -768,18 +768,18 @@
     .then(data => {
       if (data && data.period) {
         const alertId = `${data.period}-${data.timestamp}`;
-
-        // ✅ Skip if already processed
-        if (processedAlertIds.has(alertId)) {
-          console.log('⏭️ Skipping already processed alert:', alertId);
+        
+        // ✅ Skip alerts created in the last 10 seconds (from demo buttons)
+        const alertAge = Date.now() - data.timestamp;
+        if (alertAge < 10000) {
+          console.log('⏭️ Skipping recent alert (likely from demo):', alertId, `Age: ${alertAge}ms`);
           return;
         }
 
-        // Check if already in history
+        // Check if already shown
         const existingAlert = alertHistory.find(a => a.id === alertId);
         if (!existingAlert) {
-          processedAlertIds.add(alertId);
-          showAlert(data, false); // Don't send Telegram (backend already did)
+          showAlert(data);
           addToAlertHistory(data, alertId);
         }
       }
@@ -787,11 +787,10 @@
     .catch(error => {
       console.error('Error fetching alerts:', error);
     });
-}
+} 
 
 
-
-    function fetchFireAlerts() {
+  function fetchFireAlerts() {
   const params = new URLSearchParams({
     school_id: schoolId,
     user_type: userType
@@ -810,17 +809,17 @@
     .then(data => {
       if (data && data.type) {
         const alertId = `fire-${data.timestamp}`;
-
-        // ✅ Skip if already processed
-        if (processedAlertIds.has(alertId)) {
-          console.log('⏭️ Skipping already processed fire alert:', alertId);
+        
+        // ✅ Skip alerts created in the last 10 seconds (from demo buttons)
+        const alertAge = Date.now() - data.timestamp;
+        if (alertAge < 10000) {
+          console.log('⏭️ Skipping recent fire alert (likely from demo):', alertId, `Age: ${alertAge}ms`);
           return;
         }
 
         const existingAlert = alertHistory.find(a => a.id === alertId);
         if (!existingAlert) {
-          processedAlertIds.add(alertId);
-          showFireAlert(data, false); // Don't send Telegram (backend already did)
+          showFireAlert(data);
           addFireToAlertHistory(data, alertId);
         }
       }
@@ -828,7 +827,8 @@
     .catch(error => {
       // Silently handle errors
     });
-} 
+}
+    
 
     function showAlert(alertData, sendTelegram = true) {
       const container = $('#alertContainer');
@@ -878,10 +878,6 @@
       container.append(alertHtml);
       playAlertSound();
 
-      // Only send Telegram if explicitly requested
-      if (sendTelegram) {
-        sendTelegramAlert(`${title}\n\n${message}`);
-      }
 
       setTimeout(() => {
         closeAlert(alertId);
@@ -951,10 +947,7 @@
       container.append(alertHtml);
       playFireAlarmSound();
 
-      // ✅ CHANGE THIS PART - wrap in if statement
-      if (sendTelegram) {
-        sendTelegramAlert(telegramMessage);
-      }
+      
 
       setTimeout(() => {
         closeAlert(alertId);
@@ -1084,6 +1077,73 @@
 
       historyContainer.html(historyHtml);
     }
+
+    function triggerDemoAlert(period) {
+  if (period === 'fire') {
+    const fireTypes = ['flame', 'smoke', 'flame_and_smoke'];
+    const randomType = fireTypes[Math.floor(Math.random() * fireTypes.length)];
+
+    const timestamp = Date.now();
+    const demoFireAlert = {
+      type: randomType,
+      flameDetected: randomType !== 'smoke',
+      smokeLevel: Math.floor(Math.random() * 600) + 400,
+      smokeThreshold: 400,
+      timestamp: timestamp
+    };
+
+    const alertId = `fire-${timestamp}`;
+    
+    // ✅ Show immediately on screen
+    showFireAlert(demoFireAlert);
+    addFireToAlertHistory(demoFireAlert, alertId);
+    
+    // ✅ Save to Firebase (backend will send Telegram)
+    saveFireAlertToBackend(demoFireAlert);
+
+    console.log('✅ Demo fire alert triggered and saved:', alertId);
+    return;
+  }
+
+  let consumption, limit, percentageOver;
+
+  switch (period) {
+    case 'hourly':
+      limit = 2.0;
+      consumption = 2.5 + Math.random() * 0.5;
+      break;
+    case 'daily':
+      limit = 30.0;
+      consumption = 35.0 + Math.random() * 5.0;
+      break;
+    case 'monthly':
+      limit = 500.0;
+      consumption = 550.0 + Math.random() * 50.0;
+      break;
+  }
+
+  percentageOver = parseFloat((((consumption - limit) / limit) * 100).toFixed(2));
+
+  const timestamp = Date.now();
+  const demoAlert = {
+    period: period,
+    consumption: consumption,
+    limit: limit,
+    percentageOver: percentageOver,
+    timestamp: timestamp
+  };
+
+  const alertId = `${period}-${timestamp}`;
+
+  // ✅ Show immediately on screen
+  showAlert(demoAlert);
+  addToAlertHistory(demoAlert, alertId);
+  
+  // ✅ Save to Firebase (backend will send Telegram)
+  saveAlertToBackend(demoAlert);
+
+  console.log('✅ Demo alert triggered and saved:', alertId);
+}
 
     function playAlertSound() {
       // Create a simple beep sound using Web Audio API
@@ -1363,75 +1423,7 @@
         });
     }
 
-    function triggerDemoAlert(period) {
-  if (period === 'fire') {
-    const fireTypes = ['flame', 'smoke', 'flame_and_smoke'];
-    const randomType = fireTypes[Math.floor(Math.random() * fireTypes.length)];
-
-    const timestamp = Date.now();
-    const demoFireAlert = {
-      type: randomType,
-      flameDetected: randomType !== 'smoke',
-      smokeLevel: Math.floor(Math.random() * 600) + 400,
-      smokeThreshold: 400,
-      timestamp: timestamp
-    };
-
-    const alertId = `fire-${timestamp}`;
-    processedAlertIds.add(alertId);
-    
-    // ✅ Show IMMEDIATELY (instant feedback)
-    showFireAlert(demoFireAlert, false);
-    addFireToAlertHistory(demoFireAlert, alertId);
-    
-    // ✅ Save to backend in background (for persistence + Telegram)
-    saveFireAlertToBackend(demoFireAlert);
-
-    console.log('✅ Demo fire alert triggered:', alertId);
-    return;
-  }
-
-  // Consumption alerts
-  let consumption, limit, percentageOver;
-
-  switch (period) {
-    case 'hourly':
-      limit = 2.0;
-      consumption = 2.5 + Math.random() * 0.5;
-      break;
-    case 'daily':
-      limit = 30.0;
-      consumption = 35.0 + Math.random() * 5.0;
-      break;
-    case 'monthly':
-      limit = 500.0;
-      consumption = 550.0 + Math.random() * 50.0;
-      break;
-  }
-
-  percentageOver = parseFloat((((consumption - limit) / limit) * 100).toFixed(2));
-
-  const timestamp = Date.now();
-  const demoAlert = {
-    period: period,
-    consumption: consumption,
-    limit: limit,
-    percentageOver: percentageOver,
-    timestamp: timestamp
-  };
-
-  const alertId = `${period}-${timestamp}`;
-  processedAlertIds.add(alertId);
-
-  // ✅ Show IMMEDIATELY (instant feedback)
-  showAlert(demoAlert, false);
-  addToAlertHistory(demoAlert, alertId);
-  
-  // ✅ Save to backend in background (for persistence + Telegram)
-  saveAlertToBackend(demoAlert);
-
-  console.log('✅ Demo consumption alert triggered:', alertId);
-} 
+     
 
     // Make sure these are at the end
     window.closeAlert = closeAlert;
