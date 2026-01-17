@@ -751,70 +751,22 @@
     }
 
     function fetchConsumptionAlerts() {
-      const now = Date.now();
-      if (now - lastAlertCheck < 5000) return;
+  const now = Date.now();
+  if (now - lastAlertCheck < 5000) return;
 
-      lastAlertCheck = now;
+  lastAlertCheck = now;
 
-      const params = new URLSearchParams({
-        school_id: schoolId,
-        user_type: userType,
-        limit: 10
-      });
-
-      fetch(`${ALERT_API_URL}?${params}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data && data.period) {
-            const alertId = `${data.period}-${data.timestamp}`;
-
-            // Check if already processed (prevents duplicates)
-            if (processedAlertIds.has(alertId)) {
-              return;
-            }
-
-            // Check if this alert was already shown
-            const existingAlert = alertHistory.find(a => a.id === alertId);
-            if (!existingAlert) {
-              processedAlertIds.add(alertId);
-              showAlert(data, true); // Send Telegram for real alerts
-              addToAlertHistory(data, alertId);
-
-              // Clean up old processed IDs (keep last 50)
-              if (processedAlertIds.size > 50) {
-                const idsArray = Array.from(processedAlertIds);
-                processedAlertIds = new Set(idsArray.slice(-50));
-              }
-            }
-          }
-        })
-        .catch(error => {
-          console.error('Error fetching alerts:', error);
-        });
-    }
-
-    
-
-     function fetchFireAlerts() {
   const params = new URLSearchParams({
     school_id: schoolId,
     user_type: userType,
     limit: 5
   });
 
-  // ✅ Fetch from HISTORY endpoint
-  fetch(`https://sukattown-backend.onrender.com/api/fire-alerts/history?${params}`)
-    .then(response => {
-      if (!response.ok) {
-        if (response.status === 404) {
-          return null;
-        }
-        throw new Error(`HTTP ${response.status}`);
-      }
-      return response.json();
-    })
+  // ✅ Fetch from HISTORY endpoint, not latest alert endpoint
+  fetch(`https://sukattown-backend.onrender.com/api/alerts?${params}`)
+    .then(response => response.json())
     .then(result => {
-      if (!result || !result.success || !result.data || result.data.length === 0) {
+      if (!result.success || !result.data || result.data.length === 0) {
         return;
       }
 
@@ -827,7 +779,7 @@
           return;
         }
 
-        const alertId = `fire-${alert.timestamp}`;
+        const alertId = `${alert.period}-${alert.timestamp}`;
 
         // Check if already processed
         if (processedAlertIds.has(alertId)) {
@@ -841,32 +793,107 @@
           return;
         }
 
-        // ✅ NEW fire alert - process it
-        console.log('🆕 New fire alert from ESP32:', alertId);
+        // ✅ NEW alert from ESP32 - process it
+        console.log('🆕 New consumption alert from ESP32:', alertId);
         processedAlertIds.add(alertId);
         
         const alertData = {
-          type: alert.type,
-          flameDetected: alert.flameDetected,
-          smokeLevel: alert.smokeLevel,
-          smokeThreshold: alert.smokeThreshold,
+          period: alert.period,
+          consumption: alert.consumption,
+          limit: alert.limit,
+          percentageOver: alert.percentage_over,
           timestamp: alert.timestamp
         };
         
-        showFireAlert(alertData, true);
-        addFireToAlertHistory(alertData, alertId);
+        showAlert(alertData, true); // Send Telegram for real ESP32 alerts
+        addToAlertHistory(alertData, alertId);
       });
 
-      // Clean up old processed IDs
+      // Clean up old processed IDs (keep last 50)
       if (processedAlertIds.size > 50) {
         const idsArray = Array.from(processedAlertIds);
         processedAlertIds = new Set(idsArray.slice(-50));
       }
     })
     .catch(error => {
-      // Silently handle errors
+      console.error('Error fetching alerts:', error);
     });
 } 
+
+
+
+    function fetchFireAlerts() {
+      const params = new URLSearchParams({
+        school_id: schoolId,
+        user_type: userType,
+        limit: 5
+      });
+
+      // ✅ Fetch from HISTORY endpoint
+      fetch(`https://sukattown-backend.onrender.com/api/fire-alerts/history?${params}`)
+        .then(response => {
+          if (!response.ok) {
+            if (response.status === 404) {
+              return null;
+            }
+            throw new Error(`HTTP ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(result => {
+          if (!result || !result.success || !result.data || result.data.length === 0) {
+            return;
+          }
+
+          // Process only NEW alerts (from last 30 seconds)
+          const thirtySecondsAgo = Date.now() - 30000;
+
+          result.data.forEach(alert => {
+            // Skip old alerts
+            if (alert.timestamp < thirtySecondsAgo) {
+              return;
+            }
+
+            const alertId = `fire-${alert.timestamp}`;
+
+            // Check if already processed
+            if (processedAlertIds.has(alertId)) {
+              return;
+            }
+
+            // Check if already in history
+            const existingAlert = alertHistory.find(a => a.id === alertId);
+            if (existingAlert) {
+              processedAlertIds.add(alertId);
+              return;
+            }
+
+            // ✅ NEW fire alert - process it
+            console.log('🆕 New fire alert from ESP32:', alertId);
+            processedAlertIds.add(alertId);
+
+            const alertData = {
+              type: alert.type,
+              flameDetected: alert.flameDetected,
+              smokeLevel: alert.smokeLevel,
+              smokeThreshold: alert.smokeThreshold,
+              timestamp: alert.timestamp
+            };
+
+            showFireAlert(alertData, true);
+            addFireToAlertHistory(alertData, alertId);
+          });
+
+          // Clean up old processed IDs
+          if (processedAlertIds.size > 50) {
+            const idsArray = Array.from(processedAlertIds);
+            processedAlertIds = new Set(idsArray.slice(-50));
+          }
+        })
+        .catch(error => {
+          // Silently handle errors
+        });
+    }
 
     function showAlert(alertData, sendTelegram = true) {
       const container = $('#alertContainer');
@@ -1420,7 +1447,7 @@
         // ✅ Create unique ID and mark IMMEDIATELY
         const alertId = `fire-${timestamp}`;
         processedAlertIds.add(alertId);
-        
+
         // Show alert, add to history, and save - all using same timestamp
         showFireAlert(demoFireAlert, true);
         addFireToAlertHistory(demoFireAlert, alertId);
@@ -1461,7 +1488,7 @@
 
       // ✅ Create unique ID using period-timestamp format to match backend
       const alertId = `${period}-${timestamp}`;
-      
+
       // ✅ Mark as processed IMMEDIATELY before any async operations
       processedAlertIds.add(alertId);
 
@@ -1471,7 +1498,7 @@
       saveAlertToBackend(demoAlert);
 
       console.log('✅ Demo consumption alert triggered:', alertId);
-    } 
+    }
 
     // Make sure these are at the end
     window.closeAlert = closeAlert;
