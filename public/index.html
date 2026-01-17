@@ -923,12 +923,12 @@
         });
     }
 
-    function showFireAlert(alertData, sendTelegram=true) {
+    function showFireAlert(alertData, sendTelegram = true) {
       const container = $('#alertContainer');
       const alertId = `alert-${Date.now()}`;
 
       let message = '';
-      let telegramMessage = ''; // Add this
+      let telegramMessage = '';
 
       if (alertData.type === 'flame_and_smoke') {
         message = `⚠️ CRITICAL: Flame and smoke detected! Smoke level: ${alertData.smokeLevel}`;
@@ -956,8 +956,10 @@
       container.append(alertHtml);
       playFireAlarmSound();
 
-
-      sendTelegramAlert(telegramMessage);
+      // ✅ CHANGE THIS PART - wrap in if statement
+      if (sendTelegram) {
+        sendTelegramAlert(telegramMessage);
+      }
 
       setTimeout(() => {
         closeAlert(alertId);
@@ -1336,6 +1338,36 @@
         });
     }
 
+    function saveFireAlertToBackend(alertData) {
+      console.log('💾 Saving fire alert to backend:', alertData);
+
+      const payload = {
+        type: alertData.type,
+        flameDetected: alertData.flameDetected,
+        smokeLevel: alertData.smokeLevel,
+        smokeThreshold: alertData.smokeThreshold,
+        user_id: userId,
+        school_id: schoolId
+      };
+
+      fetch('https://sukattown-backend.onrender.com/api/fire-alerts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            console.log('✅ Fire alert saved to Firebase successfully');
+          } else {
+            console.error('❌ Failed to save fire alert:', data.message);
+          }
+        })
+        .catch(error => {
+          console.error('❌ Error saving fire alert to backend:', error);
+        });
+    }
+
 
     function triggerDemoAlert(period) {
       if (period === 'fire') {
@@ -1355,6 +1387,9 @@
         processedAlertIds.add(alertId);
         showFireAlert(demoFireAlert, true);
         addFireToAlertHistory(demoFireAlert, alertId);
+
+        saveFireAlertToBackend(demoFireAlert);
+
         return;
       }
 

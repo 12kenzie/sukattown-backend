@@ -791,27 +791,6 @@ app.post("/api/consumption-alerts", async (req, res) => {
 
     console.log("✅ Alert saved to Firebase");
     
-    // ========== ADD TELEGRAM NOTIFICATION HERE ==========
-    if (schoolId) {
-      const alertMessage = `⚡ <b>CONSUMPTION ALERT!</b>\n\n` +
-        `Period: ${latestConsumptionAlert.period}\n` +
-        `Consumption: ${latestConsumptionAlert.consumption} kWh\n` +
-        `Limit: ${latestConsumptionAlert.limit} kWh\n` +
-        `Over by: ${latestConsumptionAlert.percentageOver.toFixed(1)}%\n` +
-        `Time: ${new Date().toLocaleString()}`;
-      
-      try {
-        await axios.post(`${API_URL || 'http://localhost:3000'}/api/send-telegram`, {
-          message: alertMessage,
-          school_id: schoolId
-          // Don't include_admins for routine consumption alerts
-        });
-        console.log("✅ Consumption alert Telegram notification sent");
-      } catch (telegramError) {
-        console.error("❌ Failed to send Telegram notification:", telegramError.message);
-      }
-    }
-    // ====================================================
 
     res.status(200).json({
       success: true,
@@ -876,27 +855,7 @@ app.post("/api/fire-alerts", async (req, res) => {
 
     console.log("✅ Fire alert saved to Firebase");
     
-    // ========== ADD TELEGRAM NOTIFICATION HERE ==========
-    if (schoolId) {
-      const alertMessage = `🔥 <b>FIRE ALERT!</b>\n\n` +
-        `Type: ${latestFireAlert.type}\n` +
-        `Flame Detected: ${latestFireAlert.flameDetected ? 'YES ⚠️' : 'No'}\n` +
-        `Smoke Level: ${latestFireAlert.smokeLevel}\n` +
-        `Threshold: ${latestFireAlert.smokeThreshold}\n` +
-        `Time: ${new Date().toLocaleString()}`;
-      
-      try {
-        await axios.post(`${API_URL || 'http://localhost:3000'}/api/send-telegram`, {
-          message: alertMessage,
-          school_id: schoolId,
-          include_admins: true  // Send to school + all admins
-        });
-        console.log("✅ Fire alert Telegram notification sent");
-      } catch (telegramError) {
-        console.error("❌ Failed to send Telegram notification:", telegramError.message);
-      }
-    }
-    // ====================================================
+    
 
     res.status(200).json({
       success: true,
