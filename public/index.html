@@ -1375,24 +1375,29 @@
         const fireTypes = ['flame', 'smoke', 'flame_and_smoke'];
         const randomType = fireTypes[Math.floor(Math.random() * fireTypes.length)];
 
+        const timestamp = Date.now();
         const demoFireAlert = {
           type: randomType,
           flameDetected: randomType !== 'smoke',
           smokeLevel: Math.floor(Math.random() * 600) + 400,
           smokeThreshold: 400,
-          timestamp: Date.now()
+          timestamp: timestamp
         };
 
-        const alertId = `demo-fire-${Date.now()}`;
+        // ✅ Create unique ID and mark IMMEDIATELY
+        const alertId = `fire-${timestamp}`;
         processedAlertIds.add(alertId);
+
+        // Show alert, add to history, and save - all using same timestamp
         showFireAlert(demoFireAlert, true);
         addFireToAlertHistory(demoFireAlert, alertId);
-
         saveFireAlertToBackend(demoFireAlert);
 
+        console.log('✅ Demo fire alert triggered:', alertId);
         return;
       }
 
+      // Consumption alerts
       let consumption, limit, percentageOver;
 
       switch (period) {
@@ -1412,27 +1417,27 @@
 
       percentageOver = parseFloat((((consumption - limit) / limit) * 100).toFixed(2));
 
+      const timestamp = Date.now();
       const demoAlert = {
         period: period,
         consumption: consumption,
         limit: limit,
         percentageOver: percentageOver,
-        timestamp: Date.now()
+        timestamp: timestamp
       };
 
-      const alertId = `demo-${period}-${Date.now()}`;
+      // ✅ Create unique ID using period-timestamp format to match backend
+      const alertId = `${period}-${timestamp}`;
 
-      // Mark as processed BEFORE showing to prevent double alert
+      // ✅ Mark as processed IMMEDIATELY before any async operations
       processedAlertIds.add(alertId);
 
-      // ✅ 1. Show alert on screen WITH Telegram
+      // Show alert, add to history, and save - all using same data
       showAlert(demoAlert, true);
-
-      // ✅ 2. Add to local history
       addToAlertHistory(demoAlert, alertId);
-
-      // ✅ 3. SAVE TO FIREBASE via backend (THIS IS THE KEY!)
       saveAlertToBackend(demoAlert);
+
+      console.log('✅ Demo consumption alert triggered:', alertId);
     }
 
     // Make sure these are at the end
