@@ -455,7 +455,7 @@
       }
     }
 
-   function testTelegramNow() {
+    function testTelegramNow() {
       console.log('🧪 Testing Telegram with:');
       console.log('  schoolId:', schoolId);
       console.log('  userId:', userId);
@@ -488,7 +488,7 @@
       })
         .then(async (res) => {
           const data = await res.json();
-          
+
           console.log('📥 Response:', data);
 
           // Check for success in the response data
@@ -503,7 +503,7 @@
           alert("❌ Network error\n\nCouldn't connect to server. Please try again.");
         });
 
-    } 
+    }
 
     // Make functions globally available
     window.testTelegramNow = testTelegramNow;
@@ -1283,6 +1283,38 @@
       });
     }
 
+    // ADD THIS NEW FUNCTION to save alerts to Firebase via backend
+    function saveAlertToBackend(alertData) {
+      console.log('💾 Saving alert to backend:', alertData);
+
+      const payload = {
+        period: alertData.period,
+        consumption: alertData.consumption,
+        limit: alertData.limit,
+        percentageOver: alertData.percentageOver,
+        user_id: userId,
+        school_id: schoolId
+      };
+
+      fetch('https://sukattown-backend.onrender.com/api/consumption-alerts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            console.log('✅ Alert saved to Firebase successfully');
+          } else {
+            console.error('❌ Failed to save alert:', data.message);
+          }
+        })
+        .catch(error => {
+          console.error('❌ Error saving alert to backend:', error);
+        });
+    }
+
+    // REPLACE YOUR ENTIRE triggerDemoAlert FUNCTION with this:
     function triggerDemoAlert(period) {
       if (period === 'fire') {
         // Fire alert demo
@@ -1308,15 +1340,15 @@
       switch (period) {
         case 'hourly':
           limit = 2.0;
-          consumption = 2.5 + Math.random() * 0.5; // 2.5-3.0 kWh
+          consumption = 2.5 + Math.random() * 0.5;
           break;
         case 'daily':
           limit = 30.0;
-          consumption = 35.0 + Math.random() * 5.0; // 35-40 kWh
+          consumption = 35.0 + Math.random() * 5.0;
           break;
         case 'monthly':
           limit = 500.0;
-          consumption = 550.0 + Math.random() * 50.0; // 550-600 kWh
+          consumption = 550.0 + Math.random() * 50.0;
           break;
       }
 
@@ -1331,20 +1363,25 @@
       };
 
       const alertId = `demo-${period}-${Date.now()}`;
+
+      // ✅ 1. Show alert on screen
       showAlert(demoAlert);
+
+      // ✅ 2. Add to local history
       addToAlertHistory(demoAlert, alertId);
+
+      // ✅ 3. SAVE TO FIREBASE via backend (THIS IS THE KEY!)
+      saveAlertToBackend(demoAlert);
     }
 
-
-    // Make closeAlert available globally
+    // Make sure these are at the end
     window.closeAlert = closeAlert;
     window.setAccountType = setAccountType;
+    window.triggerDemoAlert = triggerDemoAlert; // Don't forget this!
 
     // Fetch data immediately and every 5 seconds
     $(document).ready(function () {
-      // Display user info first
       displayUserInfo();
-
       fetchSensorData();
       fetchConsumptionAlerts();
       fetchFireAlerts();
@@ -1354,10 +1391,3 @@
       setInterval(fetchFireAlerts, 2000);
       setInterval(generateAIInsights, 30000);
     });
-  </script>
-
-
-
-</body>
-
-</html>
