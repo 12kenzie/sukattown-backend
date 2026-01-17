@@ -1378,12 +1378,13 @@
     };
 
     const alertId = `fire-${timestamp}`;
-    
-    // ✅ Mark as processed BEFORE showing
     processedAlertIds.add(alertId);
     
+    // ✅ Show IMMEDIATELY (instant feedback)
     showFireAlert(demoFireAlert, false);
     addFireToAlertHistory(demoFireAlert, alertId);
+    
+    // ✅ Save to backend in background (for persistence + Telegram)
     saveFireAlertToBackend(demoFireAlert);
 
     console.log('✅ Demo fire alert triggered:', alertId);
@@ -1420,16 +1421,17 @@
   };
 
   const alertId = `${period}-${timestamp}`;
-  
-  // ✅ Mark as processed BEFORE showing
   processedAlertIds.add(alertId);
 
+  // ✅ Show IMMEDIATELY (instant feedback)
   showAlert(demoAlert, false);
   addToAlertHistory(demoAlert, alertId);
+  
+  // ✅ Save to backend in background (for persistence + Telegram)
   saveAlertToBackend(demoAlert);
 
   console.log('✅ Demo consumption alert triggered:', alertId);
-}
+} 
 
     // Make sure these are at the end
     window.closeAlert = closeAlert;
