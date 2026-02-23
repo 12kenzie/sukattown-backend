@@ -192,6 +192,50 @@
           </div>
         </div>
 
+        <!-- BUDGET SETTINGS (Principal Only) -->
+        <div class="settings-row" style="margin-top: 24px;" id="budgetSection">
+          <div class="card" style="grid-column: 1 / -1;">
+            <div class="card-title">
+              <i class="fa-solid fa-peso-sign" style="color:#22c55e"></i> Monthly Budget Settings
+            </div>
+
+            <div
+              style="margin-top:16px;padding:12px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;font-size:13px;margin-bottom:20px">
+              <strong>💡 Tip:</strong> Set your school's monthly electricity budget so the dashboard can track if you're
+              on track or at risk.
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+              <div>
+                <div class="muted" style="margin-bottom:8px">Monthly Budget (₱)</div>
+                <input class="number-input" id="monthlyBudget" type="number" min="0" placeholder="e.g. 5000"
+                  style="width:100%">
+                <small style="display:block;margin-top:6px;color:#666;font-size:12px">
+                  Your school's total electricity budget per month
+                </small>
+              </div>
+
+              <div>
+                <div class="muted" style="margin-bottom:8px">Warning Threshold (%)</div>
+                <input class="number-input" id="budgetWarningPercent" type="number" min="1" max="100"
+                  placeholder="e.g. 80" style="width:100%">
+                <small style="display:block;margin-top:6px;color:#666;font-size:12px">
+                  Get a warning when this % of budget is used (e.g. 80 = warn at ₱4,000 of ₱5,000)
+                </small>
+              </div>
+            </div>
+
+            <button id="saveBudgetBtn" class="btn"
+              style="margin-top:16px;background:#22c55e;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer">
+              💾 Save Budget Settings
+            </button>
+
+            <div id="budgetSaveMsg" style="display:none;margin-top:10px;font-size:13px;color:#16a34a;font-weight:600">
+              ✅ Budget saved successfully!
+            </div>
+          </div>
+        </div>
+
         <!-- PRIVACY SETTINGS (Principal only, not admins can view it) -->
         <div class="settings-row" style="margin-top: 24px;" id="privacySection">
           <div class="card" style="grid-column: 1 / -1;">
@@ -362,11 +406,11 @@
     const API_URL = 'https://sukattown-backend.onrender.com';
 
     const maxPower = document.getElementById('maxPower');
-const notifToggle = document.getElementById('notifToggle');
-const soundToggle = document.getElementById('soundToggle');
-const telegramChatId = document.getElementById('telegramChatId');
+    const notifToggle = document.getElementById('notifToggle');
+    const soundToggle = document.getElementById('soundToggle');
+    const telegramChatId = document.getElementById('telegramChatId');
 
-const defaults = { maxPower: 3000, notif: true, sound: false }; 
+    const defaults = { maxPower: 3000, notif: true, sound: false };
 
     let userId, userType, schoolId;
 
@@ -380,49 +424,49 @@ const defaults = { maxPower: 3000, notif: true, sound: false };
     window.logout = logout;
 
     function loadUserData() {
-  userId = localStorage.getItem('userId');
-  userType = localStorage.getItem('userType');
-  schoolId = localStorage.getItem('schoolId');
-  const userName = localStorage.getItem('userName');
-  const accountType = localStorage.getItem('accountType');  // ← ADD THIS
-  const storedTelegramId = localStorage.getItem('telegramChatId');
+      userId = localStorage.getItem('userId');
+      userType = localStorage.getItem('userType');
+      schoolId = localStorage.getItem('schoolId');
+      const userName = localStorage.getItem('userName');
+      const accountType = localStorage.getItem('accountType');  // ← ADD THIS
+      const storedTelegramId = localStorage.getItem('telegramChatId');
 
-  console.log('🔍 DEBUG - User Data Loaded:');
-  console.log('  userId:', userId);
-  console.log('  userType:', userType);
-  console.log('  accountType:', accountType);  // ← ADD THIS
-  console.log('  schoolId:', schoolId);
-  console.log('  userName:', userName);
+      console.log('🔍 DEBUG - User Data Loaded:');
+      console.log('  userId:', userId);
+      console.log('  userType:', userType);
+      console.log('  accountType:', accountType);  // ← ADD THIS
+      console.log('  schoolId:', schoolId);
+      console.log('  userName:', userName);
 
-  if (!userId || !userType) {
-    console.log('❌ Missing user credentials, redirecting to login');
-    window.location.href = 'login.html';
-    return;
-  }
+      if (!userId || !userType) {
+        console.log('❌ Missing user credentials, redirecting to login');
+        window.location.href = 'login.html';
+        return;
+      }
 
-  // Update debug panel
-  document.getElementById('debugUserId').textContent = userId || 'NULL';
-  document.getElementById('debugUserType').textContent = userType || 'NULL';
-  document.getElementById('debugAccountType').textContent = accountType || 'NULL';
-  document.getElementById('debugSchoolId').textContent = schoolId || 'NULL';
-  document.getElementById('debugUserName').textContent = userName || 'NULL';
+      // Update debug panel
+      document.getElementById('debugUserId').textContent = userId || 'NULL';
+      document.getElementById('debugUserType').textContent = userType || 'NULL';
+      document.getElementById('debugAccountType').textContent = accountType || 'NULL';
+      document.getElementById('debugSchoolId').textContent = schoolId || 'NULL';
+      document.getElementById('debugUserName').textContent = userName || 'NULL';
 
-  // Update UI
-  document.getElementById('userName').textContent = userName || 'User';
-  document.getElementById('userAvatar').textContent = (userName || 'U').charAt(0).toUpperCase();
+      // Update UI
+      document.getElementById('userName').textContent = userName || 'User';
+      document.getElementById('userAvatar').textContent = (userName || 'U').charAt(0).toUpperCase();
 
-  // Load Telegram Chat ID if exists
-  if (storedTelegramId) {
-    telegramChatId.value = storedTelegramId;
-  }
+      // Load Telegram Chat ID if exists
+      if (storedTelegramId) {
+        telegramChatId.value = storedTelegramId;
+      }
 
-  // Show invite code section if user is principal
-  if (userType === 'principal' && schoolId) {
-    loadInviteCode();
-  }
+      // Show invite code section if user is principal
+      if (userType === 'principal' && schoolId) {
+        loadInviteCode();
+      }
 
-  initializeUserTypeFeatures();
-} 
+      initializeUserTypeFeatures();
+    }
 
     async function loadInviteCode() {
       if (!schoolId) return;
@@ -528,6 +572,7 @@ const defaults = { maxPower: 3000, notif: true, sound: false };
       const privacySection = document.getElementById('privacySection');
       const staffSection = document.getElementById('staffSection');
       const adminSchoolsSection = document.getElementById('adminSchoolsSection');
+      document.getElementById('budgetSection').style.display = 'none';
 
       // Hide everything by default
       if (privacySection) privacySection.style.display = 'none';
@@ -539,6 +584,10 @@ const defaults = { maxPower: 3000, notif: true, sound: false };
         console.log('  ✅ Principal - Showing privacy and staff sections');
         if (privacySection) privacySection.style.display = 'block';
         if (staffSection) staffSection.style.display = 'block';
+
+        document.getElementById('budgetSection').style.display = 'block';
+        loadBudgetSettings();
+
         loadPrivacySettings();
       } else if (userType === 'admin') {
         console.log('  ✅ Admin - Showing schools overview only');
@@ -910,6 +959,34 @@ const defaults = { maxPower: 3000, notif: true, sound: false };
 
     // Make closeSchoolModal available globally
     window.closeSchoolModal = closeSchoolModal;
+
+    // Load and save budget settings (stored in localStorage per school)
+    function loadBudgetSettings() {
+      const budget = localStorage.getItem(`budget_${schoolId}`);
+      const warning = localStorage.getItem(`budgetWarning_${schoolId}`);
+
+      if (budget) document.getElementById('monthlyBudget').value = budget;
+      if (warning) document.getElementById('budgetWarningPercent').value = warning;
+    }
+
+    document.getElementById('saveBudgetBtn')?.addEventListener('click', function () {
+      const budget = document.getElementById('monthlyBudget').value;
+      const warning = document.getElementById('budgetWarningPercent').value;
+
+      if (!budget || budget <= 0) {
+        alert('❌ Please enter a valid budget amount');
+        return;
+      }
+
+      // Save to localStorage so dashboard can read it
+      localStorage.setItem(`budget_${schoolId}`, budget);
+      localStorage.setItem(`budgetWarning_${schoolId}`, warning || 80);
+
+      // Show success message
+      const msg = document.getElementById('budgetSaveMsg');
+      msg.style.display = 'block';
+      setTimeout(() => msg.style.display = 'none', 3000);
+    });
 
     // Initialize
     loadUserData();
