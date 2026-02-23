@@ -8,6 +8,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script> <!-- Jquery-->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script> <!-- Chart.js -->
   <script src="https://kit.fontawesome.com/c6249fb7d2.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
 
   <link rel="stylesheet" href="styles/styles.css">
 
@@ -455,7 +456,7 @@
       }
     }
 
-   function testTelegramNow() {
+    function testTelegramNow() {
       console.log('🧪 Testing Telegram with:');
       console.log('  schoolId:', schoolId);
       console.log('  userId:', userId);
@@ -488,7 +489,7 @@
       })
         .then(async (res) => {
           const data = await res.json();
-          
+
           console.log('📥 Response:', data);
 
           // Check for success in the response data
@@ -503,7 +504,7 @@
           alert("❌ Network error\n\nCouldn't connect to server. Please try again.");
         });
 
-    } 
+    }
 
     // Make functions globally available
     window.testTelegramNow = testTelegramNow;
@@ -659,6 +660,47 @@
       return mean > 0 ? stdDev / mean : 0;
     }
 
+    // ML: Predict end-of-day kWh using TensorFlow.js linear regression
+    async function predictEndOfDayConsumption() {
+      try {
+        // Need at least 10 readings to make a meaningful prediction
+        if (sensorHistory.length < 10) return null;
+
+        // Use time (minutes since midnight) as input, energy as output
+        const now = new Date();
+        const xs = sensorHistory.map(d => {
+          const t = new Date(d.timestamp);
+          return (t.getHours() * 60 + t.getMinutes()) / (24 * 60); // normalize 0-1
+        });
+        const ys = sensorHistory.map(d => d.energy);
+
+        const xTensor = tf.tensor1d(xs);
+        const yTensor = tf.tensor1d(ys);
+
+        // Build simple linear model
+        const model = tf.sequential();
+        model.add(tf.layers.dense({ units: 1, inputShape: [1] }));
+        model.compile({ optimizer: tf.train.adam(0.1), loss: 'meanSquaredError' });
+
+        // Train (quietly, no logs)
+        await model.fit(xTensor, yTensor, { epochs: 50, verbose: 0 });
+
+        // Predict end of day (23:59 = 1.0 normalized)
+        const prediction = model.predict(tf.tensor1d([1.0]));
+        const predictedKwh = (await prediction.data())[0];
+
+        // Clean up tensors from memory
+        xTensor.dispose();
+        yTensor.dispose();
+        prediction.dispose();
+
+        return Math.max(0, predictedKwh); // Never return negative
+      } catch (err) {
+        console.error('ML prediction error:', err);
+        return null;
+      }
+    }
+
     function setAccountType(type) {
       isPrincipalAccount = (type === 'principal');
 
@@ -695,7 +737,7 @@
       }
     }
 
-    function updateBillProjection(energy) {
+    async function updateBillProjection(energy) {
       if (!isPrincipalAccount) return;
 
       const now = new Date();
@@ -703,15 +745,22 @@
       const currentDay = now.getDate();
       const daysRemaining = daysInMonth - currentDay;
 
-      // Calculate daily average and project for full month
-      const dailyAverage = energy / currentDay;
-      const projectedMonthlyConsumption = dailyAverage * daysInMonth;
-      const projectedBill = projectedMonthlyConsumption * COST_PER_KWH;
+      // Try ML prediction first, fall back to simple average if not ready
+      let predictedTodayKwh = await predictEndOfDayConsumption();
 
-      // Calculate month-to-date cost
+      let dailyAverage;
+      if (predictedTodayKwh && predictedTodayKwh > 0) {
+        dailyAverage = predictedTodayKwh;
+        console.log('📊 Using ML prediction:', predictedTodayKwh.toFixed(3), 'kWh');
+      } else {
+        dailyAverage = energy / currentDay;
+        console.log('📊 Using simple average:', dailyAverage.toFixed(3), 'kWh');
+      }
+
+      const projectedMonthlyConsumption = (energy) + (dailyAverage * daysRemaining);
+      const projectedBill = projectedMonthlyConsumption * COST_PER_KWH;
       const monthToDateCost = energy * COST_PER_KWH;
 
-      // Update projected bill widget
       $('#projectedBill').text('₱' + projectedBill.toFixed(2));
       $('#monthCost').text('₱' + monthToDateCost.toFixed(2));
       $('#daysRemaining').text(daysRemaining + ' days');
@@ -1169,6 +1218,37 @@
       }
     }
 
+    async function loadHistoryFromFirebase() {
+      try {
+        const params = new URLSearchParams({ school_id: schoolId, limit: 200 });
+        const response = await fetch(`https://sukattown-backend.onrender.com/api/readings?${params}`);
+        const result = await response.json();
+
+        if (result.success && result.data) {
+          // Only load today's readings
+          const today = new Date().toDateString();
+          const todaysReadings = result.data.filter(r =>
+            new Date(r.timestamp).toDateString() === today
+          );
+
+          // Pre-fill sensorHistory with Firebase data
+          todaysReadings.forEach(r => {
+            sensorHistory.push({
+              timestamp: new Date(r.timestamp),
+              power: r.power || 0,
+              energy: r.energy || 0
+            });
+          });
+
+          console.log(`✅ Loaded ${todaysReadings.length} readings from Firebase for ML`);
+          updateChart();
+          generateAIInsights();
+        }
+      } catch (err) {
+        console.error('Failed to load Firebase history:', err);
+      }
+    }
+
 
     // Chart.js integration (cannot be converted to jQuery)
     function initChart(labels, data) {
@@ -1344,7 +1424,7 @@
     $(document).ready(function () {
       // Display user info first
       displayUserInfo();
-
+      loadHistoryFromFirebase();
       fetchSensorData();
       fetchConsumptionAlerts();
       fetchFireAlerts();
