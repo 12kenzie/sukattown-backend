@@ -157,6 +157,32 @@
                 </div>
               </div>
             </div>
+
+            <!-- Budget Status Card (Principal Only) -->
+            <div class="card big-tile" id="budgetStatusWidget"
+              style="background:linear-gradient(135deg,#0f1724,#1e293b);display:none">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
+                <div>
+                  <div class="tile-title" style="color:#94a3b8">Budget Status</div>
+                  <div class="tile-value" style="color:white;font-size:28px" id="budgetStatusLabel">On Track</div>
+                  <div class="tile-sub" style="color:#94a3b8;opacity:1" id="budgetStatusSub">Loading...</div>
+                </div>
+                <div class="tile-icon" style="background:rgba(255,255,255,0.1)">
+                  <i class="fa-solid fa-chart-pie" style="color:white"></i>
+                </div>
+              </div>
+
+              <!-- Progress bar -->
+              <div style="background:rgba(255,255,255,0.15);border-radius:99px;height:10px;margin-bottom:10px">
+                <div id="budgetProgressBar"
+                  style="height:10px;border-radius:99px;background:#22c55e;width:0%;transition:width 0.5s ease"></div>
+              </div>
+
+              <div style="display:flex;justify-content:space-between;font-size:13px;color:#94a3b8">
+                <span id="budgetUsedLabel">₱0 used</span>
+                <span id="budgetTotalLabel">of ₱0 budget</span>
+              </div>
+            </div>
           </div>
 
           <!-- Usage trend / mini cards -->
@@ -764,6 +790,43 @@
       $('#projectedBill').text('₱' + projectedBill.toFixed(2));
       $('#monthCost').text('₱' + monthToDateCost.toFixed(2));
       $('#daysRemaining').text(daysRemaining + ' days');
+
+      updateBudgetStatus();
+    }
+
+    function updateBudgetStatus() {
+      if (!isPrincipalAccount) return;
+
+      const budget = parseFloat(localStorage.getItem(`budget_${schoolId}`));
+      const warningPercent = parseFloat(localStorage.getItem(`budgetWarning_${schoolId}`)) || 80;
+
+      if (!budget || budget <= 0) {
+        $('#budgetStatusWidget').hide();
+        return;
+      }
+
+      $('#budgetStatusWidget').show();
+
+      // Get current month cost from the bill widget
+      const monthCostText = $('#monthCost').text().replace('₱', '').replace(',', '');
+      const monthCost = parseFloat(monthCostText) || 0;
+
+      const percentUsed = Math.min((monthCost / budget) * 100, 100);
+
+      // Update progress bar color based on status
+      let color = '#22c55e'; // green
+      let label = '✅ On Track';
+      if (percentUsed >= 100) {
+        color = '#ef4444'; label = '🚨 Over Budget';
+      } else if (percentUsed >= warningPercent) {
+        color = '#f59e0b'; label = '⚠️ At Risk';
+      }
+
+      $('#budgetProgressBar').css({ width: percentUsed + '%', background: color });
+      $('#budgetStatusLabel').text(label);
+      $('#budgetStatusSub').text(percentUsed.toFixed(1) + '% of monthly budget used');
+      $('#budgetUsedLabel').text('₱' + monthCost.toLocaleString() + ' used');
+      $('#budgetTotalLabel').text('of ₱' + budget.toLocaleString() + ' budget');
     }
 
     function fetchSensorData() {
