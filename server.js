@@ -1293,14 +1293,6 @@ app.post("/api/send-telegram", async (req, res) => {
       message: `Alert sent to ${chatIds.length} user(s)` 
     }); 
 
-    await Promise.all(sendPromises);
-
-    console.log(`✅ Telegram alerts sent to ${chatIds.length} recipients`);
-    res.json({ 
-      success: true, 
-      recipients: chatIds.length,
-      message: `Alert sent to ${chatIds.length} user(s)` 
-    });
   } catch (error) {
     console.error("❌ Telegram send error:", error);
     res.status(500).json({ 
@@ -1623,6 +1615,154 @@ app.get("/api/telegram/test", async (req, res) => {
     });
   }
 });
+
+// ========== ML / ANALYTICS ENDPOINTS ==========
+
+// Get daily averages for the past N days (used for bill projection ML)
+app.get("/api/ml/daily-averages", async (req, res) => {
+  try {
+    const schoolId = req.query.school_id || null;
+    const days = parseInt(req.query.days) || 30;
+
+    // Calculate start timestamp (N days ago)
+    const startTime = Date.now() - (days * 24 * 60 * 60 * 1000);
+
+    const snapshot = await db.ref("readings")
+      .orderByChild("timestamp")
+      .startAt(startTime)
+      .once("value");
+
+    const readingsByDay = {};
+
+    snapshot.forEach((child) => {
+      const r = child.val();
+
+      // Filter by school if provided
+      if (schoolId && r.school_id !== schoolId) return;
+
+      const date = new Date(r.timestamp).toISOString().split('T')[0]; // "2025-02-20"
+
+      if (!readingsByDay[date]) {
+        readingsByDay[date] = { readings: [], maxEnergy: 0 };
+      }
+
+      readingsByDay[date].readings.push(r);
+      if (r.energy > readingsByDay[date].maxEnergy) {
+        readingsByDay[date].maxEnergy = r.energy;
+      }
+    });
+
+    // Build daily summary array
+    const dailyAverages = Object.entries(readingsByDay).map(([date, data]) => {
+      const readings = data.readings;
+      return {
+        date,
+        avgPower: readings.reduce((s, r) => s + (r.power || 0), 0) / readings.length,
+        maxEnergy: data.maxEnergy,
+        avgVoltage: readings.reduce((s, r) => s + (r.voltage || 0), 0) / readings.length,
+        avgCurrent: readings.reduce((s, r) => s + (r.current || 0), 0) / readings.length,
+        avgPowerFactor: readings.reduce((s, r) => s + (r.powerFactor || 0), 0) / readings.length,
+        readingCount: readings.length
+      };
+    }).sort((a, b) => a.date.localeCompare(b.date));
+
+    console.log(`📊 ML daily averages: ${dailyAverages.length} days of data`);
+    res.json({ success: true, days: dailyAverages.length, data: dailyAverages });
+
+  } catch (err) {
+    console.error("❌ ML daily averages error:", err);
+    res.status(500).json({ success: false, message: "Failed to compute daily averages" });
+  }
+});
+
+// Get hourly pattern (average consumption by hour of day)
+// This helps ML predict what the rest of the day will look like
+app.get("/api/ml/hourly-pattern", async (req, res) => {
+  try {
+    const schoolId = req.query.school_id || null;
+
+    const snapshot = await db.ref("readings")
+      .orderByChild("timestamp")
+      .limitToLast(2000) // Use last 2000 readings for pattern
+      .once("value");
+
+    const byHour = Array.from({ length: 24 }, () => ({ totalPower: 0, count: 0 }));
+
+    snapshot.forEach((child) => {
+      const r = child.val();
+      if (schoolId && r.school_id !== schoolId) return;
+
+      const hour = new Date(r.timestamp).getHours();
+      byHour[hour].totalPower += (r.power || 0);
+      byHour[hour].count += 1;
+    });
+
+    const hourlyPattern = byHour.map((h, hour) => ({
+      hour,
+      avgPower: h.count > 0 ? h.totalPower / h.count : 0,
+      sampleCount: h.count
+    }));
+
+    console.log(`📊 ML hourly pattern computed`);
+    res.json({ success: true, data: hourlyPattern });
+
+  } catch (err) {
+    console.error("❌ ML hourly pattern error:", err);
+    res.status(500).json({ success: false, message: "Failed to compute hourly pattern" });
+  }
+});
+
+// Get anomaly threshold based on historical data
+// Returns mean and std deviation so the frontend can detect anomalies
+app.get("/api/ml/anomaly-baseline", async (req, res) => {
+  try {
+    const schoolId = req.query.school_id || null;
+
+    const snapshot = await db.ref("readings")
+      .orderByChild("timestamp")
+      .limitToLast(500)
+      .once("value");
+
+    const powerValues = [];
+
+    snapshot.forEach((child) => {
+      const r = child.val();
+      if (schoolId && r.school_id !== schoolId) return;
+      if (r.power) powerValues.push(r.power);
+    });
+
+    if (powerValues.length < 10) {
+      return res.json({
+        success: false,
+        message: "Not enough data for anomaly detection",
+        minRequired: 10,
+        current: powerValues.length
+      });
+    }
+
+    const mean = powerValues.reduce((a, b) => a + b, 0) / powerValues.length;
+    const variance = powerValues.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / powerValues.length;
+    const stdDev = Math.sqrt(variance);
+
+    // Thresholds: warn at 2 std devs, critical at 3
+    res.json({
+      success: true,
+      baseline: {
+        mean: mean,
+        stdDev: stdDev,
+        warnThreshold: mean + (2 * stdDev),
+        criticalThreshold: mean + (3 * stdDev),
+        sampleSize: powerValues.length
+      }
+    });
+
+  } catch (err) {
+    console.error("❌ ML anomaly baseline error:", err);
+    res.status(500).json({ success: false, message: "Failed to compute anomaly baseline" });
+  }
+});
+
+// ========== END ML ENDPOINTS ==========
 
 // STATIC FILES
 app.use(express.static("public"));
