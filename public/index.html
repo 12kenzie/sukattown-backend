@@ -1218,6 +1218,21 @@
       }
     }
 
+    async function loadMLBaseline() {
+      const [patternRes, anomalyRes] = await Promise.all([
+        fetch(`https://sukattown-backend.onrender.com/api/ml/hourly-pattern?school_id=${schoolId}`),
+        fetch(`https://sukattown-backend.onrender.com/api/ml/anomaly-baseline?school_id=${schoolId}`)
+      ]);
+
+      const pattern = await patternRes.json();
+      const anomaly = await anomalyRes.json();
+
+      window.mlHourlyPattern = pattern.data;
+      window.mlAnomaly = anomaly.baseline;
+
+      console.log('✅ ML baseline loaded from server');
+    }
+
     async function loadHistoryFromFirebase() {
       try {
         const params = new URLSearchParams({ school_id: schoolId, limit: 200 });
@@ -1425,6 +1440,7 @@
       // Display user info first
       displayUserInfo();
       loadHistoryFromFirebase();
+      loadMLBaseline();
       fetchSensorData();
       fetchConsumptionAlerts();
       fetchFireAlerts();
