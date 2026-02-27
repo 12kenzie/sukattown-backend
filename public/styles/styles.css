@@ -232,9 +232,20 @@
     /* Top cards like reference */
     .cards-top-three {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        grid-template-columns: 1fr 1fr;
         gap: 14px;
         margin-bottom: 10px;
+    } 
+
+    /* Bill and budget share the bottom row equally */
+    .cards-top-three #billWidget,
+    .cards-top-three #budgetStatusWidget {
+        grid-column: auto; /* each takes one column */
+    }
+
+    /* If only bill is visible (budget hidden), stretch it to fill both columns */
+    .cards-top-three #billWidget:last-child {
+        grid-column: 1 / -1;
     }
 
     .cards-top {

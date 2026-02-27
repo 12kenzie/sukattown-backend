@@ -159,30 +159,30 @@
             </div>
 
             <!-- Budget Status Card (Principal Only) -->
-<div class="card big-tile" id="budgetStatusWidget" 
-     style="background:linear-gradient(135deg,#0f1724,#1e293b);display:none">
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
-    <div>
-      <div class="tile-title" style="color:#94a3b8">Budget Status</div>
-      <div class="tile-value" style="color:white;font-size:28px" id="budgetStatusLabel">On Track</div>
-      <div class="tile-sub" style="color:#94a3b8;opacity:1" id="budgetStatusSub">Loading...</div>
-    </div>
-    <div class="tile-icon" style="background:rgba(255,255,255,0.1)">
-      <i class="fa-solid fa-chart-pie" style="color:white"></i>
-    </div>
-  </div>
+            <div class="card big-tile" id="budgetStatusWidget"
+              style="background:linear-gradient(135deg,#0f1724,#1e293b);display:none">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
+                <div>
+                  <div class="tile-title" style="color:#94a3b8">Budget Status</div>
+                  <div class="tile-value" style="color:white;font-size:28px" id="budgetStatusLabel">On Track</div>
+                  <div class="tile-sub" style="color:#94a3b8;opacity:1" id="budgetStatusSub">Loading...</div>
+                </div>
+                <div class="tile-icon" style="background:rgba(255,255,255,0.1)">
+                  <i class="fa-solid fa-chart-pie" style="color:white"></i>
+                </div>
+              </div>
 
-  <!-- Progress bar -->
-  <div style="background:rgba(255,255,255,0.15);border-radius:99px;height:10px;margin-bottom:10px">
-    <div id="budgetProgressBar" 
-         style="height:10px;border-radius:99px;background:#22c55e;width:0%;transition:width 0.5s ease"></div>
-  </div>
+              <!-- Progress bar -->
+              <div style="background:rgba(255,255,255,0.15);border-radius:99px;height:10px;margin-bottom:10px">
+                <div id="budgetProgressBar"
+                  style="height:10px;border-radius:99px;background:#22c55e;width:0%;transition:width 0.5s ease"></div>
+              </div>
 
-  <div style="display:flex;justify-content:space-between;font-size:13px;color:#94a3b8">
-    <span id="budgetUsedLabel">₱0 used</span>
-    <span id="budgetTotalLabel">of ₱0 budget</span>
-  </div>
-</div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;color:#94a3b8">
+                <span id="budgetUsedLabel">₱0 used</span>
+                <span id="budgetTotalLabel">of ₱0 budget</span>
+              </div>
+            </div>
           </div>
 
           <!-- Usage trend / mini cards -->
@@ -214,15 +214,14 @@
           </div>
 
           <!-- AI Insights Box -->
-          <div class="card usage-insights">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-              <div
-                style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent-1),var(--accent-2));display:flex;align-items:center;justify-content:center;color:white;font-size:18px">
-                <i class="fa-solid fa-brain"></i>
-              </div>
-              <div style="flex:1">
-                <div style="font-weight:700;font-size:15px">AI-Powered Insights</div>
-                <div style="font-size:12px;color:var(--muted)">Pattern analysis • Smart recommendations</div>
+          <div class="card intel-card usage-insights">
+            <div class="intel-card-header">
+              <div class="intel-card-title">
+                <div
+                  style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent-1),var(--accent-2));display:flex;align-items:center;justify-content:center;color:white;font-size:18px">
+                  <i class="fa-solid fa-brain"></i>
+                </div>
+                AI-Powered Insights
               </div>
               <div style="display:flex;align-items:center;gap:8px">
                 <div id="aiLoadingIndicator" style="display:none">
@@ -230,54 +229,39 @@
                     style="width:18px;height:18px;border:2px solid rgba(107,83,245,0.3);border-top-color:var(--accent-1);border-radius:50%;animation:spin 1s linear infinite">
                   </div>
                 </div>
-                <span id="aiConfidence"
-                  style="font-size:12px;color:var(--accent-1);font-weight:700;padding:4px 10px;background:rgba(107,83,245,0.1);border-radius:6px">85%
-                  confidence</span>
+                <span id="aiConfidence" class="intel-tag">85% confidence</span>
               </div>
             </div>
 
-            <div
-              style="padding:16px;background:linear-gradient(135deg,rgba(107,83,245,0.06),rgba(163,78,242,0.04));border-radius:12px;border:1px solid rgba(107,83,245,0.12)">
-              <!-- Pattern Detected -->
-              <div style="margin-bottom:14px">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                  <span style="font-size:20px">🔍</span>
-                  <strong style="font-size:13px;color:#0f1724">Pattern Detected:</strong>
+            <div class="intel-insight-block">
+              <div class="intel-insight-row">
+                <div class="intel-insight-icon">🔍</div>
+                <div>
+                  <div class="intel-insight-label">Pattern Detected</div>
+                  <p id="aiPattern" class="intel-insight-text">Stable consumption pattern with slight evening peaks</p>
                 </div>
-                <p id="aiPattern" style="margin:0;font-size:14px;line-height:1.5;color:#344054;padding-left:28px">
-                  Stable consumption pattern with slight evening peaks
-                </p>
               </div>
-
-              <!-- Insight -->
-              <div style="margin-bottom:14px">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                  <span style="font-size:20px">💡</span>
-                  <strong style="font-size:13px;color:#0f1724">Insight:</strong>
+              <div class="intel-insight-row">
+                <div class="intel-insight-icon">💡</div>
+                <div>
+                  <div class="intel-insight-label">Insight</div>
+                  <p id="aiInsight" class="intel-insight-text">Your usage is steady at 5.2 kW, close to your average of
+                    5.5 kW.</p>
                 </div>
-                <p id="aiInsight" style="margin:0;font-size:14px;line-height:1.5;color:#344054;padding-left:28px">
-                  Your usage is steady at 5.2 kW, close to your average of 5.5 kW. Energy efficiency is good.
-                </p>
               </div>
-
-              <!-- Recommendation -->
-              <div>
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                  <span style="font-size:20px">✨</span>
-                  <strong style="font-size:13px;color:#0f1724">Recommendation:</strong>
+              <div class="intel-insight-row">
+                <div class="intel-insight-icon">✨</div>
+                <div>
+                  <div class="intel-insight-label">Recommendation</div>
+                  <p id="aiRecommendation" class="intel-insight-text">Maintain current usage patterns. Monitor for any
+                    unusual spikes during peak hours.</p>
                 </div>
-                <p id="aiRecommendation"
-                  style="margin:0;font-size:14px;line-height:1.5;color:#344054;padding-left:28px">
-                  Maintain current usage patterns. Monitor for any unusual spikes during peak hours.
-                </p>
               </div>
             </div>
 
-            <div
-              style="margin-top:12px;padding:10px;background:rgba(107,83,245,0.05);border-radius:8px;display:flex;align-items:center;gap:8px">
-              <i class="fa-solid fa-circle-info" style="color:var(--accent-1);font-size:14px"></i>
-              <span style="font-size:12px;color:var(--muted)">Insights updated every 30 seconds using pattern
-                recognition</span>
+            <div class="intel-info-note" style="margin-top:12px">
+              <i class="fa-solid fa-circle-info" style="color:var(--accent-1)"></i>
+              Insights updated every 30 seconds using pattern recognition
             </div>
           </div>
 
@@ -793,7 +777,7 @@
       $('#monthCost').text('₱' + monthToDateCost.toFixed(2));
       $('#daysRemaining').text(daysRemaining + ' days');
 
-       updateBudgetStatus();
+      updateBudgetStatus();
     }
 
     function updateBudgetStatus() {
@@ -802,37 +786,37 @@
         return;
       }
 
-  const budget = parseFloat(localStorage.getItem(`budget_${schoolId}`));
-  const warningPercent = parseFloat(localStorage.getItem(`budgetWarning_${schoolId}`)) || 80;
+      const budget = parseFloat(localStorage.getItem(`budget_${schoolId}`));
+      const warningPercent = parseFloat(localStorage.getItem(`budgetWarning_${schoolId}`)) || 80;
 
-  if (!budget || budget <= 0) {
-    $('#budgetStatusWidget').hide();
-    return;
-  }
+      if (!budget || budget <= 0) {
+        $('#budgetStatusWidget').hide();
+        return;
+      }
 
-  $('#budgetStatusWidget').show();
+      $('#budgetStatusWidget').show();
 
-  // Get current month cost from the bill widget
-  const monthCostText = $('#monthCost').text().replace('₱', '').replace(',', '');
-  const monthCost = parseFloat(monthCostText) || 0;
+      // Get current month cost from the bill widget
+      const monthCostText = $('#monthCost').text().replace('₱', '').replace(',', '');
+      const monthCost = parseFloat(monthCostText) || 0;
 
-  const percentUsed = Math.min((monthCost / budget) * 100, 100);
+      const percentUsed = Math.min((monthCost / budget) * 100, 100);
 
-  // Update progress bar color based on status
-  let color = '#22c55e'; // green
-  let label = '✅ On Track';
-  if (percentUsed >= 100) {
-    color = '#ef4444'; label = '🚨 Over Budget';
-  } else if (percentUsed >= warningPercent) {
-    color = '#f59e0b'; label = '⚠️ At Risk';
-  }
+      // Update progress bar color based on status
+      let color = '#22c55e'; // green
+      let label = '✅ On Track';
+      if (percentUsed >= 100) {
+        color = '#ef4444'; label = '🚨 Over Budget';
+      } else if (percentUsed >= warningPercent) {
+        color = '#f59e0b'; label = '⚠️ At Risk';
+      }
 
-  $('#budgetProgressBar').css({ width: percentUsed + '%', background: color });
-  $('#budgetStatusLabel').text(label);
-  $('#budgetStatusSub').text(percentUsed.toFixed(1) + '% of monthly budget used');
-  $('#budgetUsedLabel').text('₱' + monthCost.toLocaleString() + ' used');
-  $('#budgetTotalLabel').text('of ₱' + budget.toLocaleString() + ' budget');
-}
+      $('#budgetProgressBar').css({ width: percentUsed + '%', background: color });
+      $('#budgetStatusLabel').text(label);
+      $('#budgetStatusSub').text(percentUsed.toFixed(1) + '% of monthly budget used');
+      $('#budgetUsedLabel').text('₱' + monthCost.toLocaleString() + ' used');
+      $('#budgetTotalLabel').text('of ₱' + budget.toLocaleString() + ' budget');
+    }
 
     function fetchSensorData() {
       // Add school and user context to API request
