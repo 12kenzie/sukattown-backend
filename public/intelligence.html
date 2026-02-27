@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" href="/assets/favicon.png" type="image/png">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://kit.fontawesome.com/c6249fb7d2.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+  <link rel="stylesheet" href="styles/styles.css">
+  <link rel="stylesheet" href="styles/intelligence-styles.css">
+  <title>SukatTown · Intelligence</title>
+</head>
+
+<body>
+  <div class="app">
+
+    <!-- ═══ LEFT NAV (identical to index.html) ═══ -->
+    <aside class="left-nav" aria-hidden="true">
+      <div class="brand">EL</div>
+      <div class="nav" role="navigation" aria-label="Main">
+        <button title="Dashboard" aria-label="Dashboard" onclick="window.location.href='index.html'">
+          <i class="fa-solid fa-house" aria-hidden="true"></i>
+        </button>
+        <button title="Consumption" aria-label="Consumption" onclick="window.location.href='consumption-history.html'">
+          <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+        </button>
+        <button class="active" title="Intelligence" aria-label="Intelligence">
+          <i class="fa-solid fa-chart-area" aria-hidden="true"></i>
+        </button>
+        <button title="Settings" aria-label="Settings" onclick="window.location.href='settings.html'">
+          <i class="fa-solid fa-gear" aria-hidden="true"></i>
+        </button>
+        <div class="spacer" aria-hidden="true"></div>
+        <button title="Help" aria-label="Help">
+          <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
+        </button>
+        <button title="Logout" aria-label="Logout" onclick="logout()">
+          <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ═══ MAIN ═══ -->
+    <div class="main">
+
+      <!-- TOPBAR (identical to index.html) -->
+      <div class="topbar" role="banner">
+        <div class="search-wrap" aria-hidden="false">
+          <div style="font-weight:700;color:#10213a">SukatTown</div>
+          <span class="status-badge offline" id="connectionStatus">● Offline</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px;justify-self:end">
+          <div class="search" role="search" aria-label="Search">
+            <i class="fa-brands fa-searchengin" aria-hidden="true"></i>
+            <input id="topSearch" type="search" placeholder="Search anything..." aria-label="Search anything">
+          </div>
+          <div class="topbar-right">
+            <div class="profile" title="Account">
+              <div class="hello">
+                <span style="font-size:13px;color:var(--muted)">Hello,</span>
+                <strong id="userName">User</strong>
+              </div>
+              <div class="avatar" aria-hidden="true" id="userAvatar">U</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ PAGE BODY ═══ -->
+      <div class="intel-page">
+
+        <!-- Page Header -->
+        <div class="intel-header">
+          <div class="intel-header-left">
+            <div class="intel-icon-wrap">
+              <i class="fa-solid fa-brain"></i>
+            </div>
+            <div>
+              <h1 class="intel-title">AI Intelligence Center</h1>
+              <p class="intel-subtitle">Machine learning analysis · Pattern recognition · Predictive insights</p>
+            </div>
+          </div>
+          <div class="intel-header-right">
+            <div class="intel-badge">
+              <span class="intel-badge-dot" id="mlDot"></span>
+              <span id="mlStatusText">Initializing ML…</span>
+            </div>
+            <button class="intel-refresh-btn" onclick="runFullAnalysis()" id="analyzeBtn">
+              <i class="fa-solid fa-rotate" id="analyzeBtnIcon"></i> Run Analysis
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI Row -->
+        <div class="intel-kpi-row">
+          <div class="intel-kpi-card">
+            <div class="intel-kpi-icon" style="background:linear-gradient(135deg,#6b53f5,#a34ef2)">
+              <i class="fa-solid fa-wave-square"></i>
+            </div>
+            <div class="intel-kpi-body">
+              <div class="intel-kpi-label">Model Confidence</div>
+              <div class="intel-kpi-value" id="kpiConfidence">—</div>
+              <div class="intel-kpi-sub" id="kpiConfidenceSub">Awaiting data</div>
+            </div>
+          </div>
+
+          <div class="intel-kpi-card">
+            <div class="intel-kpi-icon" style="background:linear-gradient(135deg,#0ea5e9,#06b6d4)">
+              <i class="fa-solid fa-chart-line"></i>
+            </div>
+            <div class="intel-kpi-body">
+              <div class="intel-kpi-label">Predicted End-of-Day</div>
+              <div class="intel-kpi-value" id="kpiPredicted">—</div>
+              <div class="intel-kpi-sub" id="kpiPredictedSub">kWh forecast via TF.js</div>
+            </div>
+          </div>
+
+          <div class="intel-kpi-card">
+            <div class="intel-kpi-icon" style="background:linear-gradient(135deg,#f59e0b,#f97316)">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div class="intel-kpi-body">
+              <div class="intel-kpi-label">Anomaly Score</div>
+              <div class="intel-kpi-value" id="kpiAnomaly">—</div>
+              <div class="intel-kpi-sub" id="kpiAnomalySub">Z-score variance</div>
+            </div>
+          </div>
+
+          <div class="intel-kpi-card">
+            <div class="intel-kpi-icon" style="background:linear-gradient(135deg,#22c55e,#16a34a)">
+              <i class="fa-solid fa-leaf"></i>
+            </div>
+            <div class="intel-kpi-body">
+              <div class="intel-kpi-label">Efficiency Rating</div>
+              <div class="intel-kpi-value" id="kpiEfficiency">—</div>
+              <div class="intel-kpi-sub" id="kpiEfficiencySub">vs. historical baseline</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main 2-column grid -->
+        <div class="intel-grid">
+
+          <!-- ── LEFT COLUMN ── -->
+          <div class="intel-col-main">
+
+            <!-- Pattern Analysis -->
+            <div class="intel-card">
+              <div class="intel-card-header">
+                <div class="intel-card-title">
+                  <i class="fa-solid fa-magnifying-glass-chart" style="color:#6b53f5"></i>
+                  AI Pattern Analysis
+                </div>
+                <span class="intel-tag" id="patternTag">Stable</span>
+              </div>
+              <div class="intel-insight-block">
+                <div class="intel-insight-row">
+                  <div class="intel-insight-icon">🔍</div>
+                  <div>
+                    <div class="intel-insight-label">Detected Pattern</div>
+                    <div class="intel-insight-text" id="patternDetected">Loading sensor data for analysis…</div>
+                  </div>
+                </div>
+                <div class="intel-insight-row">
+                  <div class="intel-insight-icon">💡</div>
+                  <div>
+                    <div class="intel-insight-label">Key Insight</div>
+                    <div class="intel-insight-text" id="patternInsight">Collecting readings — results appear once enough data points are available.</div>
+                  </div>
+                </div>
+                <div class="intel-insight-row">
+                  <div class="intel-insight-icon">✨</div>
+                  <div>
+                    <div class="intel-insight-label">Recommendation</div>
+                    <div class="intel-insight-text" id="patternRec">Run analysis after data loads to get personalised recommendations.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Real-time power trend -->
+            <div class="intel-card">
+              <div class="intel-card-header">
+                <div class="intel-card-title">
+                  <i class="fa-solid fa-chart-area" style="color:#0ea5e9"></i>
+                  Real-time Power Trend
+                </div>
+                <div style="font-size:12px;color:var(--muted)">Live · 5 s refresh</div>
+              </div>
+              <div class="intel-chart-wrap">
+                <canvas id="trendChart" height="120"></canvas>
+              </div>
+            </div>
+
+            <!-- Hourly Heatmap -->
+            <div class="intel-card">
+              <div class="intel-card-header">
+                <div class="intel-card-title">
+                  <i class="fa-solid fa-table-cells" style="color:#f59e0b"></i>
+                  Hourly Consumption Heatmap
+                </div>
+                <div style="font-size:12px;color:var(--muted)">Average kW per hour · today</div>
+              </div>
+              <!-- Hour labels -->
+              <div class="intel-heatmap-labels" id="heatmapLabels"></div>
+              <!-- Heatmap cells -->
+              <div class="intel-heatmap" id="heatmapGrid"></div>
+              <div class="intel-heatmap-legend">
+                <span style="font-size:12px;color:var(--muted)">Low</span>
+                <div class="intel-legend-bar"></div>
+                <span style="font-size:12px;color:var(--muted)">High</span>
+              </div>
+            </div>
+
+            <!-- TF.js Linear Regression -->
+            <div class="intel-card">
+              <div class="intel-card-header">
+                <div class="intel-card-title">
+                  <i class="fa-solid fa-code-branch" style="color:#a34ef2"></i>
+                  TF.js Linear Regression · End-of-Day Forecast
+                </div>
+                <span class="intel-tag" id="regressionTag" style="background:rgba(107,83,245,0.1);color:#6b53f5">
+                  Waiting
+                </span>
+              </div>
+
+              <div class="intel-regression-body">
+                <div class="intel-regression-stat">
+                  <div class="intel-regression-stat-label">Slope (kWh/min)</div>
+                  <div class="intel-regression-stat-val" id="regSlope">—</div>
+                </div>
+                <div class="intel-regression-stat">
+                  <div class="intel-regression-stat-label">Intercept</div>
+                  <div class="intel-regression-stat-val" id="regIntercept">—</div>
+                </div>
+                <div class="intel-regression-stat">
+                  <div class="intel-regression-stat-label">R² Score</div>
+                  <div class="intel-regression-stat-val" id="regR2">—</div>
+                </div>
+                <div class="intel-regression-stat">
+                  <div class="intel-regression-stat-label">Predicted @ 23:59</div>
+                  <div class="intel-regression-stat-val" id="regPredicted">—</div>
+                </div>
+              </div>
+
+              <div class="intel-chart-wrap" style="margin-top:14px">
+                <canvas id="regressionChart" height="120"></canvas>
+              </div>
+
+              <div class="intel-info-note">
+                <i class="fa-solid fa-circle-info" style="color:#6b53f5;flex-shrink:0"></i>
+                TensorFlow.js trains a dense neural layer on normalised time → energy readings each analysis cycle.
+                Requires ≥ 10 data points. R² shows goodness-of-fit (1.0 = perfect).
+              </div>
+            </div>
+
+            <!-- Daily averages trend (from /api/ml/daily-averages) -->
+            <div class="intel-card">
+              <div class="intel-card-header">
+                <div class="intel-card-title">
+                  <i class="fa-solid fa-calendar-days" style="color:#22c55e"></i>
+                  Historical Daily Averages
+                </div>
+                <div style="font-size:12px;color:var(--muted)" id="dailyAvgDays">Last 30 days</div>
+              </div>
+              <div class="intel-chart-wrap">
+                <canvas id="dailyAvgChart" height="120"></canvas>
+              </div>
+              <div class="intel-info-note" style="margin-top:14px">
+                <i class="fa-solid fa-circle-info" style="color:#22c55e;flex-shrink:0"></i>
+                Fetched from <code>/api/ml/daily-averages</code>. Each bar = average power (W) across all readings for that day.
+              </div>
+            </div>
+
+          </div><!-- /intel-col-main -->
+
+          <!-- ── RIGHT COLUMN ── -->
+          <div class="intel-col-side">
+
+            <!-- Anomaly Detection -->
+            <div class="intel-card">
+              <div class="intel-card-header">
+                <div class="intel-card-title">
+                  <i class="fa-solid fa-shield-halved" style="color:#ef4444"></i>
+                  Anomaly Detection
+                </div>
+                <span class="intel-tag" id="anomalyCountTag">0 found</span>
+              </div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:12px">
+                Z-score threshold: <strong>± 2.0 σ</strong> · Server baseline + live readings
+              </div>
+              <div class="intel-anomaly-list" id="anomalyList">
+                <div class="intel-empty-state">
+                  <i class="fa-solid fa-circle-check" style="font-size:28px;color:#22c55e;margin-bottom:8px"></i>
+                  <div>No anomalies detected</div>
+                  <div style="font-size:12px;color:var(--muted);margin-top:4px">System operating normally</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Volatility Gauge -->
+            <div class="intel-card">
+              <div class="intel-card-header">
+                <div class="intel-card-title">
+                  <i class="fa-solid fa-gauge-high" style="color:#f59e0b"></i>
+                  Consumption Volatility
+                </div>
+              </div>
+              <div class="intel-gauge-wrap">
+                <canvas id="volatilityGauge" width="220" height="120"></canvas>
+                <div class="intel-gauge-label">
+                  <div class="intel-gauge-val" id="volatilityVal">—</div>
+                  <div class="intel-gauge-sub" id="volatilitySub">Awaiting readings</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Rolling Statistics -->
+            <div class="intel-card">
+              <div class="intel-card-header">
+                <div class="intel-card-title">
+                  <i class="fa-solid fa-sigma" style="color:#0ea5e9"></i>
+                  Rolling Statistics
+                </div>
+                <div style="font-size:12px;color:var(--muted)">Last 50 readings</div>
+              </div>
+              <div class="intel-stats-grid">
+                <div class="intel-stat-item">
+                  <div class="intel-stat-label">Mean Power</div>
+                  <div class="intel-stat-val" id="statMean">—</div>
+                </div>
+                <div class="intel-stat-item">
+                  <div class="intel-stat-label">Std Deviation</div>
+                  <div class="intel-stat-val" id="statStd">—</div>
+                </div>
+                <div class="intel-stat-item">
+                  <div class="intel-stat-label">Min Power</div>
+                  <div class="intel-stat-val" id="statMin">—</div>
+                </div>
+                <div class="intel-stat-item">
+                  <div class="intel-stat-label">Max Power</div>
+                  <div class="intel-stat-val" id="statMax">—</div>
+                </div>
+                <div class="intel-stat-item">
+                  <div class="intel-stat-label">Trend Slope</div>
+                  <div class="intel-stat-val" id="statSlope">—</div>
+                </div>
+                <div class="intel-stat-item">
+                  <div class="intel-stat-label">Data Points</div>
+                  <div class="intel-stat-val" id="statCount">0</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Period Breakdown -->
+            <div class="intel-card">
+              <div class="intel-card-header">
+                <div class="intel-card-title">
+                  <i class="fa-solid fa-clock" style="color:#a34ef2"></i>
+                  Period Breakdown
+                </div>
+                <div style="font-size:12px;color:var(--muted)">Today</div>
+              </div>
+              <div class="intel-chart-wrap">
+                <canvas id="periodChart" height="150"></canvas>
+              </div>
+            </div>
+
+            <!-- Hourly Pattern from server -->
+            <div class="intel-card">
+              <div class="intel-card-header">
+                <div class="intel-card-title">
+                  <i class="fa-solid fa-clock-rotate-left" style="color:#f59e0b"></i>
+                  Server Hourly Pattern
+                </div>
+                <div style="font-size:12px;color:var(--muted)">/api/ml/hourly-pattern</div>
+              </div>
+              <div class="intel-chart-wrap">
+                <canvas id="hourlyPatternChart" height="150"></canvas>
+              </div>
+              <div class="intel-info-note" style="margin-top:12px">
+                <i class="fa-solid fa-circle-info" style="color:#f59e0b;flex-shrink:0"></i>
+                Average power (W) per hour computed server-side from up to 2,000 historical readings.
+              </div>
+            </div>
+
+            <!-- ML Activity Log -->
+            <div class="intel-card">
+              <div class="intel-card-header">
+                <div class="intel-card-title">
+                  <i class="fa-solid fa-terminal" style="color:var(--muted)"></i>
+                  Model Activity Log
+                </div>
+                <button onclick="clearLog()"
+                  style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #e2e8f0;
+                         background:white;color:var(--muted);cursor:pointer">
+                  Clear
+                </button>
+              </div>
+              <div class="intel-log" id="mlLog">
+                <div class="intel-log-entry">
+                  <span class="intel-log-time">--:--:--</span>
+                  <span class="intel-log-msg">Waiting for intelligence engine to start…</span>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /intel-col-side -->
+        </div><!-- /intel-grid -->
+      </div><!-- /intel-page -->
+    </div><!-- /main -->
+  </div><!-- /app -->
+
+
+  <!-- ══════════════════════════════════════════════
+       JAVASCRIPT
+  ══════════════════════════════════════════════ -->
+  <script>
+  // ─────────────────────────────────────────────────────────────
+  //  Auth guard (same pattern as index.html)
+  // ─────────────────────────────────────────────────────────────
+  const userId    = localStorage.getItem('userId');
+  const userName  = localStorage.getItem('userName');
+  const userType  = localStorage.getItem('userType');
+  const schoolId  = localStorage.getItem('schoolId');
+  const schoolName = localStorage.getItem('schoolName');
+
+  (function checkAuth() {
+    if (!userId || !userType || !schoolId) {
+      localStorage.clear();
+      if (!sessionStorage.getItem('redirecting')) {
+        sessionStorage.setItem('redirecting', 'true');
+        window.location.href = 'login.html';
+      }
+      throw new Error('Auth required');
+    }
+    sessionStorage.removeItem('redirecting');
+  })();
+
+  function logout() {
+    if (confirm('Are you sure you want to logout?')) {
+      localStorage.clear();
+      window.location.href = 'login.html';
+    }
+  }
+  window.logout = logout;
+
+  // ─────────────────────────────────────────────────────────────
+  //  Constants & state
+  // ─────────────────────────────────────────────────────────────
+  const BASE      = 'https://sukattown-backend.onrender.com';
+  const API_POWER = `${BASE}/api/power-data`;
+
+  let sensorHistory  = [];   // { timestamp, power, energy, voltage, current }
+  let serverBaseline = null; // from /api/ml/anomaly-baseline
+  let serverHourly   = null; // from /api/ml/hourly-pattern
+
+  // Chart instances
+  let chartTrend         = null;
+  let chartRegression    = null;
+  let chartDaily         = null;
+  let chartPeriod        = null;
+  let chartHourlyPattern = null;
+
+  // ─────────────────────────────────────────────────────────────
+  //  Display user info
+  // ─────────────────────────────────────────────────────────────
+  function displayUserInfo() {
+    if (userName) {
+      $('#userName').text(userName);
+      const initials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+      $('#userAvatar').text(initials);
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  Logging
+  // ─────────────────────────────────────────────────────────────
+  function log(msg, type = 'info') {
+    const colors = {
+      info   : '#a5b4fc',
+      success: '#86efac',
+      warn   : '#fcd34d',
+      error  : '#fca5a5'
+    };
+    const now   = new Date().toLocaleTimeString('en-US', { hour12: false });
+    const color = colors[type] || '#c4d0e8';
+    const entry = `<div class="intel-log-entry">
+      <span class="intel-log-time">${now}</span>
+      <span class="intel-log-msg" style="color:${color}">${msg}</span>
+    </div>`;
+    $('#mlLog').prepend(entry);
+    $('#mlLog .intel-log-entry').slice(40).remove();
+  }
+
+  function clearLog() {
+    $('#mlLog').html(`<div class="intel-log-entry">
+      <span class="intel-log-time">--:--:--</span>
+      <span class="intel-log-msg">Log cleared.</span>
+    </div>`);
+  }
+  window.clearLog = clearLog;
+
+  // ─────────────────────────────────────────────────────────────
+  //  Connection status
+  // ─────────────────────────────────────────────────────────────
+  function setConnected(ok) {
+    const b = $('#connectionStatus');
+    ok ? b.removeClass('offline').text('● Connected')
+       : b.addClass('offline').text('● Offline');
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  Fetch live sensor data every 5 s
+  // ─────────────────────────────────────────────────────────────
+  function fetchSensorData() {
+    const params = new URLSearchParams({ school_id: schoolId, user_type: userType });
+    fetch(`${API_POWER}?${params}`)
+      .then(r => r.json())
+      .then(data => {
+        setConnected(true);
+        sensorHistory.push({
+          timestamp: new Date(),
+          power  : data.power   || 0,
+          energy : data.energy  || 0,
+          voltage: data.voltage || 0,
+          current: data.current || 0
+        });
+        if (sensorHistory.length > 50) sensorHistory.shift();
+        updateTrendChart();
+        updateRollingStats();
+        updateHeatmap();
+        updatePeriodChart();
+      })
+      .catch(() => setConnected(false));
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  Load Firebase history (today's readings)
+  // ─────────────────────────────────────────────────────────────
+  async function loadHistory() {
+    log('Loading historical readings from Firebase…');
+    try {
+      const params = new URLSearchParams({ school_id: schoolId, limit: 200 });
+      const res    = await fetch(`${BASE}/api/readings?${params}`);
+      const result = await res.json();
+
+      if (result.success && result.data) {
+        const today = new Date().toDateString();
+        result.data
+          .filter(r => new Date(r.timestamp).toDateString() === today)
+          .forEach(r => sensorHistory.push({
+            timestamp: new Date(r.timestamp),
+            power  : r.power   || 0,
+            energy : r.energy  || 0,
+            voltage: r.voltage || 0,
+            current: r.current || 0
+          }));
+
+        log(`Loaded ${sensorHistory.length} readings for today.`, 'success');
+        updateTrendChart();
+        updateRollingStats();
+        updateHeatmap();
+        updatePeriodChart();
+      }
+    } catch (e) {
+      log('Failed to load Firebase history.', 'error');
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  Load server-side ML baselines
+  // ─────────────────────────────────────────────────────────────
+  async function loadServerML() {
+    log('Fetching server-side ML baselines…');
+    try {
+      const [patternRes, anomalyRes] = await Promise.all([
+        fetch(`${BASE}/api/ml/hourly-pattern?school_id=${schoolId}`),
+        fetch(`${BASE}/api/ml/anomaly-baseline?school_id=${schoolId}`)
+      ]);
+
+      const patternData = await patternRes.json();
+      const anomalyData = await anomalyRes.json();
+
+      if (patternData.success) {
+        serverHourly = patternData.data;
+        renderHourlyPatternChart(serverHourly);
+        log('Hourly pattern loaded from server.', 'success');
+      }
+
+      if (anomalyData.success) {
+        serverBaseline = anomalyData.baseline;
+        log(`Anomaly baseline: mean=${serverBaseline.mean.toFixed(1)} W, σ=${serverBaseline.stdDev.toFixed(1)} W`, 'success');
+      } else {
+        log('Not enough historical data for server anomaly baseline yet.', 'warn');
+      }
+    } catch (e) {
+      log('Could not reach server ML endpoints.', 'error');
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  Load daily averages from server
+  // ─────────────────────────────────────────────────────────────
+  async function loadDailyAverages() {
+    log('Fetching daily averages (/api/ml/daily-averages)…');
+    try {
+      const res    = await fetch(`${BASE}/api/ml/daily-averages?school_id=${schoolId}&days=30`);
+      const result = await res.json();
+
+      if (result.success && result.data && result.data.length) {
+        renderDailyAvgChart(result.data);
+        $('#dailyAvgDays').text(`Last ${result.data.length} day(s)`);
+        log(`Daily averages loaded: ${result.data.length} days of data.`, 'success');
+      } else {
+        log('No daily average data available yet.', 'warn');
+      }
+    } catch (e) {
+      log('Failed to fetch daily averages.', 'error');
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  Math helpers
+  // ─────────────────────────────────────────────────────────────
+  function calcTrend(values) {
+    if (values.length < 2) return 0;
+    const n    = values.length;
+    const xs   = Array.from({ length: n }, (_, i) => i);
+    const sumX = xs.reduce((a, b) => a + b, 0);
+    const sumY = values.reduce((a, b) => a + b, 0);
+    const sumXY = xs.reduce((s, x, i) => s + x * values[i], 0);
+    const sumXX = xs.reduce((s, x) => s + x * x, 0);
+    return (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+  }
+
+  function calcVolatility(values) {
+    if (values.length < 2) return 0;
+    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    const variance = values.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / values.length;
+    return mean > 0 ? Math.sqrt(variance) / mean : 0;
+  }
+
+  function calcR2(ys, yPred) {
+    const mean    = ys.reduce((a, b) => a + b, 0) / ys.length;
+    const SStot   = ys.reduce((s, y) => s + Math.pow(y - mean, 2), 0);
+    const SSres   = ys.reduce((s, y, i) => s + Math.pow(y - yPred[i], 2), 0);
+    return SStot === 0 ? 1 : 1 - SSres / SStot;
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  Rolling stats
+  // ─────────────────────────────────────────────────────────────
+  function updateRollingStats() {
+    if (!sensorHistory.length) return;
+
+    const pw    = sensorHistory.map(d => d.power / 1000);
+    const mean  = pw.reduce((a, b) => a + b, 0) / pw.length;
+    const variance = pw.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / pw.length;
+    const std   = Math.sqrt(variance);
+    const min   = Math.min(...pw);
+    const max   = Math.max(...pw);
+    const slope = calcTrend(pw);
+    const vol   = calcVolatility(pw);
+
+    $('#statMean').text(mean.toFixed(3) + ' kW');
+    $('#statStd').text(std.toFixed(3) + ' kW');
+    $('#statMin').text(min.toFixed(3) + ' kW');
+    $('#statMax').text(max.toFixed(3) + ' kW');
+    $('#statSlope').text((slope >= 0 ? '+' : '') + slope.toFixed(4));
+    $('#statCount').text(sensorHistory.length);
+
+    // Volatility gauge
+    drawVolatilityGauge(vol);
+    $('#volatilityVal').text((vol * 100).toFixed(1) + '%');
+    $('#volatilitySub').text(
+      vol < 0.05 ? '✅ Very stable' :
+      vol < 0.15 ? '🟡 Normal variation' :
+      vol < 0.30 ? '🟠 Elevated variance' : '🔴 High volatility'
+    );
+
+    // KPI: efficiency
+    const eff = Math.max(0, Math.min(100, (1 - vol) * 100));
+    $('#kpiEfficiency').text(eff.toFixed(1) + '%');
+    $('#kpiEfficiencySub').text(
+      eff >= 85 ? '✅ Excellent' : eff >= 65 ? '⚠️ Moderate' : '🔴 Poor'
+    );
+
+    // KPI: anomaly score (0-100, higher = more anomalous)
+    const anomScore = Math.min(100, vol * 200);
+    $('#kpiAnomaly').text(anomScore.toFixed(1));
+    $('#kpiAnomalySub').text(
+      anomScore < 15 ? 'Normal range' : anomScore < 40 ? 'Mild variation' : 'High variance'
+    );
+
+    // Detect anomalies
+    detectAnomalies(pw, mean, std);
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  Anomaly detection  (z-score, combines live + server baseline)
+  // ─────────────────────────────────────────────────────────────
+  function detectAnomalies(powerValues, localMean, localStd) {
+    // Use server baseline if available, otherwise local
+    const mean = serverBaseline ? serverBaseline.mean / 1000 : localMean;
+    const std  = serverBaseline ? serverBaseline.stdDev / 1000 : localStd;
+
+    const THRESHOLD = 2.0;
+    const anomalies = powerValues
+      .map((v, i) => ({ v, i, z: std > 0 ? Math.abs((v - mean) / std) : 0 }))
+      .filter(a => a.z > THRESHOLD);
+
+    $('#anomalyCountTag').text(`${anomalies.length} found`);
+
+    const list = $('#anomalyList');
+    if (!anomalies.length) {
+      list.html(`<div class="intel-empty-state">
+        <i class="fa-solid fa-circle-check" style="font-size:28px;color:#22c55e;margin-bottom:8px"></i>
+        <div>No anomalies detected</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">System operating normally</div>
+      </div>`);
+      return;
+    }
+
+    let html = '';
+    anomalies.slice(-6).reverse().forEach(a => {
+      const severe = a.z > 3;
+      const col    = severe ? '#ef4444' : '#f59e0b';
+      const icon   = severe ? '🔴' : '🟡';
+      const ts     = sensorHistory[a.i]?.timestamp;
+      const time   = ts ? new Date(ts).toLocaleTimeString() : '—';
+      html += `<div class="intel-anomaly-item" style="border-left-color:${col}">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:700;font-size:13px;color:${col}">${icon} ${a.v.toFixed(3)} kW</span>
+          <span style="font-size:11px;color:var(--muted)">${time}</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px">
+          Z-score: ${a.z.toFixed(2)} · ${severe ? 'critical' : 'moderate'} deviation
+        </div>
+      </div>`;
+    });
+    list.html(html);
+
+    if (anomalies.length) log(`${anomalies.length} anomaly reading(s) detected.`, 'warn');
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  Pattern analysis (same logic as index.html, expanded)
+  // ─────────────────────────────────────────────────────────────
+  function runPatternAnalysis() {
+    if (sensorHistory.length < 5) {
+      $('#patternDetected').text('Collecting data — need at least 5 readings for pattern analysis.');
+      $('#patternInsight').text('Keep monitoring your energy consumption for better analysis.');
+      $('#patternRec').text('Run analysis again after more data has been collected.');
+      $('#kpiConfidence').text('—');
+      $('#kpiConfidenceSub').text('Insufficient data');
+      return;
+    }
+
+    const pw         = sensorHistory.map(d => d.power / 1000);
+    const mean       = pw.reduce((a, b) => a + b, 0) / pw.length;
+    const max        = Math.max(...pw);
+    const min        = Math.min(...pw);
+    const current    = pw[pw.length - 1];
+    const trend      = calcTrend(pw);
+    const volatility = calcVolatility(pw);
+    const hour       = new Date().getHours();
+
+    let pattern, insight, rec, confidence, tagClass;
+
+    if (trend > 0.05) {
+      pattern    = 'Increasing consumption trend detected';
+      insight    = `Power usage is rising steadily (${(trend * 100).toFixed(1)}% per reading). Current: ${current.toFixed(2)} kW, Average: ${mean.toFixed(2)} kW.`;
+      rec        = 'Identify high-power appliances currently in use. Turn off devices on standby mode.';
+      confidence = 85; tagClass = 'warn';
+    } else if (trend < -0.05) {
+      pattern    = 'Decreasing consumption trend — great job!';
+      insight    = `Energy usage is declining (${Math.abs(trend * 100).toFixed(1)}% reduction). You're using ${((mean - current) / mean * 100).toFixed(1)}% less than average.`;
+      rec        = 'Excellent energy management. Maintain these efficient practices.';
+      confidence = 88; tagClass = '';
+    } else if (volatility > 0.3) {
+      pattern    = 'High fluctuation in power usage';
+      insight    = `Consumption varies significantly (${(volatility * 100).toFixed(0)}% volatility). Range: ${min.toFixed(2)}–${max.toFixed(2)} kW.`;
+      rec        = 'Check for power-hungry appliances cycling on and off frequently.';
+      confidence = 78; tagClass = 'warn';
+    } else if (current > mean * 1.5) {
+      pattern    = 'Current usage significantly above average';
+      insight    = `Using ${((current / mean - 1) * 100).toFixed(0)}% more power than average (${mean.toFixed(2)} kW).`;
+      rec        = 'High power demand right now. Consider staggering major appliance usage.';
+      confidence = 92; tagClass = 'alert';
+    } else if (current < mean * 0.5) {
+      pattern    = 'Very low consumption period — optimal efficiency';
+      insight    = `Current usage is ${((1 - current / mean) * 100).toFixed(0)}% below average. Energy efficiency is excellent.`;
+      rec        = 'Perfect time for charging devices or running energy-intensive tasks.';
+      confidence = 90; tagClass = '';
+    } else {
+      pattern    = 'Stable and consistent usage pattern';
+      insight    = `Consumption is steady at ${current.toFixed(2)} kW, close to your average of ${mean.toFixed(2)} kW.`;
+      rec        = 'Maintain current usage patterns. Monitor for any unusual spikes during peak hours.';
+      confidence = 82; tagClass = '';
+    }
+
+    if (hour >= 18 && hour <= 21 && current > mean * 1.2) {
+      rec += ' Peak evening hours — consider delaying heavy appliance use to after 10 PM.';
+      confidence = Math.min(confidence + 5, 95);
+    }
+
+    $('#patternDetected').text(pattern);
+    $('#patternInsight').text(insight);
+    $('#patternRec').text(rec);
+    $('#patternTag').text(tagClass === 'alert' ? 'High' : tagClass === 'warn' ? 'Elevated' : 'Stable');
+    $('#patternTag').attr('class', 'intel-tag ' + tagClass);
+    $('#kpiConfidence').text(confidence + '%');
+    $('#kpiConfidenceSub').text(confidence >= 88 ? '🟢 High confidence' : '🟡 Moderate confidence');
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  TF.js Linear Regression
+  // ─────────────────────────────────────────────────────────────
+  async function runTFRegression() {
+    if (sensorHistory.length < 10) {
+      log('TF.js regression: needs ≥ 10 data points.', 'warn');
+      $('#regressionTag').text('Need more data');
+      return null;
+    }
+
+    log('Training TF.js linear regression model…');
+    $('#regressionTag').text('Training…');
+
+    try {
+      const now   = new Date();
+      const xs    = sensorHistory.map(d => {
+        const t = new Date(d.timestamp);
+        return (t.getHours() * 60 + t.getMinutes()) / (24 * 60);
+      });
+      const ys    = sensorHistory.map(d => d.energy);
+
+      const xTensor = tf.tensor1d(xs);
+      const yTensor = tf.tensor1d(ys);
+
+      const model = tf.sequential();
+      model.add(tf.layers.dense({ units: 1, inputShape: [1] }));
+      model.compile({ optimizer: tf.train.adam(0.1), loss: 'meanSquaredError' });
+
+      await model.fit(xTensor, yTensor, { epochs: 80, verbose: 0 });
+
+      // Predicted values at each observed x
+      const yPredTensor = model.predict(xTensor);
+      const yPredArr    = Array.from(await yPredTensor.data());
+
+      // Predict end of day
+      const eodTensor = model.predict(tf.tensor1d([1.0]));
+      const eodKwh    = (await eodTensor.data())[0];
+
+      // Slope & intercept via linear regression formula on normalised data
+      const n    = xs.length;
+      const sumX = xs.reduce((a, b) => a + b, 0);
+      const sumY = ys.reduce((a, b) => a + b, 0);
+      const sumXY = xs.reduce((s, x, i) => s + x * ys[i], 0);
+      const sumXX = xs.reduce((s, x) => s + x * x, 0);
+      const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+      const intercept = (sumY - slope * sumX) / n;
+      const r2        = calcR2(ys, yPredArr);
+
+      // Display
+      $('#regSlope').text(slope.toFixed(5));
+      $('#regIntercept').text(intercept.toFixed(4));
+      $('#regR2').text(r2.toFixed(4));
+      $('#regPredicted').text(Math.max(0, eodKwh).toFixed(3) + ' kWh');
+      $('#kpiPredicted').text(Math.max(0, eodKwh).toFixed(2) + ' kWh');
+      $('#kpiPredictedSub').text(`R² = ${r2.toFixed(3)} · ${r2 >= 0.85 ? 'Strong fit' : r2 >= 0.6 ? 'Moderate fit' : 'Weak fit'}`);
+      $('#regressionTag').text(`R² ${r2.toFixed(3)}`);
+
+      // Render regression chart
+      renderRegressionChart(xs, ys, yPredArr, eodKwh);
+
+      // Cleanup tensors
+      xTensor.dispose(); yTensor.dispose();
+      yPredTensor.dispose(); eodTensor.dispose();
+
+      log(`TF.js regression complete. R²=${r2.toFixed(4)}, EoD forecast=${Math.max(0, eodKwh).toFixed(3)} kWh.`, 'success');
+      return eodKwh;
+    } catch (err) {
+      log('TF.js regression error: ' + err.message, 'error');
+      $('#regressionTag').text('Error');
+      return null;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  Run Full Analysis (called by button)
+  // ─────────────────────────────────────────────────────────────
+  async function runFullAnalysis() {
+    $('#analyzeBtn').prop('disabled', true);
+    $('#analyzeBtnIcon').addClass('spinning');
+    $('#mlStatusText').text('Running analysis…');
+    log('─── Full analysis started ───', 'info');
+
+    runPatternAnalysis();
+    await runTFRegression();
+
+    $('#mlStatusText').text('Analysis complete');
+    $('#analyzeBtn').prop('disabled', false);
+    $('#analyzeBtnIcon').removeClass('spinning');
+    log('─── Full analysis complete ───', 'success');
+  }
+  window.runFullAnalysis = runFullAnalysis;
+
+  // ─────────────────────────────────────────────────────────────
+  //  Volatility Gauge (canvas arc)
+  // ─────────────────────────────────────────────────────────────
+  function drawVolatilityGauge(vol) {
+    const canvas = document.getElementById('volatilityGauge');
+    if (!canvas) return;
+    const ctx  = canvas.getContext('2d');
+    const W    = canvas.width;
+    const H    = canvas.height;
+    const cx   = W / 2;
+    const cy   = H - 14;
+    const r    = Math.min(cx - 16, cy - 4);
+    const clamp = Math.min(vol, 1);
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Background arc
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, Math.PI, 0);
+    ctx.lineWidth   = 14;
+    ctx.strokeStyle = '#f0f4ff';
+    ctx.lineCap     = 'round';
+    ctx.stroke();
+
+    // Value arc
+    const color =
+      clamp < 0.15 ? '#22c55e' :
+      clamp < 0.30 ? '#f59e0b' : '#ef4444';
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, Math.PI, Math.PI + clamp * Math.PI);
+    ctx.lineWidth   = 14;
+    ctx.strokeStyle = color;
+    ctx.lineCap     = 'round';
+    ctx.stroke();
+
+    // Zone labels
+    ctx.font      = '10px system-ui, sans-serif';
+    ctx.fillStyle = '#94a3b8';
+    ctx.textAlign = 'left';
+    ctx.fillText('0%', cx - r - 4, cy + 14);
+    ctx.textAlign = 'right';
+    ctx.fillText('100%', cx + r + 4, cy + 14);
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  Heatmap
+  // ─────────────────────────────────────────────────────────────
+  function updateHeatmap() {
+    const buckets = Array(24).fill(null).map(() => ({ sum: 0, count: 0 }));
+    sensorHistory.forEach(d => {
+      const h = new Date(d.timestamp).getHours();
+      buckets[h].sum   += d.power / 1000;
+      buckets[h].count += 1;
+    });
+
+    const avgs  = buckets.map(b => b.count ? b.sum / b.count : 0);
+    const maxAv = Math.max(...avgs, 0.001);
+    const curH  = new Date().getHours();
+
+    // Labels
+    let labHtml = '';
+    for (let h = 0; h < 24; h++) {
+      labHtml += `<span>${h}h</span>`;
+    }
+    $('#heatmapLabels').html(labHtml);
+
+    // Cells
+    let cellHtml = '';
+    avgs.forEach((v, h) => {
+      const intensity  = v / maxAv;
+      const isCurrent  = h === curH;
+      const alpha      = 0.07 + intensity * 0.93;
+      const bg         = `rgba(107,83,245,${alpha.toFixed(2)})`;
+      const border     = isCurrent ? '2px solid #6b53f5' : '1px solid transparent';
+      const label      = v > 0 ? `${h}:00 · ${v.toFixed(2)} kW` : `${h}:00 · No data`;
+      cellHtml += `<div class="intel-heatmap-cell"
+        style="background:${bg};border:${border}"
+        title="${label}">
+        <div class="tooltip">${label}</div>
+      </div>`;
+    });
+    $('#heatmapGrid').html(cellHtml);
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  Chart: Trend
+  // ─────────────────────────────────────────────────────────────
+  function updateTrendChart() {
+    if (!sensorHistory.length) return;
+
+    const labels = sensorHistory.map(d =>
+      new Date(d.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    );
+    const data = sensorHistory.map(d => d.power / 1000);
+
+    if (chartTrend) {
+      chartTrend.data.labels           = labels;
+      chartTrend.data.datasets[0].data = data;
+      chartTrend.update('none');
+      return;
+    }
+
+    const ctx  = document.getElementById('trendChart').getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, 0, 120);
+    grad.addColorStop(0, 'rgba(14,165,233,0.25)');
+    grad.addColorStop(1, 'rgba(14,165,233,0.01)');
+
+    chartTrend = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Power (kW)',
+          data,
+          borderColor: '#0ea5e9',
+          backgroundColor: grad,
+          borderWidth: 2.5,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 3,
+          pointBackgroundColor: '#0ea5e9',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2
+        }]
+      },
+      options: chartOptions('kW')
+    });
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  Chart: Regression scatter + fit line
+  // ─────────────────────────────────────────────────────────────
+  function renderRegressionChart(xs, ys, yPred, eodKwh) {
+    const toTime = x => {
+      const mins  = Math.round(x * 24 * 60);
+      const h     = Math.floor(mins / 60).toString().padStart(2, '0');
+      const m     = (mins % 60).toString().padStart(2, '0');
+      return `${h}:${m}`;
+    };
+
+    const scatterPts = xs.map((x, i) => ({ x: toTime(x), y: parseFloat(ys[i].toFixed(4)) }));
+    const linePts    = xs.map((x, i) => ({ x: toTime(x), y: parseFloat(yPred[i].toFixed(4)) }));
+    linePts.push({ x: '23:59', y: parseFloat(Math.max(0, eodKwh).toFixed(4)) });
+
+    if (chartRegression) {
+      chartRegression.data.datasets[0].data = scatterPts;
+      chartRegression.data.datasets[1].data = linePts;
+      chartRegression.update();
+      return;
+    }
+
+    const ctx = document.getElementById('regressionChart').getContext('2d');
+    chartRegression = new Chart(ctx, {
+      type: 'scatter',
+      data: {
+        datasets: [
+          {
+            label: 'Actual energy (kWh)',
+            data: scatterPts,
+            backgroundColor: 'rgba(107,83,245,0.5)',
+            pointRadius: 4,
+            pointHoverRadius: 6
+          },
+          {
+            label: 'Regression line',
+            data: linePts,
+            type: 'line',
+            borderColor: '#a34ef2',
+            borderWidth: 2,
+            borderDash: [5, 4],
+            fill: false,
+            tension: 0,
+            pointRadius: 0,
+            pointHoverRadius: 0
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: true, labels: { font: { size: 11 }, color: '#667085' } } },
+        scales: {
+          x: { type: 'category', ticks: { color: '#667085', font: { size: 10 }, maxTicksLimit: 8 }, grid: { display: false } },
+          y: { beginAtZero: true, ticks: { color: '#667085', font: { size: 10 }, callback: v => v + ' kWh' }, grid: { color: 'rgba(15,23,36,0.05)' } }
+        }
+      }
+    });
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  Chart: Daily averages (bar)
+  // ─────────────────────────────────────────────────────────────
+  function renderDailyAvgChart(data) {
+    const labels   = data.map(d => d.date.slice(5)); // MM-DD
+    const avgPower = data.map(d => (d.avgPower / 1000).toFixed(3));
+
+    if (chartDaily) {
+      chartDaily.data.labels           = labels;
+      chartDaily.data.datasets[0].data = avgPower;
+      chartDaily.update();
+      return;
+    }
+
+    const ctx = document.getElementById('dailyAvgChart').getContext('2d');
+    chartDaily = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Avg Power (kW)',
+          data: avgPower,
+          backgroundColor: 'rgba(34,197,94,0.7)',
+          borderColor: '#16a34a',
+          borderWidth: 1.5,
+          borderRadius: 5
+        }]
+      },
+      options: chartOptions('kW', true)
+    });
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  Chart: Period breakdown (doughnut)
+  // ─────────────────────────────────────────────────────────────
+  function updatePeriodChart() {
+    const morningKw   = avg(sensorHistory.filter(d => inHours(d, 6,  12)).map(d => d.power / 1000));
+    const afternoonKw = avg(sensorHistory.filter(d => inHours(d, 12, 17)).map(d => d.power / 1000));
+    const eveningKw   = avg(sensorHistory.filter(d => inHours(d, 17, 22)).map(d => d.power / 1000));
+    const nightKw     = avg(sensorHistory.filter(d => inHours(d, 22, 24) || inHours(d, 0, 6)).map(d => d.power / 1000));
+
+    const vals = [morningKw, afternoonKw, eveningKw, nightKw];
+
+    if (chartPeriod) {
+      chartPeriod.data.datasets[0].data = vals;
+      chartPeriod.update();
+      return;
+    }
+
+    const ctx = document.getElementById('periodChart').getContext('2d');
+    chartPeriod = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Morning (6–12)', 'Afternoon (12–17)', 'Evening (17–22)', 'Night (22–6)'],
+        datasets: [{
+          data: vals,
+          backgroundColor: ['#fbbf24', '#0ea5e9', '#a34ef2', '#334155'],
+          borderWidth: 0,
+          hoverOffset: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '62%',
+        plugins: {
+          legend: { display: true, position: 'bottom', labels: { font: { size: 11 }, color: '#667085', padding: 12 } },
+          tooltip: {
+            callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed.toFixed(3)} kW avg` }
+          }
+        }
+      }
+    });
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  Chart: Hourly pattern from server
+  // ─────────────────────────────────────────────────────────────
+  function renderHourlyPatternChart(data) {
+    const labels = data.map(d => `${d.hour}h`);
+    const vals   = data.map(d => (d.avgPower / 1000).toFixed(3));
+
+    if (chartHourlyPattern) {
+      chartHourlyPattern.data.labels           = labels;
+      chartHourlyPattern.data.datasets[0].data = vals;
+      chartHourlyPattern.update();
+      return;
+    }
+
+    const ctx  = document.getElementById('hourlyPatternChart').getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, 0, 150);
+    grad.addColorStop(0, 'rgba(245,158,11,0.3)');
+    grad.addColorStop(1, 'rgba(245,158,11,0.02)');
+
+    chartHourlyPattern = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Avg Power (kW)',
+          data: vals,
+          borderColor: '#f59e0b',
+          backgroundColor: grad,
+          borderWidth: 2.5,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 3,
+          pointBackgroundColor: '#f59e0b',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2
+        }]
+      },
+      options: chartOptions('kW')
+    });
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  Shared Chart.js options factory
+  // ─────────────────────────────────────────────────────────────
+  function chartOptions(unit = 'kW', isBar = false) {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(255,255,255,0.97)',
+          titleColor: '#0f1724',
+          bodyColor: '#6b53f5',
+          borderColor: 'rgba(107,83,245,0.18)',
+          borderWidth: 1.5,
+          padding: 10,
+          borderRadius: 8,
+          displayColors: false,
+          callbacks: {
+            label: ctx => `${ctx.parsed.y} ${unit}`
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(15,23,36,0.05)', drawBorder: false },
+          ticks: { color: '#667085', font: { size: 11 }, callback: v => v + ' ' + unit }
+        },
+        x: {
+          grid: { display: false, drawBorder: false },
+          ticks: {
+            color: '#667085',
+            font: { size: 10 },
+            maxTicksLimit: isBar ? 10 : 8,
+            maxRotation: 45
+          }
+        }
+      },
+      interaction: { intersect: false, mode: 'index' },
+      animation: { duration: 600, easing: 'easeInOutQuart' }
+    };
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  Small utilities
+  // ─────────────────────────────────────────────────────────────
+  function avg(arr) {
+    return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+  }
+
+  function inHours(d, from, to) {
+    const h = new Date(d.timestamp).getHours();
+    return h >= from && h < to;
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  Boot sequence
+  // ─────────────────────────────────────────────────────────────
+  $(document).ready(async function () {
+    displayUserInfo();
+    log('Intelligence engine initialising…');
+
+    // Initial data load
+    await loadHistory();
+    await loadServerML();
+    await loadDailyAverages();
+
+    // Run full analysis once we have data
+    runFullAnalysis();
+
+    $('#mlStatusText').text('Live · auto-refresh 5 s');
+
+    // Live polling
+    setInterval(fetchSensorData, 5000);
+
+    // Re-run pattern analysis every 30 s
+    setInterval(() => {
+      runPatternAnalysis();
+      updateRollingStats();
+    }, 30000);
+
+    // Re-run TF.js regression every 2 min
+    setInterval(runTFRegression, 120000);
+  });
+  </script>
+
+</body>
+</html>
