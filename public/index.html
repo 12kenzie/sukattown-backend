@@ -797,7 +797,10 @@
     }
 
     function updateBudgetStatus() {
-  if (!isPrincipalAccount) return;
+      if (!isPrincipalAccount) {
+        $('#budgetStatusWidget').hide();
+        return;
+      }
 
   const budget = parseFloat(localStorage.getItem(`budget_${schoolId}`));
   const warningPercent = parseFloat(localStorage.getItem(`budgetWarning_${schoolId}`)) || 80;
