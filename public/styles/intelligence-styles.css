@@ -1,0 +1,546 @@
+/* ============================================================
+   intelligence.css  –  SukatTown AI Intelligence Center
+   Supplements styles/styles.css (shared nav, topbar, etc.)
+   ============================================================ */
+
+/* ── Page layout ─────────────────────────────────────────── */
+.intel-page {
+  padding: 24px 28px 48px;
+  animation: fadeInUp 0.45s ease both;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Page header ─────────────────────────────────────────── */
+.intel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.intel-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.intel-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #6b53f5, #a34ef2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 22px;
+  box-shadow: 0 8px 24px rgba(107, 83, 245, 0.35);
+  flex-shrink: 0;
+}
+
+.intel-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f1724;
+  letter-spacing: -0.5px;
+}
+
+.intel-subtitle {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: var(--muted, #94a3b8);
+}
+
+.intel-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.intel-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(107, 83, 245, 0.08);
+  border: 1px solid rgba(107, 83, 245, 0.2);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b53f5;
+}
+
+.intel-badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); }
+  50%       { box-shadow: 0 0 0 5px rgba(34, 197, 94, 0); }
+}
+
+.intel-refresh-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #6b53f5, #a34ef2);
+  color: white;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(107, 83, 245, 0.3);
+}
+
+.intel-refresh-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(107, 83, 245, 0.45);
+}
+
+.intel-refresh-btn:active {
+  transform: translateY(0);
+}
+
+.intel-refresh-btn.spinning i {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── KPI row ─────────────────────────────────────────────── */
+.intel-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 1100px) {
+  .intel-kpi-row { grid-template-columns: repeat(2, 1fr); }
+}
+
+.intel-kpi-card {
+  background: white;
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 2px 12px rgba(15, 23, 36, 0.06);
+  border: 1px solid rgba(15, 23, 36, 0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+  animation: fadeInUp 0.5s ease both;
+}
+
+.intel-kpi-card:nth-child(1) { animation-delay: 0.05s; }
+.intel-kpi-card:nth-child(2) { animation-delay: 0.10s; }
+.intel-kpi-card:nth-child(3) { animation-delay: 0.15s; }
+.intel-kpi-card:nth-child(4) { animation-delay: 0.20s; }
+
+.intel-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(15, 23, 36, 0.1);
+}
+
+.intel-kpi-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.intel-kpi-body { flex: 1; min-width: 0; }
+
+.intel-kpi-label {
+  font-size: 12px;
+  color: var(--muted, #94a3b8);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.intel-kpi-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f1724;
+  letter-spacing: -0.5px;
+  margin: 2px 0;
+}
+
+.intel-kpi-sub {
+  font-size: 12px;
+  color: var(--muted, #94a3b8);
+}
+
+/* ── Main grid ───────────────────────────────────────────── */
+.intel-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 1200px) {
+  .intel-grid { grid-template-columns: 1fr; }
+}
+
+.intel-col-main,
+.intel-col-side {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Cards ───────────────────────────────────────────────── */
+.intel-card {
+  background: white;
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: 0 2px 12px rgba(15, 23, 36, 0.06);
+  border: 1px solid rgba(15, 23, 36, 0.05);
+  animation: fadeInUp 0.5s ease both;
+}
+
+.intel-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.intel-card-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f1724;
+}
+
+.intel-tag {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+}
+
+.intel-tag.warn  { background: rgba(245, 158, 11, 0.1); color: #b45309; }
+.intel-tag.alert { background: rgba(239, 68, 68, 0.1);  color: #dc2626; }
+
+/* ── Insight block ───────────────────────────────────────── */
+.intel-insight-block {
+  background: linear-gradient(135deg, rgba(107,83,245,0.05), rgba(163,78,242,0.03));
+  border: 1px solid rgba(107, 83, 245, 0.1);
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.intel-insight-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.intel-insight-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.intel-insight-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b53f5;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.intel-insight-text {
+  font-size: 14px;
+  color: #344054;
+  line-height: 1.55;
+}
+
+/* ── Chart wrapper ───────────────────────────────────────── */
+.intel-chart-wrap {
+  background: linear-gradient(180deg, #fafbff, #ffffff);
+  border-radius: 10px;
+  padding: 10px;
+  border: 1px solid rgba(15, 23, 36, 0.04);
+}
+
+/* ── Heatmap ─────────────────────────────────────────────── */
+.intel-heatmap {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.intel-heatmap-cell {
+  height: 36px;
+  border-radius: 6px;
+  cursor: default;
+  transition: transform 0.15s;
+  position: relative;
+}
+
+.intel-heatmap-cell:hover {
+  transform: scaleY(1.15);
+  z-index: 2;
+}
+
+.intel-heatmap-cell .tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0f1724;
+  color: white;
+  font-size: 11px;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.intel-heatmap-cell:hover .tooltip { display: block; }
+
+.intel-heatmap-labels {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.intel-heatmap-labels span {
+  font-size: 9px;
+  color: var(--muted, #94a3b8);
+  text-align: center;
+}
+
+.intel-heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.intel-legend-bar {
+  width: 100px;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(to right,
+    rgba(107, 83, 245, 0.08),
+    rgba(107, 83, 245, 0.4),
+    rgba(107, 83, 245, 1));
+}
+
+/* ── Regression stats grid ───────────────────────────────── */
+.intel-regression-body {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.intel-regression-stat {
+  background: rgba(107, 83, 245, 0.05);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+
+.intel-regression-stat-label {
+  font-size: 11px;
+  color: var(--muted, #94a3b8);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 6px;
+}
+
+.intel-regression-stat-val {
+  font-size: 17px;
+  font-weight: 800;
+  color: #6b53f5;
+}
+
+/* ── Info note ───────────────────────────────────────────── */
+.intel-info-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: rgba(107, 83, 245, 0.05);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--muted, #94a3b8);
+  line-height: 1.5;
+}
+
+/* ── Anomaly list ────────────────────────────────────────── */
+.intel-anomaly-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 80px;
+}
+
+.intel-anomaly-item {
+  padding: 10px 14px;
+  background: rgba(239, 68, 68, 0.04);
+  border-radius: 10px;
+  border-left: 3px solid #ef4444;
+}
+
+.intel-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 0;
+  color: #344054;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* ── Volatility gauge ────────────────────────────────────── */
+.intel-gauge-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 4px;
+}
+
+.intel-gauge-label {
+  text-align: center;
+  margin-top: -8px;
+}
+
+.intel-gauge-val {
+  font-size: 28px;
+  font-weight: 800;
+  color: #0f1724;
+  letter-spacing: -1px;
+}
+
+.intel-gauge-sub {
+  font-size: 12px;
+  color: var(--muted, #94a3b8);
+  margin-top: 2px;
+}
+
+/* ── Rolling stats grid ──────────────────────────────────── */
+.intel-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.intel-stat-item {
+  background: #f8faff;
+  border-radius: 10px;
+  padding: 12px;
+  border: 1px solid rgba(15, 23, 36, 0.04);
+}
+
+.intel-stat-label {
+  font-size: 11px;
+  color: var(--muted, #94a3b8);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 5px;
+}
+
+.intel-stat-val {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f1724;
+}
+
+/* ── Activity log ────────────────────────────────────────── */
+.intel-log {
+  background: #0f1724;
+  border-radius: 10px;
+  padding: 14px;
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.intel-log::-webkit-scrollbar { width: 4px; }
+.intel-log::-webkit-scrollbar-track { background: transparent; }
+.intel-log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 99px; }
+
+.intel-log-entry {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.intel-log-time {
+  color: rgba(255,255,255,0.3);
+  flex-shrink: 0;
+}
+
+.intel-log-msg {
+  color: rgba(255,255,255,0.8);
+}
+
+/* ── Skeleton shimmer for loading states ─────────────────── */
+.intel-skeleton {
+  background: linear-gradient(90deg, #f0f4ff 25%, #e4eaff 50%, #f0f4ff 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 6px;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Responsive tweaks ───────────────────────────────────── */
+@media (max-width: 900px) {
+  .intel-regression-body { grid-template-columns: repeat(2, 1fr); }
+  .intel-heatmap { grid-template-columns: repeat(12, 1fr); }
+  .intel-heatmap-labels { grid-template-columns: repeat(12, 1fr); }
+}
