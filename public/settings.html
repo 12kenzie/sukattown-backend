@@ -31,7 +31,7 @@
           <i class="fa-solid fa-bolt" aria-hidden="true"></i>
         </button>
 
-        <button title="Reports" aria-label="Reports" onclick="window.location.href='intelligence.html'"> 
+        <button title="Reports" aria-label="Reports" onclick="window.location.href='intelligence.html'">
           <i class="fa-solid fa-chart-area" aria-hidden="true"></i>
         </button>
 
@@ -86,7 +86,7 @@
         <div style="margin-bottom:24px;padding:16px;background:#f0f9ff;border:2px solid #0ea5e9;border-radius:12px">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <div>
-              <strong style="font-size:16px;color:#0369a1">🔍 User Debug Info</strong>
+              <strong style="font-size:16px;color:#0369a1">User Debug Info</strong>
               <div style="margin-top:8px;font-size:13px;color:#075985">
                 <div><strong>User ID:</strong> <code id="debugUserId"
                     style="background:#fff;padding:2px 6px;border-radius:4px">Loading...</code></div>
@@ -171,7 +171,7 @@
                   </div>
                   <button id="copyCodeBtn" class="btn"
                     style="margin-top:12px;background:#4659ff;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer">
-                    📋 Copy Code
+                    <i class="fa-regular fa-clipboard"></i> Copy Code
                   </button>
                   <div style="margin-top:12px;font-size:13px;color:#666">
                     Share this code with staff members to join your school
@@ -181,7 +181,7 @@
             </div>
 
             <div style="margin-top:16px;padding:12px;background:#e8f4ff;border-radius:8px;font-size:13px">
-              <strong>💡 Pro Tips:</strong>
+              <strong>Telegram Guide:</strong>
               <ul style="margin:8px 0 0 20px;line-height:1.8">
                 <li>Connect Telegram to receive instant alerts about power consumption and fire hazards</li>
                 <li>As a principal/admin, you can retrieve your school's invite code anytime by sending <code
@@ -201,7 +201,8 @@
 
             <div
               style="margin-top:16px;padding:12px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;font-size:13px;margin-bottom:20px">
-              <strong>💡 Tip:</strong> Set your school's monthly electricity budget so the dashboard can track if you're
+              <strong>Budget Tip:</strong> Set your school's monthly electricity budget so the dashboard can track if
+              you're
               on track or at risk.
             </div>
 
@@ -227,11 +228,11 @@
 
             <button id="saveBudgetBtn" class="btn"
               style="margin-top:16px;background:#22c55e;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer">
-              💾 Save Budget Settings
+              <i class="fa-regular fa-floppy-disk"></i> Save Budget Settings
             </button>
 
             <div id="budgetSaveMsg" style="display:none;margin-top:10px;font-size:13px;color:#16a34a;font-weight:600">
-              ✅ Budget saved successfully!
+              <i class="fa-solid fa-check"></i> Budget saved successfully!
             </div>
           </div>
         </div>
@@ -245,7 +246,7 @@
 
             <div
               style="margin-top:16px;padding:12px;background:#fff3cd;border-radius:8px;font-size:13px;margin-bottom:16px">
-              <strong>⚠️ Ethical Considerations:</strong> Control what data system admins can view from your school
+              <strong>Ethical Considerations:</strong> Control what data system admins can view from your school
             </div>
 
             <div class="toggle-row">
@@ -280,7 +281,7 @@
 
             <button id="savePrivacyBtn" class="btn"
               style="margin-top:16px;background:#4659ff;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer">
-              💾 Save Privacy Settings
+              <i class="fa-regular fa-floppy-disk"></i> Save Privacy Settings
             </button>
           </div>
         </div>
@@ -294,14 +295,15 @@
 
             <div
               style="margin-top:16px;padding:12px;background:#e8f4ff;border-radius:8px;font-size:13px;margin-bottom:16px">
-              <strong>💡 Admin View:</strong> Monitor all schools in the system. Access to detailed data depends on each
+              <strong><i class="fa-brands fa-black-tie"></i> Admin View:</strong> Monitor all schools in the system.
+              Access to detailed data depends on each
               school's privacy settings.
             </div>
 
             <div style="margin-top:16px">
               <button id="loadAllSchoolsBtn" class="btn"
                 style="background:#4659ff;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer">
-                🏫 Load All Schools
+                <i class="fa-solid fa-school"></i> Load All Schools
               </button>
             </div>
 
@@ -342,11 +344,11 @@
             <div style="margin-bottom:16px">
               <button id="modalViewStaffBtn" class="btn"
                 style="background:#4659ff;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;margin-right:8px">
-                👥 View Staff
+                <i class="fa-solid fa-person"></i> View Staff
               </button>
               <button id="modalViewConsumptionBtn" class="btn"
                 style="background:#10b981;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer">
-                ⚡ View Consumption
+                <i class="fa-solid fa-bolt"></i> View Consumption
               </button>
             </div>
 
@@ -366,7 +368,7 @@
             <div style="margin-top:16px">
               <button id="loadStaffBtn" class="btn"
                 style="background:#4659ff;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer">
-                👥 View Staff Members
+                <i class="fa-solid fa-person"></i> View Staff Members
               </button>
             </div>
 
@@ -439,7 +441,7 @@
       console.log('  userName:', userName);
 
       if (!userId || !userType) {
-        console.log('❌ Missing user credentials, redirecting to login');
+        console.log('Missing user credentials, redirecting to login');
         window.location.href = 'login.html';
         return;
       }
@@ -508,7 +510,7 @@
       const chatId = telegramChatId.value.trim();
 
       if (!chatId) {
-        alert('❌ Please enter your Telegram Chat ID');
+        alert('Please enter your Telegram Chat ID');
         return;
       }
 
@@ -523,13 +525,13 @@
 
         if (data.success) {
           localStorage.setItem('telegramChatId', chatId);
-          alert('✅ Telegram Chat ID saved successfully!\n\nYou will now receive notifications via Telegram.');
+          alert('Telegram Chat ID saved successfully!\n\nYou will now receive notifications via Telegram.');
         } else {
-          alert('❌ Failed to save Telegram Chat ID');
+          alert('Failed to save Telegram Chat ID');
         }
       } catch (error) {
         console.error('Error saving Telegram:', error);
-        alert('❌ Error saving Telegram Chat ID');
+        alert('Error saving Telegram Chat ID');
       }
     });
 
@@ -537,9 +539,9 @@
     document.getElementById('copyCodeBtn').addEventListener('click', function () {
       const code = document.getElementById('displayInviteCode').textContent;
       navigator.clipboard.writeText(code).then(() => {
-        alert('✅ Invitation code copied to clipboard!\n\n' + code);
+        alert('Invitation code copied to clipboard!\n\n' + code);
       }).catch(err => {
-        alert('❌ Failed to copy code');
+        alert('Failed to copy code');
       });
     });
 
@@ -597,11 +599,11 @@
       }
 
       const visibleSections = [];
-      if (privacySection && privacySection.style.display === 'block') visibleSections.push('✅ Privacy');
-      if (staffSection && staffSection.style.display === 'block') visibleSections.push('✅ Staff');
-      if (adminSchoolsSection && adminSchoolsSection.style.display === 'block') visibleSections.push('✅ Schools Overview');
+      if (privacySection && privacySection.style.display === 'block') visibleSections.push('Privacy');
+      if (staffSection && staffSection.style.display === 'block') visibleSections.push('Staff');
+      if (adminSchoolsSection && adminSchoolsSection.style.display === 'block') visibleSections.push('Schools Overview');
 
-      if (visibleSections.length === 0) visibleSections.push('❌ None');
+      if (visibleSections.length === 0) visibleSections.push('None');
 
       document.getElementById('debugVisibleSections').innerHTML = visibleSections.join('<br>');
     }
@@ -645,13 +647,13 @@
         const data = await response.json();
 
         if (data.success) {
-          alert('✅ Privacy settings saved successfully!');
+          alert('Privacy settings saved successfully!');
         } else {
-          alert('❌ Failed to save privacy settings');
+          alert('Failed to save privacy settings');
         }
       } catch (error) {
         console.error('Error saving privacy:', error);
-        alert('❌ Error saving privacy settings');
+        alert('Error saving privacy settings');
       }
     });
 
@@ -659,7 +661,7 @@
     document.getElementById('loadStaffBtn')?.addEventListener('click', async function () {
       const btn = this;
       const originalText = btn.textContent;
-      btn.textContent = '⏳ Loading...';
+      btn.textContent = 'Loading...';
       btn.disabled = true;
 
       try {
@@ -699,11 +701,11 @@
 
           document.getElementById('staffList').style.display = 'block';
         } else {
-          alert('❌ Failed to load staff members');
+          alert('Failed to load staff members');
         }
       } catch (error) {
         console.error('Error loading staff:', error);
-        alert('❌ Error loading staff members');
+        alert('Error loading staff members');
       } finally {
         btn.textContent = originalText;
         btn.disabled = false;
@@ -731,11 +733,11 @@
           document.getElementById('schoolsOverviewList').style.display = 'block';
           document.getElementById('totalSchoolsCount').textContent = data.count;
         } else {
-          alert('❌ ' + data.message);
+          alert(data.message);
         }
       } catch (error) {
         console.error('Error loading schools:', error);
-        alert('❌ Error loading schools');
+        alert('Error loading schools');
       } finally {
         btn.textContent = originalText;
         btn.disabled = false;
@@ -808,8 +810,8 @@
 
       // Privacy status
       const privacyStatus = document.getElementById('modalPrivacyStatus');
-      const consumptionStatus = school.privacy.allowConsumptionView ? '✅ Visible' : '❌ Hidden';
-      const billingStatus = school.privacy.allowBillingView ? '✅ Visible' : '❌ Hidden';
+      const consumptionStatus = school.privacy.allowConsumptionView ? 'Visible' : 'Hidden';
+      const billingStatus = school.privacy.allowBillingView ? 'Visible' : 'Hidden';
 
       privacyStatus.innerHTML = `
     <strong>Privacy Settings:</strong><br>
@@ -895,7 +897,7 @@
       const allowed = this.dataset.allowed === 'true';
 
       if (!allowed) {
-        alert('❌ This school\'s principal has restricted consumption data access.\n\nYou cannot view their consumption history.');
+        alert('This school\'s principal has restricted consumption data access.\n\nYou cannot view their consumption history.');
         return;
       }
 
@@ -974,7 +976,7 @@
       const warning = document.getElementById('budgetWarningPercent').value;
 
       if (!budget || budget <= 0) {
-        alert('❌ Please enter a valid budget amount');
+        alert('Please enter a valid budget amount');
         return;
       }
 

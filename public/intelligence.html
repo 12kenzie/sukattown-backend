@@ -158,21 +158,21 @@
               </div>
               <div class="intel-insight-block">
                 <div class="intel-insight-row">
-                  <div class="intel-insight-icon">🔍</div>
+                  <div class="intel-insight-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
                   <div>
                     <div class="intel-insight-label">Detected Pattern</div>
                     <div class="intel-insight-text" id="patternDetected">Loading sensor data for analysis…</div>
                   </div>
                 </div>
                 <div class="intel-insight-row">
-                  <div class="intel-insight-icon">💡</div>
+                  <div class="intel-insight-icon"><i class="fa-regular fa-lightbulb"></i></div>
                   <div>
                     <div class="intel-insight-label">Key Insight</div>
                     <div class="intel-insight-text" id="patternInsight">Collecting readings — results appear once enough data points are available.</div>
                   </div>
                 </div>
                 <div class="intel-insight-row">
-                  <div class="intel-insight-icon">✨</div>
+                  <div class="intel-insight-icon"><i class="fa-regular fa-square-caret-right"></i></div>
                   <div>
                     <div class="intel-insight-label">Recommendation</div>
                     <div class="intel-insight-text" id="patternRec">Run analysis after data loads to get personalised recommendations.</div>
@@ -677,16 +677,16 @@
     drawVolatilityGauge(vol);
     $('#volatilityVal').text((vol * 100).toFixed(1) + '%');
     $('#volatilitySub').text(
-      vol < 0.05 ? '✅ Very stable' :
-      vol < 0.15 ? '🟡 Normal variation' :
-      vol < 0.30 ? '🟠 Elevated variance' : '🔴 High volatility'
+      vol < 0.05 ? 'Very stable' :
+      vol < 0.15 ? 'Normal variation' :
+      vol < 0.30 ? 'Elevated variance' : 'High volatility'
     );
 
     // KPI: efficiency
     const eff = Math.max(0, Math.min(100, (1 - vol) * 100));
     $('#kpiEfficiency').text(eff.toFixed(1) + '%');
     $('#kpiEfficiencySub').text(
-      eff >= 85 ? '✅ Excellent' : eff >= 65 ? '⚠️ Moderate' : '🔴 Poor'
+      eff >= 85 ? 'Excellent' : eff >= 65 ? 'Moderate' : 'Poor'
     );
 
     // KPI: anomaly score (0-100, higher = more anomalous)
