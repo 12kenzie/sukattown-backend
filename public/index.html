@@ -1010,13 +1010,13 @@
       let telegramMessage = ''; // Add this
 
       if (alertData.type === 'flame_and_smoke') {
-        message = `⚠️ CRITICAL: Flame and smoke detected! Smoke level: ${alertData.smokeLevel}`;
+        message = `CRITICAL: Flame and smoke detected! Smoke level: ${alertData.smokeLevel}`;
         telegramMessage = `🚨🔥 CRITICAL FIRE ALERT! 🔥🚨\n\n⚠️ FLAME AND SMOKE DETECTED!\n\nSmoke Level: ${alertData.smokeLevel}\nThreshold: ${alertData.smokeThreshold}\n\nTime: ${new Date().toLocaleString()}\n\n⚠️ IMMEDIATE ACTION REQUIRED!`;
       } else if (alertData.type === 'flame') {
-        message = `🔥 Flame detected!`;
+        message = `Flame detected!`;
         telegramMessage = `🚨🔥 FIRE ALERT! 🔥🚨\n\n🔥 FLAME DETECTED!\n\nTime: ${new Date().toLocaleString()}\n\n⚠️ Check your property immediately!`;
       } else if (alertData.type === 'smoke') {
-        message = `💨 Smoke detected! Level: ${alertData.smokeLevel} (Threshold: ${alertData.smokeThreshold})`;
+        message = `Smoke detected! Level: ${alertData.smokeLevel} (Threshold: ${alertData.smokeThreshold})`;
         telegramMessage = `🚨💨 SMOKE ALERT! 💨🚨\n\n💨 SMOKE DETECTED!\n\nSmoke Level: ${alertData.smokeLevel}\nThreshold: ${alertData.smokeThreshold}\n\nTime: ${new Date().toLocaleString()}\n\n⚠️ Investigate immediately!`;
       }
 
