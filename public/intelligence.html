@@ -677,16 +677,16 @@
     drawVolatilityGauge(vol);
     $('#volatilityVal').text((vol * 100).toFixed(1) + '%');
     $('#volatilitySub').text(
-      vol < 0.05 ? '✅ Very stable' :
-      vol < 0.15 ? '🟡 Normal variation' :
-      vol < 0.30 ? '🟠 Elevated variance' : '🔴 High volatility'
+      vol < 0.05 ? 'Very stable' :
+      vol < 0.15 ? 'Normal variation' :
+      vol < 0.30 ? 'Elevated variance' : 'High volatility'
     );
 
     // KPI: efficiency
     const eff = Math.max(0, Math.min(100, (1 - vol) * 100));
     $('#kpiEfficiency').text(eff.toFixed(1) + '%');
     $('#kpiEfficiencySub').text(
-      eff >= 85 ? '✅ Excellent' : eff >= 65 ? '⚠️ Moderate' : '🔴 Poor'
+      eff >= 85 ? 'Excellent' : eff >= 65 ? 'Moderate' : 'Poor'
     );
 
     // KPI: anomaly score (0-100, higher = more anomalous)
