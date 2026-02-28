@@ -400,14 +400,10 @@ body {
     box-shadow: 0 4px 12px rgba(12, 18, 30, 0.1);
 }
 
-/* ── Page Header ── */
 .page-header-wrap {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     margin-bottom: 24px;
-    flex-wrap: wrap;
-    gap: 14px;
 }
 
 .page-header-left {
@@ -428,6 +424,10 @@ body {
     font-size: 22px;
     flex-shrink: 0;
     box-shadow: 0 8px 24px rgba(107, 83, 245, 0.3);
+    /* reset any card inheritance */
+    flex: unset;
+    min-height: unset;
+    animation: none;
 }
 
 .page-header-title {
@@ -436,12 +436,16 @@ body {
     font-weight: 800;
     color: #0f1724;
     letter-spacing: -0.5px;
+    min-height: unset;
+    flex: unset;
 }
 
 .page-header-sub {
     margin: 3px 0 0;
     font-size: 13px;
     color: var(--muted);
+    min-height: unset;
+    flex: unset;
 }
 
 /* RESPONSIVE */
