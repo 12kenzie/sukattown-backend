@@ -441,7 +441,7 @@
       console.log('  userName:', userName);
 
       if (!userId || !userType) {
-        console.log('❌ Missing user credentials, redirecting to login');
+        console.log('Missing user credentials, redirecting to login');
         window.location.href = 'login.html';
         return;
       }
@@ -510,7 +510,7 @@
       const chatId = telegramChatId.value.trim();
 
       if (!chatId) {
-        alert('❌ Please enter your Telegram Chat ID');
+        alert('Please enter your Telegram Chat ID');
         return;
       }
 
@@ -525,13 +525,13 @@
 
         if (data.success) {
           localStorage.setItem('telegramChatId', chatId);
-          alert('✅ Telegram Chat ID saved successfully!\n\nYou will now receive notifications via Telegram.');
+          alert('Telegram Chat ID saved successfully!\n\nYou will now receive notifications via Telegram.');
         } else {
-          alert('❌ Failed to save Telegram Chat ID');
+          alert('Failed to save Telegram Chat ID');
         }
       } catch (error) {
         console.error('Error saving Telegram:', error);
-        alert('❌ Error saving Telegram Chat ID');
+        alert('Error saving Telegram Chat ID');
       }
     });
 
@@ -539,9 +539,9 @@
     document.getElementById('copyCodeBtn').addEventListener('click', function () {
       const code = document.getElementById('displayInviteCode').textContent;
       navigator.clipboard.writeText(code).then(() => {
-        alert('✅ Invitation code copied to clipboard!\n\n' + code);
+        alert('Invitation code copied to clipboard!\n\n' + code);
       }).catch(err => {
-        alert('❌ Failed to copy code');
+        alert('Failed to copy code');
       });
     });
 
@@ -599,11 +599,11 @@
       }
 
       const visibleSections = [];
-      if (privacySection && privacySection.style.display === 'block') visibleSections.push('✅ Privacy');
-      if (staffSection && staffSection.style.display === 'block') visibleSections.push('✅ Staff');
-      if (adminSchoolsSection && adminSchoolsSection.style.display === 'block') visibleSections.push('✅ Schools Overview');
+      if (privacySection && privacySection.style.display === 'block') visibleSections.push('Privacy');
+      if (staffSection && staffSection.style.display === 'block') visibleSections.push('Staff');
+      if (adminSchoolsSection && adminSchoolsSection.style.display === 'block') visibleSections.push('Schools Overview');
 
-      if (visibleSections.length === 0) visibleSections.push('❌ None');
+      if (visibleSections.length === 0) visibleSections.push('None');
 
       document.getElementById('debugVisibleSections').innerHTML = visibleSections.join('<br>');
     }
@@ -647,13 +647,13 @@
         const data = await response.json();
 
         if (data.success) {
-          alert('✅ Privacy settings saved successfully!');
+          alert('Privacy settings saved successfully!');
         } else {
-          alert('❌ Failed to save privacy settings');
+          alert('Failed to save privacy settings');
         }
       } catch (error) {
         console.error('Error saving privacy:', error);
-        alert('❌ Error saving privacy settings');
+        alert('Error saving privacy settings');
       }
     });
 
@@ -701,11 +701,11 @@
 
           document.getElementById('staffList').style.display = 'block';
         } else {
-          alert('❌ Failed to load staff members');
+          alert('Failed to load staff members');
         }
       } catch (error) {
         console.error('Error loading staff:', error);
-        alert('❌ Error loading staff members');
+        alert('Error loading staff members');
       } finally {
         btn.textContent = originalText;
         btn.disabled = false;
@@ -733,11 +733,11 @@
           document.getElementById('schoolsOverviewList').style.display = 'block';
           document.getElementById('totalSchoolsCount').textContent = data.count;
         } else {
-          alert('❌ ' + data.message);
+          alert(data.message);
         }
       } catch (error) {
         console.error('Error loading schools:', error);
-        alert('❌ Error loading schools');
+        alert('Error loading schools');
       } finally {
         btn.textContent = originalText;
         btn.disabled = false;
@@ -810,8 +810,8 @@
 
       // Privacy status
       const privacyStatus = document.getElementById('modalPrivacyStatus');
-      const consumptionStatus = school.privacy.allowConsumptionView ? '✅ Visible' : '❌ Hidden';
-      const billingStatus = school.privacy.allowBillingView ? '✅ Visible' : '❌ Hidden';
+      const consumptionStatus = school.privacy.allowConsumptionView ? 'Visible' : 'Hidden';
+      const billingStatus = school.privacy.allowBillingView ? 'Visible' : 'Hidden';
 
       privacyStatus.innerHTML = `
     <strong>Privacy Settings:</strong><br>
@@ -897,7 +897,7 @@
       const allowed = this.dataset.allowed === 'true';
 
       if (!allowed) {
-        alert('❌ This school\'s principal has restricted consumption data access.\n\nYou cannot view their consumption history.');
+        alert('This school\'s principal has restricted consumption data access.\n\nYou cannot view their consumption history.');
         return;
       }
 
@@ -976,7 +976,7 @@
       const warning = document.getElementById('budgetWarningPercent').value;
 
       if (!budget || budget <= 0) {
-        alert('❌ Please enter a valid budget amount');
+        alert('Please enter a valid budget amount');
         return;
       }
 
