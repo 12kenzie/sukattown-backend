@@ -78,10 +78,17 @@
       </div>
 
       <div class="content-wrap" style="padding: 24px;">
-        <div class="page-header">
-          <div style="font-size:32px;font-weight:800">Settings</div>
-          <div style="color:var(--muted);margin-top:4px">Customize thresholds & alerts</div>
-        </div>
+        <div class="page-header-wrap">
+          <div class="page-header-left">
+            <div class="page-header-icon" style="background:linear-gradient(135deg,#6b53f5,#a34ef2)">
+              <i class="fa-solid fa-gear"></i>
+            </div>
+            <div>
+              <h1 class="page-header-title">Settings</h1>
+              <p class="page-header-sub">Customize thresholds, alerts & notifications</p>
+            </div>
+          </div>
+        </div> 
 
         <div style="margin-bottom:24px;padding:16px;background:#f0f9ff;border:2px solid #0ea5e9;border-radius:12px">
           <div style="display:flex;justify-content:space-between;align-items:center">
@@ -992,6 +999,21 @@
 
     // Initialize
     loadUserData();
+
+    function checkConnection() {
+      fetch(`${API_URL}/api/power-data`)
+        .then(() => {
+          document.getElementById('connectionStatus').textContent = '● Online';
+          document.getElementById('connectionStatus').classList.remove('offline');
+        })
+        .catch(() => {
+          document.getElementById('connectionStatus').textContent = '● Offline';
+          document.getElementById('connectionStatus').classList.add('offline');
+        });
+    }
+
+    checkConnection();
+    setInterval(checkConnection, 10000);
 
   </script>
 
