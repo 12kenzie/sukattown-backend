@@ -268,10 +268,17 @@
   align-items: flex-start;
 }
 
-.intel-insight-icon {
-  font-size: 20px;
-  flex-shrink: 0;
-  margin-top: 1px;
+  .intel-insight-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(107, 83, 245, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-1);
+    font-size: 14px;
+    flex-shrink: 0;
 }
 
 .intel-insight-label {
