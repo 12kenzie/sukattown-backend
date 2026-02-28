@@ -925,24 +925,28 @@
       switch (alertData.period) {
         case 'hourly':
           title = 'Hourly Limit Exceeded';
+          message = `Consumption: ${alertData.consumption.toFixed(2)} kWh (Limit: ${alertData.limit} kWh) — ${alertData.percentageOver}% over`;
           icon = '<i class="fa-regular fa-hourglass"></i>';
           type = 'warning';
           break;
         case 'daily':
           title = 'Daily Limit Exceeded';
+          message = `Consumption: ${alertData.consumption.toFixed(2)} kWh (Limit: ${alertData.limit} kWh) — ${alertData.percentageOver}% over`;
           icon = '<i class="fa-solid fa-calendar-day"></i>';
           type = '';
           break;
         case 'monthly':
           title = 'Monthly Limit Exceeded';
+          message = `Consumption: ${alertData.consumption.toFixed(2)} kWh (Limit: ${alertData.limit} kWh) — ${alertData.percentageOver}% over`;
           icon = '<i class="fa-regular fa-calendar"></i>';
           type = 'info';
           break;
         default:
           title = 'Alert';
+          message = 'Energy consumption threshold exceeded';
           icon = '<i class="fa-solid fa-triangle-exclamation"></i>';
-          type = 'info'; 
-      }
+          type = 'info';
+      } 
 
       // Show on-screen alert
       const alertHtml = `
