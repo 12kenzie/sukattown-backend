@@ -420,6 +420,11 @@
        font-size: 18px;
    }
 
+   .alert-icon i {
+        font-size: 16px;
+        line-height: 1;
+    }
+
    .alert-content {
        flex: 1;
    }

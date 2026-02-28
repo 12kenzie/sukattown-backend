@@ -924,28 +924,24 @@
 
       switch (alertData.period) {
         case 'hourly':
-          title = '⚠️ Hourly Limit Exceeded';
-          message = `Consumption: ${alertData.consumption.toFixed(2)} kWh (Limit: ${alertData.limit} kWh) - ${alertData.percentageOver}% over`;
-          icon = '⚡';
+          title = 'Hourly Limit Exceeded';
+          icon = '<i class="fa-regular fa-hourglass"></i>';
           type = 'warning';
           break;
         case 'daily':
-          title = '🚨 Daily Limit Exceeded';
-          message = `Consumption: ${alertData.consumption.toFixed(2)} kWh (Limit: ${alertData.limit} kWh) - ${alertData.percentageOver}% over`;
-          icon = '📊';
+          title = 'Daily Limit Exceeded';
+          icon = '<i class="fa-solid fa-calendar-day"></i>';
           type = '';
           break;
         case 'monthly':
-          title = '🔴 Monthly Limit Exceeded';
-          message = `Consumption: ${alertData.consumption.toFixed(2)} kWh (Limit: ${alertData.limit} kWh) - ${alertData.percentageOver}% over`;
-          icon = '📈';
+          title = 'Monthly Limit Exceeded';
+          icon = '<i class="fa-regular fa-calendar"></i>';
           type = 'info';
           break;
         default:
           title = 'Alert';
-          message = 'Energy consumption threshold exceeded';
-          icon = '⚠️';
-          type = 'info';
+          icon = '<i class="fa-solid fa-triangle-exclamation"></i>';
+          type = 'info'; 
       }
 
       // Show on-screen alert
@@ -1022,9 +1018,9 @@
 
       const alertHtml = `
     <div class="alert-notification" id="${alertId}" style="background:linear-gradient(135deg,#ff4444,#cc0000)">
-      <div class="alert-icon">🔥</div>
+      <div class="alert-icon"><i class="fa-solid fa-fire"></i></div> 
       <div class="alert-content">
-        <div class="alert-title">🚨 FIRE ALARM!</div>
+        <div class="alert-title">FIRE ALARM!</div>
         <div class="alert-message">${message}</div>
         <div class="alert-time">${new Date().toLocaleTimeString()}</div>
       </div>
@@ -1142,7 +1138,7 @@
 
           historyHtml += `
             <div class="alert-history-item" style="background:rgba(255,68,68,0.08);border-left-color:#ff4444">
-              <div class="alert-history-item-title">🔥 Fire Alert</div>
+              <div class="alert-history-item-title"><i class="fa-solid fa-fire"></i> Fire Alert</div>
               <div class="alert-history-item-message">${fireMessage}</div>
               <div class="alert-history-item-time">${alert.timestamp.toLocaleString()}</div>
             </div>
@@ -1150,7 +1146,11 @@
         } else {
           // Handle consumption alerts
           const typeClass = alert.period === 'hourly' ? 'warning' : '';
-          const icon = alert.period === 'hourly' ? '⚡' : alert.period === 'daily' ? '📊' : '📈';
+          const icon = alert.period === 'hourly'
+            ? '<i class="fa-regular fa-hourglass"></i>'
+            : alert.period === 'daily'
+            ? '<i class="fa-solid fa-calendar-day"></i>'
+            : '<i class="fa-regular fa-calendar"></i>';
 
           historyHtml += `
             <div class="alert-history-item ${typeClass}">
