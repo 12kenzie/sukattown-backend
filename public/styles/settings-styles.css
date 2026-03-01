@@ -48,8 +48,9 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 12px;
-    height: fit-content;
     position: sticky;
+    top: 28px;
+    height: fit-content;
 }
 
 .brand {
