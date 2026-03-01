@@ -49,6 +49,7 @@ body {
     align-items: center;
     gap: 12px;
     height: fit-content;
+    position: sticky;
 }
 
 .brand {

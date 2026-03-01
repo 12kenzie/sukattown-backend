@@ -1,9 +1,3 @@
-/* ============================================================
-   intelligence.css  –  SukatTown AI Intelligence Center
-   Supplements styles/styles.css (shared nav, topbar, etc.)
-   ============================================================ */
-
-/* ── Page layout ─────────────────────────────────────────── */
 .intel-page {
   padding: 24px 28px 48px;
   animation: fadeInUp 0.45s ease both;
