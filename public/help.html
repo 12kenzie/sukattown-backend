@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" href="/assets/favicon.png" type="image/png">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://kit.fontawesome.com/c6249fb7d2.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="styles/help-styles.css">
+  <title>SukatTown · Help Center</title>
+</head>
+
+<body>
+  <div class="app">
+
+    <!-- LEFT NAV -->
+    <aside class="left-nav" aria-hidden="true">
+      <div class="brand">EL</div>
+      <div class="nav" role="navigation" aria-label="Main">
+        <button title="Dashboard" aria-label="Dashboard" onclick="window.location.href='index.html'">
+          <i class="fa-solid fa-house" aria-hidden="true"></i>
+        </button>
+        <button title="Consumption" aria-label="Consumption" onclick="window.location.href='consumption-history.html'">
+          <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+        </button>
+        <button title="Reports" aria-label="Reports" onclick="window.location.href='intelligence.html'">
+          <i class="fa-solid fa-chart-area" aria-hidden="true"></i>
+        </button>
+        <button title="Settings" aria-label="Settings" onclick="window.location.href='settings.html'">
+          <i class="fa-solid fa-gear" aria-hidden="true"></i>
+        </button>
+        <div class="spacer" aria-hidden="true"></div>
+        <button class="active" title="Help" aria-label="Help">
+          <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
+        </button>
+        <button title="Logout" aria-label="Logout" onclick="logout()">
+          <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main">
+
+      <!-- TOPBAR -->
+      <div class="topbar" role="banner">
+        <div class="search-wrap">
+          <div style="font-weight:700;color:#10213a">SukatTown</div>
+          <span class="status-badge offline" id="connectionStatus">● Offline</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px;justify-self:end">
+          <div class="search" role="search">
+            <i class="fa-brands fa-searchengin"></i>
+            <input id="topSearch" type="search" placeholder="Search anything...">
+          </div>
+          <div class="topbar-right">
+            <div class="profile" title="Account">
+              <div class="hello">
+                <span style="font-size:13px;color:var(--muted)">Hello,</span>
+                <strong id="userName">User</strong>
+              </div>
+              <div class="avatar" id="userAvatar">U</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE HEADER -->
+      <div class="page-header-wrap" style="padding:0 4px">
+        <div class="page-header-left">
+          <div class="page-header-icon" style="background:linear-gradient(135deg,#0ea5e9,#6b53f5)">
+            <i class="fa-solid fa-circle-question"></i>
+          </div>
+          <div>
+            <h1 class="page-header-title">Help Center</h1>
+            <p class="page-header-sub">Guides, FAQs, and documentation for SukatTown</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- HERO BANNER -->
+      <div class="help-hero">
+        <div class="help-hero-title">
+          <i class="fa-solid fa-bolt" style="margin-right:8px"></i> How can we help you?
+        </div>
+        <p class="help-hero-sub">
+          SukatTown helps public schools track, analyze, and reduce electricity consumption through real-time IoT monitoring and AI-powered insights.
+        </p>
+        <div class="help-search-wrap">
+          <input class="help-search-input" id="heroSearch" type="search" placeholder="Search FAQs, guides, glossary...">
+          <button class="help-search-btn" onclick="doHeroSearch()">
+            <i class="fa-solid fa-magnifying-glass"></i> Search
+          </button>
+        </div>
+      </div>
+
+      <!-- QUICK LINKS -->
+      <div class="help-quick-row">
+        <a class="help-quick-card" onclick="scrollToSection('getting-started')">
+          <div class="help-quick-icon" style="background:linear-gradient(135deg,#22c55e,#16a34a)">
+            <i class="fa-solid fa-rocket"></i>
+          </div>
+          <div class="help-quick-title">Getting Started</div>
+          <div class="help-quick-desc">Setup guide, login, and first steps for new users</div>
+        </a>
+        <a class="help-quick-card" onclick="scrollToSection('dashboard-guide')">
+          <div class="help-quick-icon" style="background:linear-gradient(135deg,#6b53f5,#a34ef2)">
+            <i class="fa-solid fa-gauge-high"></i>
+          </div>
+          <div class="help-quick-title">Dashboard Guide</div>
+          <div class="help-quick-desc">Understanding widgets, charts, and real-time data</div>
+        </a>
+        <a class="help-quick-card" onclick="scrollToSection('faq')">
+          <div class="help-quick-icon" style="background:linear-gradient(135deg,#f59e0b,#f97316)">
+            <i class="fa-solid fa-circle-question"></i>
+          </div>
+          <div class="help-quick-title">FAQs</div>
+          <div class="help-quick-desc">Answers to the most common questions</div>
+        </a>
+        <a class="help-quick-card" onclick="scrollToSection('esp32-guide')">
+          <div class="help-quick-icon" style="background:linear-gradient(135deg,#0ea5e9,#06b6d4)">
+            <i class="fa-solid fa-microchip"></i>
+          </div>
+          <div class="help-quick-title">ESP32 Device</div>
+          <div class="help-quick-desc">Hardware setup, WiFi config, and troubleshooting</div>
+        </a>
+      </div>
+
+      <!-- MAIN CONTENT + SIDEBAR -->
+      <div class="help-content-grid">
+
+        <!-- LEFT: main content -->
+        <div style="display:flex;flex-direction:column;gap:20px">
+
+          <!-- ABOUT SUKATTOWN -->
+          <div class="help-section" id="about">
+            <div class="help-section-title">
+              <i class="fa-solid fa-info-circle"></i> About SukatTown
+            </div>
+            <p style="font-size:14px;color:#344054;line-height:1.7;margin:0 0 14px">
+              <strong>SukatTown</strong> is an IoT-based energy monitoring system designed specifically for public schools. It tracks electricity consumption in real-time using ESP32 hardware sensors and displays data on a digital dashboard that helps school administrators identify usage patterns, detect anomalies, and receive AI-powered predictions for cost-effective power management.
+            </p>
+            <p style="font-size:14px;color:#344054;line-height:1.7;margin:0 0 16px">
+              The system aims to help public schools <strong>save energy</strong>, <strong>reduce electricity costs</strong>, and <strong>limit carbon emissions</strong> by giving administrators the information they need to make smart, actionable decisions about how their school uses power.
+            </p>
+            <div class="help-feature-grid">
+              <div class="help-feature-item">
+                <div class="help-feature-icon" style="background:linear-gradient(135deg,#6b53f5,#a34ef2)">
+                  <i class="fa-solid fa-bolt"></i>
+                </div>
+                <div>
+                  <div class="help-feature-title">Real-time Monitoring</div>
+                  <div class="help-feature-desc">Live voltage, current, power, and energy readings from your ESP32 sensor every 5 seconds</div>
+                </div>
+              </div>
+              <div class="help-feature-item">
+                <div class="help-feature-icon" style="background:linear-gradient(135deg,#0ea5e9,#06b6d4)">
+                  <i class="fa-solid fa-brain"></i>
+                </div>
+                <div>
+                  <div class="help-feature-title">AI Insights</div>
+                  <div class="help-feature-desc">Machine learning detects patterns, forecasts end-of-day usage, and provides energy-saving recommendations</div>
+                </div>
+              </div>
+              <div class="help-feature-item">
+                <div class="help-feature-icon" style="background:linear-gradient(135deg,#f59e0b,#f97316)">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div>
+                  <div class="help-feature-title">Alert System</div>
+                  <div class="help-feature-desc">Hourly, daily, and monthly threshold alerts plus fire detection with Telegram notifications</div>
+                </div>
+              </div>
+              <div class="help-feature-item">
+                <div class="help-feature-icon" style="background:linear-gradient(135deg,#22c55e,#16a34a)">
+                  <i class="fa-solid fa-peso-sign"></i>
+                </div>
+                <div>
+                  <div class="help-feature-title">Cost Projection</div>
+                  <div class="help-feature-desc">ML-powered billing estimates and monthly budget tracking with overspend warnings</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- GETTING STARTED -->
+          <div class="help-section" id="getting-started">
+            <div class="help-section-title">
+              <i class="fa-solid fa-rocket"></i> Getting Started
+            </div>
+            <div class="help-steps">
+              <div class="help-step">
+                <div class="help-step-num">1</div>
+                <div class="help-step-body">
+                  <div class="help-step-title">Create Your Account</div>
+                  <div class="help-step-desc">Visit the login page and register as a <strong>Principal</strong> to create a new school, or as a <strong>Teacher/Staff</strong> using your school's invitation code. Your account type determines which features you can access.</div>
+                </div>
+              </div>
+              <div class="help-step">
+                <div class="help-step-num">2</div>
+                <div class="help-step-body">
+                  <div class="help-step-title">Set Up Your ESP32 Device</div>
+                  <div class="help-step-desc">Flash the SukatTown Arduino sketch to your ESP32. Enter your WiFi credentials, <code>school_id</code>, and <code>user_id</code> from your account's <strong>localStorage</strong> (check browser DevTools → Application tab). The device will automatically begin sending sensor data to the backend.</div>
+                </div>
+              </div>
+              <div class="help-step">
+                <div class="help-step-num">3</div>
+                <div class="help-step-body">
+                  <div class="help-step-title">Connect Telegram Notifications</div>
+                  <div class="help-step-desc">Go to <strong>Settings → Telegram Integration</strong>. Message <a href="https://t.me/userinfobot" target="_blank" style="color:var(--accent-1)">@userinfobot</a> on Telegram to get your Chat ID, then save it in settings. You will receive instant alerts for power thresholds and fire detection.</div>
+                </div>
+              </div>
+              <div class="help-step">
+                <div class="help-step-num">4</div>
+                <div class="help-step-body">
+                  <div class="help-step-title">Configure Thresholds & Budget</div>
+                  <div class="help-step-desc">In <strong>Settings</strong>, set your maximum power threshold (Watts) and — for Principals — your monthly electricity budget. The dashboard will warn you when you approach or exceed these limits.</div>
+                </div>
+              </div>
+              <div class="help-step">
+                <div class="help-step-num">5</div>
+                <div class="help-step-body">
+                  <div class="help-step-title">Invite Your Staff</div>
+                  <div class="help-step-desc">As a Principal, go to <strong>Settings → Telegram Integration</strong> to find your school's invitation code. Share this with teachers and staff so they can register and join your school's monitoring group.</div>
+                </div>
+              </div>
+            </div>
+            <div class="help-highlight info" style="margin-top:16px">
+              <i class="fa-solid fa-circle-info"></i>
+              <span>Your <code>school_id</code> and <code>user_id</code> are stored in your browser's localStorage after login. Open DevTools (F12) → Application → Local Storage to find them before flashing your ESP32.</span>
+            </div>
+          </div>
+
+          <!-- DASHBOARD GUIDE -->
+          <div class="help-section" id="dashboard-guide">
+            <div class="help-section-title">
+              <i class="fa-solid fa-gauge-high"></i> Dashboard Guide
+            </div>
+            <p style="font-size:14px;color:#344054;line-height:1.7;margin:0 0 16px">
+              The main dashboard (<code>index.html</code>) displays live sensor data, cost projections, AI insights, and alert history. Here's what each section does:
+            </p>
+            <div class="faq-list">
+              <div class="faq-item open">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                  <div class="faq-question-left">
+                    <div class="faq-q-icon" style="background:rgba(107,83,245,0.1);color:#6b53f5"><i class="fa-solid fa-bolt"></i></div>
+                    <div class="faq-q-text">Today's Consumption Tile</div>
+                  </div>
+                  <i class="fa-solid fa-chevron-down faq-chevron"></i>
+                </div>
+                <div class="faq-answer">
+                  <p>Shows cumulative energy consumption for the day in <strong>kWh</strong>, along with the day's peak and average readings. Data is fetched live from your ESP32 via the backend every 5 seconds. The value resets each day.</p>
+                </div>
+              </div>
+              <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                  <div class="faq-question-left">
+                    <div class="faq-q-icon" style="background:rgba(245,158,11,0.1);color:#f59e0b"><i class="fa-solid fa-plug"></i></div>
+                    <div class="faq-q-text">Voltage Stability Tile</div>
+                  </div>
+                  <i class="fa-solid fa-chevron-down faq-chevron"></i>
+                </div>
+                <div class="faq-answer">
+                  <p>Displays real-time RMS voltage (V), frequency (Hz), and power factor (PF) from your sensor. Nominal voltage in the Philippines is <strong>220V</strong>. Power factor should ideally be close to <strong>1.0</strong> — values below 0.85 indicate inefficiency.</p>
+                </div>
+              </div>
+              <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                  <div class="faq-question-left">
+                    <div class="faq-q-icon" style="background:rgba(34,197,94,0.1);color:#22c55e"><i class="fa-solid fa-peso-sign"></i></div>
+                    <div class="faq-q-text">Projected Monthly Bill (Principal only)</div>
+                  </div>
+                  <i class="fa-solid fa-chevron-down faq-chevron"></i>
+                </div>
+                <div class="faq-answer">
+                  <p>Uses <strong>TensorFlow.js linear regression</strong> to project your end-of-month electricity bill based on current usage trends. The calculation uses a rate of <strong>₱5.50 per kWh</strong>. When fewer than 10 readings are available, it falls back to a simple daily average projection. Only visible to Principal accounts.</p>
+                </div>
+              </div>
+              <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                  <div class="faq-question-left">
+                    <div class="faq-q-icon" style="background:rgba(107,83,245,0.1);color:#6b53f5"><i class="fa-solid fa-brain"></i></div>
+                    <div class="faq-q-text">AI-Powered Insights</div>
+                  </div>
+                  <i class="fa-solid fa-chevron-down faq-chevron"></i>
+                </div>
+                <div class="faq-answer">
+                  <p>Updated every 30 seconds, the AI block analyzes your recent sensor history and identifies:</p>
+                  <ul>
+                    <li><strong>Pattern Detected</strong> — whether usage is stable, increasing, decreasing, or highly volatile</li>
+                    <li><strong>Insight</strong> — a quantified observation about your current vs average usage</li>
+                    <li><strong>Recommendation</strong> — actionable advice based on the pattern, including time-of-day awareness (e.g., peak evening hours)</li>
+                  </ul>
+                  <p>Requires at least <strong>5 data points</strong> to generate meaningful insights.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ESP32 GUIDE -->
+          <div class="help-section" id="esp32-guide">
+            <div class="help-section-title">
+              <i class="fa-solid fa-microchip"></i> ESP32 Device Setup
+            </div>
+            <p style="font-size:14px;color:#344054;line-height:1.7;margin:0 0 16px">
+              The SukatTown ESP32 device sends power readings every few seconds to the backend. It measures voltage, current, power, energy, frequency, and power factor using a <strong>PZEM-004T</strong> sensor module.
+            </p>
+            <div class="help-steps">
+              <div class="help-step">
+                <div class="help-step-num">1</div>
+                <div class="help-step-body">
+                  <div class="help-step-title">Find Your school_id and user_id</div>
+                  <div class="help-step-desc">Log in to the dashboard, then open browser DevTools (F12) → Application → Local Storage → your site URL. Copy the values for <code>schoolId</code> and <code>userId</code>.</div>
+                </div>
+              </div>
+              <div class="help-step">
+                <div class="help-step-num">2</div>
+                <div class="help-step-body">
+                  <div class="help-step-title">Edit the Arduino Sketch</div>
+                  <div class="help-step-desc">Open <code>sukattown_esp32.ino</code> and fill in your <code>WIFI_SSID</code>, <code>WIFI_PASS</code>, <code>SCHOOL_ID</code>, and <code>USER_ID</code> constants at the top of the file. The ESP32 must be on the <strong>same WiFi network</strong> as your router (it does not need to be on the same network as your PC).</div>
+                </div>
+              </div>
+              <div class="help-step">
+                <div class="help-step-num">3</div>
+                <div class="help-step-body">
+                  <div class="help-step-title">Flash and Test</div>
+                  <div class="help-step-desc">Upload the sketch via Arduino IDE. Open the Serial Monitor at <strong>115200 baud</strong> to see connection logs. If successful, you will see HTTP 200 responses and the dashboard's connection badge will turn green within 10 seconds.</div>
+                </div>
+              </div>
+            </div>
+            <div class="help-highlight warning" style="margin-top:16px">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>The ESP32 requires WiFi to function. If your school only has wired (ethernet) internet, a WiFi router or hotspot must be available within range of the sensor device.</span>
+            </div>
+            <div class="help-highlight info" style="margin-top:10px">
+              <i class="fa-solid fa-clock"></i>
+              <span>By default, the sketch uses <strong>180 seconds = 1 virtual hour</strong> for testing. Change this to <code>3600</code> in the sketch before deploying to production.</span>
+            </div>
+          </div>
+
+          <!-- FAQ SECTION -->
+          <div class="help-section" id="faq">
+            <div class="help-section-title">
+              <i class="fa-solid fa-circle-question"></i> Frequently Asked Questions
+            </div>
+            <div class="faq-list" id="faqList">
+
+              <div class="faq-item" data-keywords="purpose goal aim sukattown what why">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                  <div class="faq-question-left">
+                    <div class="faq-q-icon" style="background:rgba(107,83,245,0.1);color:#6b53f5"><i class="fa-solid fa-bullseye"></i></div>
+                    <div class="faq-q-text">What is the purpose of SukatTown?</div>
+                  </div>
+                  <i class="fa-solid fa-chevron-down faq-chevron"></i>
+                </div>
+                <div class="faq-answer">
+                  <p>SukatTown aims to help public schools <strong>save energy and limit carbon emissions</strong> by tracking energy consumption and displaying a real-time dashboard. It helps school administrators identify patterns or trends and provides predictions for cost-effective power management — guiding them to formulate actionable steps for energy management.</p>
+                </div>
+              </div>
+
+              <div class="faq-item" data-keywords="what is sukattown system iot">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                  <div class="faq-question-left">
+                    <div class="faq-q-icon" style="background:rgba(14,165,233,0.1);color:#0ea5e9"><i class="fa-solid fa-info"></i></div>
+                    <div class="faq-q-text">What exactly is SukatTown?</div>
+                  </div>
+                  <i class="fa-solid fa-chevron-down faq-chevron"></i>
+                </div>
+                <div class="faq-answer">
+                  <p>SukatTown is an <strong>IoT (Internet of Things) system</strong> which tracks electric consumption with a digital real-time dashboard that identifies trends or patterns, and makes predictions for efficient power management. It combines an ESP32 hardware sensor, a cloud backend (Node.js + Firebase), and a web dashboard with AI analytics.</p>
+                </div>
+              </div>
+
+              <div class="faq-item" data-keywords="offline dashboard data not loading connection">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                  <div class="faq-question-left">
+                    <div class="faq-q-icon" style="background:rgba(239,68,68,0.1);color:#ef4444"><i class="fa-solid fa-wifi"></i></div>
+                    <div class="faq-q-text">The dashboard shows "Offline" — what does this mean?</div>
+                  </div>
+                  <i class="fa-solid fa-chevron-down faq-chevron"></i>
+                </div>
+                <div class="faq-answer">
+                  <p>The "Offline" badge means the dashboard cannot reach the SukatTown backend server. This can happen because:</p>
+                  <ul>
+                    <li>The backend server on Render is <strong>spinning up</strong> (free-tier servers sleep after inactivity — wait 30–60 seconds and refresh)</li>
+                    <li>Your internet connection is down</li>
+                    <li>The ESP32 device has not sent any recent data</li>
+                  </ul>
+                  <p>The badge turns green automatically once a successful API response is received.</p>
+                </div>
+              </div>
+
+              <div class="faq-item" data-keywords="alert notification telegram not receiving">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                  <div class="faq-question-left">
+                    <div class="faq-q-icon" style="background:rgba(0,136,204,0.1);color:#0088cc"><i class="fa-brands fa-telegram"></i></div>
+                    <div class="faq-q-text">Why am I not receiving Telegram alerts?</div>
+                  </div>
+                  <i class="fa-solid fa-chevron-down faq-chevron"></i>
+                </div>
+                <div class="faq-answer">
+                  <p>Check the following:</p>
+                  <ul>
+                    <li>Your <strong>Telegram Chat ID</strong> must be saved in Settings → Telegram Integration</li>
+                    <li>You must have started a conversation with the SukatTown bot first (send it any message)</li>
+                    <li>Your <code>school_id</code> must be correctly set in your ESP32 sketch — alerts are filtered by school</li>
+                    <li>Use the <strong>"Test Telegram Now"</strong> button in the demo controls on the dashboard to verify your connection</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="faq-item" data-keywords="account type principal teacher staff difference">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                  <div class="faq-question-left">
+                    <div class="faq-q-icon" style="background:rgba(107,83,245,0.1);color:#6b53f5"><i class="fa-solid fa-users"></i></div>
+                    <div class="faq-q-text">What is the difference between Principal and Teacher accounts?</div>
+                  </div>
+                  <i class="fa-solid fa-chevron-down faq-chevron"></i>
+                </div>
+                <div class="faq-answer">
+                  <ul>
+                    <li><strong>Principal:</strong> Full access — can view the projected monthly bill, budget tracker, manage staff, set privacy settings, and receive all alerts. Creates the school in the system.</li>
+                    <li><strong>Teacher/Staff:</strong> Can view the real-time dashboard and consumption history, but billing and budget details are hidden. Joins a school using the invitation code.</li>
+                    <li><strong>Admin:</strong> System-level access to view all registered schools and their data (subject to each school's privacy settings).</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="faq-item" data-keywords="budget monthly cost rate php kwh electricity">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                  <div class="faq-question-left">
+                    <div class="faq-q-icon" style="background:rgba(34,197,94,0.1);color:#22c55e"><i class="fa-solid fa-peso-sign"></i></div>
+                    <div class="faq-q-text">How is the electricity cost calculated?</div>
+                  </div>
+                  <i class="fa-solid fa-chevron-down faq-chevron"></i>
+                </div>
+                <div class="faq-answer">
+                  <p>SukatTown uses a flat rate of <strong>₱5.50 per kWh</strong> for all cost calculations. This is a conservative estimate for typical Philippine electricity rates. The system multiplies your total energy reading (in kWh) by this rate to estimate your bill.</p>
+                  <p>The <strong>projected monthly bill</strong> extrapolates today's usage to the end of the month using TensorFlow.js linear regression when enough data points are available.</p>
+                </div>
+              </div>
+
+              <div class="faq-item" data-keywords="fire alarm smoke detection sensor false alert">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                  <div class="faq-question-left">
+                    <div class="faq-q-icon" style="background:rgba(239,68,68,0.1);color:#ef4444"><i class="fa-solid fa-fire"></i></div>
+                    <div class="faq-q-text">How does fire detection work?</div>
+                  </div>
+                  <i class="fa-solid fa-chevron-down faq-chevron"></i>
+                </div>
+                <div class="faq-answer">
+                  <p>The ESP32 device includes <strong>flame sensor and smoke (MQ-2) sensor</strong> support. When a fire or smoke event is detected:</p>
+                  <ul>
+                    <li>The ESP32 posts to <code>/api/fire-alerts</code> with the detection type (<code>flame</code>, <code>smoke</code>, or <code>flame_and_smoke</code>)</li>
+                    <li>The dashboard checks for new fire alerts every <strong>2 seconds</strong> and displays a red popup alarm</li>
+                    <li>A Telegram alert is automatically sent to all registered users of your school</li>
+                    <li>The alert auto-dismisses after <strong>15 seconds</strong> but is logged in the Alert History panel</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="faq-item" data-keywords="ai insights machine learning tensorflow prediction how">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                  <div class="faq-question-left">
+                    <div class="faq-q-icon" style="background:rgba(163,78,242,0.1);color:#a34ef2"><i class="fa-solid fa-brain"></i></div>
+                    <div class="faq-q-text">How does the AI and machine learning work?</div>
+                  </div>
+                  <i class="fa-solid fa-chevron-down faq-chevron"></i>
+                </div>
+                <div class="faq-answer">
+                  <p>SukatTown uses <strong>TensorFlow.js</strong> running directly in your browser (no server needed) for on-device ML:</p>
+                  <ul>
+                    <li><strong>Linear Regression</strong> — trains a dense neural layer on time → energy readings to forecast end-of-day consumption. Requires ≥ 10 data points.</li>
+                    <li><strong>Pattern Analysis</strong> — uses statistical methods (trend slope, volatility coefficient) to classify consumption as stable, increasing, decreasing, or fluctuating.</li>
+                    <li><strong>Anomaly Detection</strong> — uses Z-score analysis (threshold: ±2.0σ) against a server-computed baseline to flag unusual readings.</li>
+                  </ul>
+                  <p>The <strong>Intelligence page</strong> provides full access to all ML outputs including regression charts, heatmaps, rolling statistics, and an activity log.</p>
+                </div>
+              </div>
+
+              <div class="faq-item" data-keywords="data privacy admin can see consumption billing">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                  <div class="faq-question-left">
+                    <div class="faq-q-icon" style="background:rgba(70,89,255,0.1);color:#4659ff"><i class="fa-solid fa-shield-halved"></i></div>
+                    <div class="faq-q-text">Can system admins see my school's data?</div>
+                  </div>
+                  <i class="fa-solid fa-chevron-down faq-chevron"></i>
+                </div>
+                <div class="faq-answer">
+                  <p>SukatTown includes privacy controls in <strong>Settings → Privacy & Data Sharing</strong> (Principal accounts only). You can individually toggle:</p>
+                  <ul>
+                    <li><strong>Allow Admin to View Consumption Data</strong> — whether system admins can see your school's power readings</li>
+                    <li><strong>Allow Admin to View Billing Estimates</strong> — whether cost estimates are visible to admins</li>
+                  </ul>
+                  <p>These settings are stored on the server and respected by all admin-level queries.</p>
+                </div>
+              </div>
+
+              <div class="faq-item" data-keywords="esp32 no data school id wrong not appearing dashboard">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                  <div class="faq-question-left">
+                    <div class="faq-q-icon" style="background:rgba(245,158,11,0.1);color:#f59e0b"><i class="fa-solid fa-microchip"></i></div>
+                    <div class="faq-q-text">My ESP32 is sending data but nothing shows on the dashboard</div>
+                  </div>
+                  <i class="fa-solid fa-chevron-down faq-chevron"></i>
+                </div>
+                <div class="faq-answer">
+                  <p>The most common cause is a missing or incorrect <code>school_id</code> in the Arduino sketch. The backend <strong>filters all data by school_id</strong> — if it doesn't match your logged-in account's school, the data is stored but never shown to you.</p>
+                  <ul>
+                    <li>Check your <code>school_id</code> in browser DevTools → Application → Local Storage</li>
+                    <li>Verify the <code>SCHOOL_ID</code> constant in your <code>sukattown_esp32.ino</code> matches exactly</li>
+                    <li>Re-flash the ESP32 after correcting the value</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="faq-item" data-keywords="consumption history export csv download data">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                  <div class="faq-question-left">
+                    <div class="faq-q-icon" style="background:rgba(22,163,74,0.1);color:#16a34a"><i class="fa-solid fa-download"></i></div>
+                    <div class="faq-q-text">Can I export my consumption data?</div>
+                  </div>
+                  <i class="fa-solid fa-chevron-down faq-chevron"></i>
+                </div>
+                <div class="faq-answer">
+                  <p>Yes. Go to the <strong>Consumption History</strong> page and click the <strong>"Export CSV"</strong> button in the top-right of the data table. This downloads all currently loaded readings as a CSV file containing: Timestamp, Voltage (V), Current (A), Power (W), Energy (kWh), Frequency (Hz), and Power Factor.</p>
+                  <p>Use the filter buttons (Last 50, 100, 500, All Data) to control how many records are included in the export.</p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- GLOSSARY -->
+          <div class="help-section" id="glossary">
+            <div class="help-section-title">
+              <i class="fa-solid fa-book"></i> Glossary of Terms
+            </div>
+            <table class="help-table">
+              <thead>
+                <tr>
+                  <th>Term</th>
+                  <th>Definition</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>kWh</td>
+                  <td>Kilowatt-hour — the unit of energy used for billing. 1 kWh = using 1,000 watts for 1 hour. Your electricity bill is calculated in kWh.</td>
+                </tr>
+                <tr>
+                  <td>Power (W)</td>
+                  <td>Watts — the instantaneous rate of energy use. Equal to Voltage × Current × Power Factor.</td>
+                </tr>
+                <tr>
+                  <td>Voltage (V)</td>
+                  <td>The electrical pressure in the circuit. Philippine standard is 220V AC, 60Hz. Stable voltage is critical for equipment protection.</td>
+                </tr>
+                <tr>
+                  <td>Current (A)</td>
+                  <td>Amperes — the flow of electric charge. Higher current means more devices drawing power.</td>
+                </tr>
+                <tr>
+                  <td>Power Factor (PF)</td>
+                  <td>A ratio from 0 to 1 indicating how efficiently power is used. A PF of 1.0 is ideal; below 0.85 indicates reactive loads (motors, fluorescent lights) wasting energy.</td>
+                </tr>
+                <tr>
+                  <td>Frequency (Hz)</td>
+                  <td>The AC cycle rate. Philippines standard is 60 Hz. Deviations can indicate power quality issues.</td>
+                </tr>
+                <tr>
+                  <td>IoT</td>
+                  <td>Internet of Things — physical devices (like the ESP32) connected to the internet to collect and exchange data.</td>
+                </tr>
+                <tr>
+                  <td>ESP32</td>
+                  <td>A low-cost microcontroller with built-in WiFi used by SukatTown to read sensor data and transmit it to the cloud.</td>
+                </tr>
+                <tr>
+                  <td>PZEM-004T</td>
+                  <td>The energy monitoring module connected to the ESP32. Measures voltage, current, power, energy, frequency, and power factor.</td>
+                </tr>
+                <tr>
+                  <td>Z-Score</td>
+                  <td>A statistical measure of how many standard deviations a value is from the mean. SukatTown uses ±2.0σ as the anomaly detection threshold.</td>
+                </tr>
+                <tr>
+                  <td>R² Score</td>
+                  <td>Coefficient of determination — measures how well the regression model fits the data. 1.0 = perfect fit, 0 = no relationship.</td>
+                </tr>
+                <tr>
+                  <td>TF.js</td>
+                  <td>TensorFlow.js — Google's machine learning library that runs in the browser. Used by SukatTown for on-device energy forecasting.</td>
+                </tr>
+                <tr>
+                  <td>school_id</td>
+                  <td>A unique identifier assigned to your school when a Principal registers. Required in the ESP32 sketch so data is attributed to the correct school.</td>
+                </tr>
+                <tr>
+                  <td>Invite Code</td>
+                  <td>A 6-character code generated for each school. Teachers and staff use this to register and join a school's monitoring group.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div><!-- /left column -->
+
+        <!-- RIGHT SIDEBAR -->
+        <div class="help-sidebar">
+
+          <!-- Table of Contents -->
+          <div class="help-sidebar-card">
+            <div class="help-sidebar-title">
+              <i class="fa-solid fa-list"></i> On This Page
+            </div>
+            <ul class="help-toc-list">
+              <li><a onclick="scrollToSection('about')"><i class="fa-solid fa-info-circle"></i> About SukatTown</a></li>
+              <li><a onclick="scrollToSection('getting-started')"><i class="fa-solid fa-rocket"></i> Getting Started</a></li>
+              <li><a onclick="scrollToSection('dashboard-guide')"><i class="fa-solid fa-gauge-high"></i> Dashboard Guide</a></li>
+              <li><a onclick="scrollToSection('esp32-guide')"><i class="fa-solid fa-microchip"></i> ESP32 Device</a></li>
+              <li><a onclick="scrollToSection('faq')"><i class="fa-solid fa-circle-question"></i> FAQs</a></li>
+              <li><a onclick="scrollToSection('glossary')"><i class="fa-solid fa-book"></i> Glossary</a></li>
+            </ul>
+          </div>
+
+          <!-- Quick Stats -->
+          <div class="help-sidebar-card">
+            <div class="help-sidebar-title">
+              <i class="fa-solid fa-bolt"></i> System Overview
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#f8faff;border-radius:10px">
+                <span style="font-size:13px;color:var(--muted)">Data Refresh</span>
+                <span class="badge badge-purple">Every 5s</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#f8faff;border-radius:10px">
+                <span style="font-size:13px;color:var(--muted)">AI Insights</span>
+                <span class="badge badge-blue">Every 30s</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#f8faff;border-radius:10px">
+                <span style="font-size:13px;color:var(--muted)">Fire Alerts</span>
+                <span class="badge badge-red">Every 2s</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#f8faff;border-radius:10px">
+                <span style="font-size:13px;color:var(--muted)">Cost Rate</span>
+                <span class="badge badge-green">₱5.50/kWh</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#f8faff;border-radius:10px">
+                <span style="font-size:13px;color:var(--muted)">ML Min Points</span>
+                <span class="badge badge-orange">10 readings</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Key Pages -->
+          <div class="help-sidebar-card">
+            <div class="help-sidebar-title">
+              <i class="fa-solid fa-map"></i> Key Pages
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <a href="index.html" class="help-contact-item">
+                <div class="help-contact-icon" style="background:linear-gradient(135deg,#6b53f5,#a34ef2)"><i class="fa-solid fa-house"></i></div>
+                <div>
+                  <div class="help-contact-label">Dashboard</div>
+                  <div class="help-contact-sub">Live sensor data & AI insights</div>
+                </div>
+              </a>
+              <a href="consumption-history.html" class="help-contact-item">
+                <div class="help-contact-icon" style="background:linear-gradient(135deg,#0ea5e9,#06b6d4)"><i class="fa-solid fa-bolt"></i></div>
+                <div>
+                  <div class="help-contact-label">Consumption History</div>
+                  <div class="help-contact-sub">View & export past readings</div>
+                </div>
+              </a>
+              <a href="intelligence.html" class="help-contact-item">
+                <div class="help-contact-icon" style="background:linear-gradient(135deg,#a34ef2,#6b53f5)"><i class="fa-solid fa-brain"></i></div>
+                <div>
+                  <div class="help-contact-label">Intelligence</div>
+                  <div class="help-contact-sub">ML analytics & anomaly detection</div>
+                </div>
+              </a>
+              <a href="settings.html" class="help-contact-item">
+                <div class="help-contact-icon" style="background:linear-gradient(135deg,#f59e0b,#f97316)"><i class="fa-solid fa-gear"></i></div>
+                <div>
+                  <div class="help-contact-label">Settings</div>
+                  <div class="help-contact-sub">Thresholds, Telegram, budget</div>
+                </div>
+              </a>
+            </div>
+          </div>
+
+          <!-- Version info -->
+          <div class="help-sidebar-card" style="background:linear-gradient(135deg,rgba(107,83,245,0.06),rgba(163,78,242,0.04));border-color:rgba(107,83,245,0.15)">
+            <div class="help-sidebar-title" style="margin-bottom:10px">
+              <i class="fa-solid fa-code-branch"></i> System Info
+            </div>
+            <div style="font-size:13px;color:#344054;line-height:1.8">
+              <div><span style="color:var(--muted)">Platform:</span> <strong>Node.js + Firebase</strong></div>
+              <div><span style="color:var(--muted)">Frontend:</span> <strong>Vanilla JS + Chart.js + TF.js</strong></div>
+              <div><span style="color:var(--muted)">Hardware:</span> <strong>ESP32 + PZEM-004T</strong></div>
+              <div><span style="color:var(--muted)">Alerts:</span> <strong>Telegram Bot API</strong></div>
+            </div>
+          </div>
+
+        </div><!-- /sidebar -->
+      </div><!-- /content grid -->
+    </div><!-- /main -->
+  </div><!-- /app -->
+
+  <!-- Back to top -->
+  <button class="back-to-top" id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+    <i class="fa-solid fa-chevron-up"></i>
+  </button>
+
+  <script>
+    // Auth
+    const userId   = localStorage.getItem('userId');
+    const userName = localStorage.getItem('userName');
+
+    if (!userId) {
+      window.location.href = 'login.html';
+    }
+
+    if (userName) {
+      document.getElementById('userName').textContent = userName;
+      document.getElementById('userAvatar').textContent = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    }
+
+    function logout() {
+      if (confirm('Are you sure you want to logout?')) {
+        localStorage.clear();
+        window.location.href = 'login.html';
+      }
+    }
+    window.logout = logout;
+
+    // Connection check
+    fetch('https://sukattown-backend.onrender.com/api/power-data')
+      .then(() => {
+        document.getElementById('connectionStatus').textContent = '● Online';
+        document.getElementById('connectionStatus').classList.remove('offline');
+      })
+      .catch(() => {});
+
+    // FAQ accordion
+    function toggleFaq(questionEl) {
+      const item = questionEl.closest('.faq-item');
+      const isOpen = item.classList.contains('open');
+      item.classList.toggle('open', !isOpen);
+    }
+
+    // Scroll to section
+    function scrollToSection(id) {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Hero search
+    function doHeroSearch() {
+      const q = document.getElementById('heroSearch').value.trim().toLowerCase();
+      if (!q) return;
+
+      const items = document.querySelectorAll('.faq-item[data-keywords]');
+      let found = false;
+
+      items.forEach(item => {
+        const keywords = item.getAttribute('data-keywords') || '';
+        const text = item.textContent.toLowerCase();
+        if (keywords.includes(q) || text.includes(q)) {
+          item.classList.add('open');
+          if (!found) {
+            found = true;
+            setTimeout(() => item.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+          }
+        }
+      });
+
+      if (!found) {
+        alert(`No results found for "${q}". Try different keywords.`);
+      }
+    }
+
+    document.getElementById('heroSearch').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doHeroSearch();
+    });
+
+    document.getElementById('topSearch').addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        document.getElementById('heroSearch').value = e.target.value;
+        doHeroSearch();
+      }
+    });
+
+    // Back to top button
+    window.addEventListener('scroll', () => {
+      const btn = document.getElementById('backToTop');
+      btn.classList.toggle('visible', window.scrollY > 400);
+    });
+  </script>
+
+</body>
+</html>
