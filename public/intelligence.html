@@ -426,6 +426,7 @@
   const userType  = localStorage.getItem('userType');
   const schoolId  = localStorage.getItem('schoolId');
   const schoolName = localStorage.getItem('schoolName');
+  const COST_PER_KWH = 13.1734;
 
   (function checkAuth() {
     if (!userId || !userType || !schoolId) {
